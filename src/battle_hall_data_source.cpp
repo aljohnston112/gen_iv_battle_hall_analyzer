@@ -16,9 +16,9 @@ std::string replace_gender_symbols(const std::string& pokemon_name) {
     return result;
 }
 
-Pokemon parse_pokemon_line(const std::string& line) {
+BattleHallPokemon parse_pokemon_line(const std::string& line) {
     std::istringstream string_stream(line);
-    Pokemon pokemon;
+    BattleHallPokemon pokemon;
     std::string token;
     // Skip ID
     std::getline(string_stream, token, '\t');
@@ -135,7 +135,7 @@ GroupedPokemon get_battle_hall_pokemon() {
         }
         // Parse the data
         uint8_t group_number = std::stoi(cells[0]);
-        Pokemon pokemon;
+        BattleHallPokemon pokemon;
         pokemon.name = cells[1];
         pokemon.item = cells[2];
         pokemon.moves = {cells[3], cells[4], cells[5], cells[6]};
@@ -148,12 +148,12 @@ GroupedPokemon get_battle_hall_pokemon() {
     return grouped_pokemon;
 }
 
-void print_battle_hall_pokemon(const GroupedPokemon& data) {
-    for (
-        const auto& [
-            group_number,
-            pokemon_group
-        ] : data
+void print_battle_hall_pokemon() {
+    for (const auto data = get_battle_hall_pokemon();
+         const auto& [
+             group_number,
+             pokemon_group
+         ] : data
     ) {
         std::cout << "Group: " << static_cast<int>(group_number) << ":\n";
         std::cout << std::left
