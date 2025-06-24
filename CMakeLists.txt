@@ -9,6 +9,7 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/battle_hall_data_source.h
         src/serebii_pokemon_data_source.cpp
         src/serebii_pokemon_data_source.h
+        src/moves.h
 )
 
 add_custom_command(
