@@ -1,5 +1,6 @@
 #ifndef ATTACKS_H
 #define ATTACKS_H
+
 #include <bitset>
 #include <ranges>
 #include <string>
@@ -512,7 +513,185 @@ static std::unordered_set POWER_MOVES = {
     Move::Thrash,
     Move::DoubleEdge,
     Move::PoisonSting,
+    Move::Twineedle,
+    Move::PinMissile,
+    Move::Bite,
+    Move::Acid,
+    Move::Ember,
+    Move::Flamethrower,
+    Move::WaterGun,
+    Move::HydroPump,
+    Move::Surf,
+    Move::IceBeam,
+    Move::Blizzard,
+    Move::Psybeam,
+    Move::Bubblebeam,
+    Move::AuroraBeam,
+    Move::HyperBeam,
+    Move::Peck,
+    Move::DrillPeck,
+    Move::Submission,
+    Move::Strength,
+    Move::Absorb,
+    Move::MegaDrain,
+    Move::RazorLeaf,
+    Move::SolarBeam,
+    Move::PetalDance,
+    Move::FireSpin,
+    Move::Thundershock,
+    Move::Thunderbolt,
+    Move::RockThrow,
+    Move::Earthquake,
+    Move::Dig,
+    Move::Confusion,
+    Move::Psychic,
+    Move::QuickAttack,
+    Move::Selfdestruct,
+    Move::EggBomb,
+    Move::Lick,
+    Move::Smog,
+    Move::Sludge,
+    Move::BoneClub,
+    Move::FireBlast,
+    Move::Waterfall,
+    Move::Clamp,
+    Move::Swift,
+    Move::SkullBash,
+    Move::SpikeCannon,
+    Move::Constrict,
+    Move::HighJumpKick,
+    Move::Barrage,
+    Move::LeechLife,
+    Move::SkyAttack,
+    Move::Bubble,
+    Move::DizzyPunch,
+    Move::Crabhammer,
+    Move::Explosion,
+    Move::FuryAttack,
+    Move::Bonemerang,
+    Move::RockSlide,
+    Move::HyperFang,
+    Move::TriAttack,
+    Move::Slash,
+    Move::FlameWheel,
+    Move::Aeroblast,
+    Move::PowderSnow,
+    Move::MachPunch,
+    Move::FaintAttack,
+    Move::SludgeBomb,
+    Move::MudSlap,
+    Move::Octazooka,
+    Move::ZapCannon,
+    Move::IcyWind,
+    Move::BoneRush,
+    Move::Outrage,
 
+};
+
+static std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
+    Move::Absorb,
+    Move::MegaDrain,
+    Move::Recover,
+    Move::Softboiled,
+    Move::LeechLife,
+
+};
+
+static std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
+    Move::SwordsDance,
+    Move::Growth,
+    Move::Meditate,
+    Move::Agility,
+    Move::DoubleTeam,
+    Move::Harden,
+    Move::Minimize,
+    Move::Withdraw,
+    Move::Amnesia,
+    Move::AcidArmor,
+    Move::Sharpen
+};
+
+static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_ATTACK = {
+    Move::SwordsDance,
+    Move::Meditate,
+    Move::Sharpen,
+    Move::BellyDrum
+
+};
+
+static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_DEFENSE = {
+    Move::Harden,
+    Move::Withdraw,
+    Move::SkullBash,
+    Move::AcidArmor
+};
+
+static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_ATTACK = {
+    Move::Growth
+};
+
+static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_DEFENSE = {
+    Move::Amnesia
+};
+
+static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPEED = {
+    Move::Agility
+};
+
+static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_EVASION = {
+    Move::DoubleTeam,
+    Move::Minimize
+};
+
+
+static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_CRIT_RATE = {
+    Move::FocusEnergy
+};
+
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ATTACK = {
+    Move::Growl,
+    Move::AuroraBeam,
+
+};
+
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
+    Move::TailWhip,
+    Move::Leer,
+    Move::Screech,
+
+};
+
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE = {
+    Move::Acid,
+    Move::Psychic,
+
+};
+
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPEED = {
+    Move::Bubblebeam,
+    Move::StringShot,
+    Move::Constrict,
+    Move::Bubble,
+    Move::CottonSpore,
+    Move::ScaryFace,
+    Move::IcyWind
+};
+
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
+    Move::SandAttack,
+    Move::Smokescreen,
+    Move::Kinesis,
+    Move::Flash,
+    Move::MudSlap,
+    Move::Octazooka,
+
+};
+
+static std::unordered_set MOVES_THAT_MAY_BYPASS_ACCURACY = {
+    Move::Blizzard,
+    Move::Thunder,
+    Move::Swift,
+    Move::FaintAttack
 };
 
 static std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
@@ -525,38 +704,96 @@ static std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
 };
 
 static std::unordered_set OTHER_MOVES = {
-    Move::Whirlwind
+    Move::Disable,
+    Move::Mist,
+    Move::LowKick,
+    Move::Counter,
+    Move::LeechSeed,
+    Move::Rage,
+    Move::Teleport,
+    Move::Mimic,
+    Move::DefenseCurl,
+    Move::Barrier,
+    Move::LightScreen,
+    Move::Haze,
+    Move::Reflect,
+    Move::Bide,
+    Move::Metronome,
+    Move::MirrorMove,
+    Move::DreamEater,
+    Move::Transform,
+    Move::Psywave,
+    Move::Splash,
+    Move::Rest,
+    Move::Conversion,
+    Move::TriAttack,
+    Move::SuperFang,
+    Move::Substitute,
+    Move::Struggle,
+    Move::Sketch,
+    Move::TripleKick,
+    Move::Thief,
+    Move::SpiderWeb,
+    Move::MindReader,
+    Move::Nightmare,
+    Move::Snore,
+    Move::Curse,
+    Move::Flail,
+    Move::Conversion2,
+    Move::Reversal,
+    Move::Spite,
+    Move::Protect,
+    Move::Spikes,
+    Move::Foresight,
+    Move::DestinyBond,
+    Move::PerishSong,
+    Move::Detect,
+    Move::LockOn,
+
 };
 
-static std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
-    Move::SwordsDance
-};
-
-static std::unordered_set MOVES_THAT_INCREASE_ATTACKERS_ATTACK = {
-    Move::SwordsDance
-};
-
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
-    Move::TailWhip
-};
-
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
-    Move::SandAttack
+static std::unordered_set MOVES_THAT_FORCE_USER_OUT = {
+    Move::Whirlwind,
+    Move::Roar,
 };
 
 static std::unordered_set ONE_HIT_KO_MOVES = {
     Move::Guillotine,
     Move::HornDrill,
+    Move::Fissure,
 
+};
+
+static std::unordered_set MOVES_THAT_MAKE_ATTACKER_FAINT = {
+    Move::Selfdestruct,
+    Move::Explosion
 };
 
 static std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
     Move::KarateChop,
-    Move::RazorWind
+    Move::RazorWind,
+    Move::RazorLeaf,
+    Move::SkyAttack,
+    Move::Crabhammer,
+    Move::Slash,
+    Move::Aeroblast,
+
 };
 
 static std::unordered_set MOVES_THAT_REQUIRE_CHARGING_TURN = {
-    Move::RazorWind
+    Move::RazorWind,
+    Move::SolarBeam,
+    Move::SkullBash,
+    Move::SkyAttack,
+};
+
+static std::unordered_set MOVES_THAT_REQUIRE_RECHARGE_TURN = {
+    Move::HyperBeam,
+
+};
+
+static std::unordered_set MOVES_THAT_DEAL_DOUBLE_AFTER_MINIMIZE = {
+    Move::Stomp
 };
 
 static std::unordered_set MULTI_HIT_MOVES = {
@@ -564,38 +801,114 @@ static std::unordered_set MULTI_HIT_MOVES = {
     Move::CometPunch,
     Move::DoubleKick,
     Move::FuryAttack,
-
+    Move::Twineedle,
+    Move::PinMissile,
+    Move::SpikeCannon,
+    Move::Barrage,
+    Move::FuryAttack,
+    Move::Bonemerang,
+    Move::BoneRush,
 };
 
 static std::unordered_set MOVES_THAT_CONTINUE = {
     Move::Bind,
     Move::Wrap,
-
+    Move::FireSpin,
+    Move::Clamp
 };
 
 static std::unordered_set MOVES_THAT_BURN = {
-    Move::FirePunch
+    Move::FirePunch,
+    Move::Ember,
+    Move::Flamethrower,
+    Move::FireBlast,
+    Move::FlameWheel,
+
 };
 
 static std::unordered_set MOVES_THAT_FREEZE = {
-    Move::IcePunch
+    Move::IcePunch,
+    Move::IceBeam,
+    Move::Blizzard,
+    Move::PowderSnow,
 };
 
 static std::unordered_set MOVES_THAT_PARALYZE = {
     Move::ThunderPunch,
     Move::BodySlam,
-
+    Move::StunSpore,
+    Move::Thundershock,
+    Move::Thunderbolt,
+    Move::ThunderWave,
+    Move::Thunder,
+    Move::Lick,
+    Move::Glare,
+    Move::ZapCannon,
 };
 
 static std::unordered_set MOVES_THAT_POISON = {
     Move::PoisonSting,
+    Move::Twineedle,
+    Move::PoisonPowder,
+    Move::Smog,
+    Move::Sludge,
+    Move::PoisonGas,
+    Move::SludgeBomb
+};
 
+static std::unordered_set MOVES_THAT_BADLY_POISON = {
+    Move::Toxic
+};
+
+static std::unordered_set MOVES_THAT_MAKE_DEFENDER_SLEEP = {
+    Move::Sing,
+    Move::SleepPowder,
+    Move::Hypnosis,
+    Move::LovelyKiss,
+    Move::Spore
+};
+
+static std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
+    Move::Supersonic,
+    Move::Psybeam,
+    Move::Confusion,
+    Move::ConfuseRay,
+    Move::DizzyPunch,
+    Move::SweetKiss
 };
 
 static std::unordered_set MOVES_THAT_FLINCH = {
     Move::Stomp,
     Move::RollingKick,
-    Move::Headbutt
+    Move::Headbutt,
+    Move::Bite,
+    Move::BoneClub,
+    Move::Waterfall,
+    Move::SkyAttack,
+    Move::HyperFang
+};
+
+static std::unordered_set MOVES_WITH_RECOIL = {
+    Move::JumpKick,
+    Move::TakeDown,
+    Move::DoubleEdge,
+    Move::Submission,
+    Move::HighJumpKick,
+    Move::BellyDrum,
+};
+
+static std::unordered_set MULTI_TURN_MOVES = {
+    Move::Thrash,
+    Move::PetalDance,
+    Move::Outrage
+};
+
+static std::unordered_set MOVES_THAT_HAVE_FIXED_DAMAGE = {
+    Move::SonicBoom,
+    Move::SeismicToss,
+    Move::DragonRage,
+    Move::NightShade,
+
 };
 
 static std::unordered_set MOVES_THAT_GO_INTO_AIR = {
@@ -620,7 +933,7 @@ static std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_GROUND = {
     Move::Fissure
 };
 
-static std::unordered_set MOVES_THAT_GO_UNDER_WATER = {
+static std::unordered_set MOVES_THAT_HIT_UNDER_WATER = {
     Move::Dive,
 };
 
@@ -631,18 +944,6 @@ static std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_WATER = {
 
 static std::unordered_set MOVES_THAT_VANISH_USER = {
     Move::ShadowForce,
-};
-
-static std::unordered_set MOVES_WITH_RECOIL = {
-    Move::JumpKick,
-    Move::TakeDown,
-    Move::DoubleEdge,
-
-};
-
-static std::unordered_set MULTI_TURN_MOVES = {
-    Move::Thrash,
-
 };
 
 static std::unordered_set MOVES_THAT_MAKE_CONTACT = {
@@ -1125,15 +1426,15 @@ static const std::unordered_set MOVES_AFFECTED_BY_KINGS_ROCK = {
 static std::unordered_map<std::string, Move> move_map = {
     {"Pound", Move::Pound},
     {"Karate Chop", Move::KarateChop},
-    {"Double Slap", Move::DoubleSlap},
+    {"Doubleslap", Move::DoubleSlap},
     {"Comet Punch", Move::CometPunch},
     {"Mega Punch", Move::MegaPunch},
     {"Pay Day", Move::PayDay},
     {"Fire Punch", Move::FirePunch},
     {"Ice Punch", Move::IcePunch},
-    {"Thunder Punch", Move::ThunderPunch},
+    {"Thunderpunch", Move::ThunderPunch},
     {"Scratch", Move::Scratch},
-    {"Vice Grip", Move::ViceGrip},
+    {"Vicegrip", Move::ViceGrip},
     {"Guillotine", Move::Guillotine},
     {"Razor Wind", Move::RazorWind},
     {"Swords Dance", Move::SwordsDance},
@@ -1150,7 +1451,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Mega Kick", Move::MegaKick},
     {"Jump Kick", Move::JumpKick},
     {"Rolling Kick", Move::RollingKick},
-    {"Sand-Attack", Move::SandAttack},
+    {"Sand-attack", Move::SandAttack},
     {"Headbutt", Move::Headbutt},
     {"Horn Attack", Move::HornAttack},
     {"Fury Attack", Move::FuryAttack},
@@ -1160,7 +1461,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Wrap", Move::Wrap},
     {"Take Down", Move::TakeDown},
     {"Thrash", Move::Thrash},
-    {"Double-Edge", Move::DoubleEdge},
+    {"Double-edge", Move::DoubleEdge},
     {"Tail Whip", Move::TailWhip},
     {"Poison Sting", Move::PoisonSting},
     {"Twineedle", Move::Twineedle},
@@ -1171,7 +1472,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Roar", Move::Roar},
     {"Sing", Move::Sing},
     {"Supersonic", Move::Supersonic},
-    {"SonicBoom", Move::SonicBoom},
+    {"Sonicboom", Move::SonicBoom},
     {"Disable", Move::Disable},
     {"Acid", Move::Acid},
     {"Ember", Move::Ember},
@@ -1199,7 +1500,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Growth", Move::Growth},
     {"Razor Leaf", Move::RazorLeaf},
     {"Solarbeam", Move::SolarBeam},
-    {"Poison Powder", Move::PoisonPowder},
+    {"Poisonpowder", Move::PoisonPowder},
     {"Stun Spore", Move::StunSpore},
     {"Sleep Powder", Move::SleepPowder},
     {"Petal Dance", Move::PetalDance},
@@ -1258,7 +1559,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Amnesia", Move::Amnesia},
     {"Kinesis", Move::Kinesis},
     {"Softboiled", Move::Softboiled},
-    {"High Jump Kick", Move::HighJumpKick},
+    {"Hi Jump Kick", Move::HighJumpKick},
     {"Glare", Move::Glare},
     {"Dream Eater", Move::DreamEater},
     {"Poison Gas", Move::PoisonGas},
@@ -1298,7 +1599,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Snore", Move::Snore},
     {"Curse", Move::Curse},
     {"Flail", Move::Flail},
-    {"Conversion2", Move::Conversion2},
+    {"Conversion 2", Move::Conversion2},
     {"Aeroblast", Move::Aeroblast},
     {"Cotton Spore", Move::CottonSpore},
     {"Reversal", Move::Reversal},
@@ -1311,7 +1612,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Sweet Kiss", Move::SweetKiss},
     {"Belly Drum", Move::BellyDrum},
     {"Sludge Bomb", Move::SludgeBomb},
-    {"Mud-Slap", Move::MudSlap},
+    {"Mud-slap", Move::MudSlap},
     {"Octazooka", Move::Octazooka},
     {"Spikes", Move::Spikes},
     {"Zap Cannon", Move::ZapCannon},
@@ -1321,7 +1622,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Icy Wind", Move::IcyWind},
     {"Detect", Move::Detect},
     {"Bone Rush", Move::BoneRush},
-    {"Lock-On", Move::LockOn},
+    {"Lock-on", Move::LockOn},
     {"Outrage", Move::Outrage},
     {"Sandstorm", Move::Sandstorm},
     {"Giga Drain", Move::GigaDrain},
@@ -1383,7 +1684,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Hail", Move::Hail},
     {"Torment", Move::Torment},
     {"Flatter", Move::Flatter},
-    {"Will-O-Wisp", Move::WillOWisp},
+    {"Will-o-wisp", Move::WillOWisp},
     {"Memento", Move::Memento},
     {"Facade", Move::Facade},
     {"Focus Punch", Move::FocusPunch},
@@ -1577,11 +1878,11 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Wood Hammer", Move::WoodHammer},
     {"Aqua Jet", Move::AquaJet},
     {"Attack Order", Move::AttackOrder},
-    {"Defense Order", Move::DefenseOrder},
+    {"Defend Order", Move::DefenseOrder},
     {"Heal Order", Move::HealOrder},
     {"Head Smash", Move::HeadSmash},
     {"Double Hit", Move::DoubleHit},
-    {"Roar of Time", Move::RoarOfTime},
+    {"Roar Of Time", Move::RoarOfTime},
     {"Spacial Rend", Move::SpacialRend},
     {"Lunar Dance", Move::LunarDance},
     {"Crush Grip", Move::CrushGrip},
@@ -1597,7 +1898,7 @@ inline void verify_map() {
     for (int i = 0; i < static_cast<int>(Move::Count); ++i) {
         moves.insert(static_cast<Move>(i));
     }
-    for (Move value: move_map | std::ranges::views::values) {
+    for (Move value : move_map | std::ranges::views::values) {
         moves.erase(value);
     }
     if (moves.size() != 0) {
