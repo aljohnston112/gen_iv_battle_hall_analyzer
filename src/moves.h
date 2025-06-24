@@ -504,6 +504,14 @@ static std::unordered_set POWER_MOVES = {
     Move::RollingKick,
     Move::Headbutt,
     Move::HornAttack,
+    Move::FuryAttack,
+    Move::Tackle,
+    Move::BodySlam,
+    Move::Wrap,
+    Move::TakeDown,
+    Move::Thrash,
+    Move::DoubleEdge,
+    Move::PoisonSting,
 
 };
 
@@ -528,12 +536,18 @@ static std::unordered_set MOVES_THAT_INCREASE_ATTACKERS_ATTACK = {
     Move::SwordsDance
 };
 
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
+    Move::TailWhip
+};
+
 static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
     Move::SandAttack
 };
 
 static std::unordered_set ONE_HIT_KO_MOVES = {
-    Move::Guillotine
+    Move::Guillotine,
+    Move::HornDrill,
+
 };
 
 static std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
@@ -548,11 +562,15 @@ static std::unordered_set MOVES_THAT_REQUIRE_CHARGING_TURN = {
 static std::unordered_set MULTI_HIT_MOVES = {
     Move::DoubleSlap,
     Move::CometPunch,
-    Move::DoubleKick
+    Move::DoubleKick,
+    Move::FuryAttack,
+
 };
 
 static std::unordered_set MOVES_THAT_CONTINUE = {
-    Move::Bind
+    Move::Bind,
+    Move::Wrap,
+
 };
 
 static std::unordered_set MOVES_THAT_BURN = {
@@ -564,7 +582,14 @@ static std::unordered_set MOVES_THAT_FREEZE = {
 };
 
 static std::unordered_set MOVES_THAT_PARALYZE = {
-    Move::ThunderPunch
+    Move::ThunderPunch,
+    Move::BodySlam,
+
+};
+
+static std::unordered_set MOVES_THAT_POISON = {
+    Move::PoisonSting,
+
 };
 
 static std::unordered_set MOVES_THAT_FLINCH = {
@@ -610,6 +635,14 @@ static std::unordered_set MOVES_THAT_VANISH_USER = {
 
 static std::unordered_set MOVES_WITH_RECOIL = {
     Move::JumpKick,
+    Move::TakeDown,
+    Move::DoubleEdge,
+
+};
+
+static std::unordered_set MULTI_TURN_MOVES = {
+    Move::Thrash,
+
 };
 
 static std::unordered_set MOVES_THAT_MAKE_CONTACT = {
