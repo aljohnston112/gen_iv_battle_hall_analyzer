@@ -1,0 +1,24 @@
+### For level 50 ###
+Group 1:
+    Rank 1 to 5
+    Types goes from 0 to 17
+    Level = min(50,⌈28.7868+(Types/2)+(Rank−1)⋅1.4142⌉)
+    Levels 29 to 43
+
+Group 2:
+    Rank 3 to 8
+    Types goes from 1 to 17
+    Level = min(50,⌈28.7868+(Types/2)+(Rank−1)⋅1.4142⌉)
+    Level 33 to 48
+
+Group 3:
+    Rank 6 to 10
+    Types goes from 2 to 17
+    Level = min(50,⌈28.7868+(Types/2)+(Rank−1)⋅1.4142⌉)
+    Level 37 to 50
+
+Group 4:
+    Rank 9 to 10
+    Types goes from 4 to 17
+    Level = min(50,⌈28.7868+(Types/2)+(Rank−1)⋅1.4142⌉)
+    Level 43 to 50

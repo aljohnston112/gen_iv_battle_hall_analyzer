@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "moves.h"
+
 enum class PokemonType {
     NORMAL,
     FIGHTING,
@@ -38,6 +40,7 @@ extern std::unordered_map<std::string, Category> move_category_map;
 
 struct MoveInfo {
     std::string name;
+    Move move;
     PokemonType move_type;
     Category category;
     int power;
@@ -52,7 +55,7 @@ struct MoveInfo {
 template <>
 struct std::hash<MoveInfo> {
     size_t operator()(const MoveInfo& a) const noexcept {
-        return std::hash<std::string>{}(a.name);
+        return static_cast<size_t>(a.move);
     }
 };
 
@@ -70,7 +73,7 @@ extern std::unordered_map<std::string, Stat> stat_map;
 
 struct SerebiiPokemon {
     std::string name;
-    std::vector<PokemonType> types;
+    std::unordered_set<PokemonType> types;
     int id = -1;
     std::string ability;
     double pounds = 0;
@@ -106,14 +109,14 @@ struct SerebiiPokemon {
     > form_to_move_tutor_moves;
 };
 
-std::unordered_map<std::string, SerebiiPokemon> get_serebii_pokemon();
+std::unordered_map<std::string, SerebiiPokemon> get_all_serebii_pokemon();
 
 void print_serebii_pokemon();
 
 std::unordered_map<std::string, std::unordered_set<MoveInfo>>
-get_all_serebii_moves(const SerebiiPokemon& serebii_pokemon);
+get_moves_for_serebii_pokemon(const SerebiiPokemon& serebii_pokemon);
 
-std::unordered_set<MoveInfo> get_all_pokemon_moves(
+std::unordered_map<Move, MoveInfo> get_all_pokemon_moves(
     std::unordered_map<std::string, SerebiiPokemon> pokedex
 );
 

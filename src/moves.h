@@ -1423,7 +1423,7 @@ static const std::unordered_set MOVES_AFFECTED_BY_KINGS_ROCK = {
     Move::XScissor,
 };
 
-static std::unordered_map<std::string, Move> move_map = {
+static std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Pound", Move::Pound},
     {"Karate Chop", Move::KarateChop},
     {"Doubleslap", Move::DoubleSlap},
@@ -1433,6 +1433,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Fire Punch", Move::FirePunch},
     {"Ice Punch", Move::IcePunch},
     {"Thunderpunch", Move::ThunderPunch},
+    {"Thunder Punch", Move::ThunderPunch},
     {"Scratch", Move::Scratch},
     {"Vicegrip", Move::ViceGrip},
     {"Guillotine", Move::Guillotine},
@@ -1452,6 +1453,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Jump Kick", Move::JumpKick},
     {"Rolling Kick", Move::RollingKick},
     {"Sand-attack", Move::SandAttack},
+    {"Sand Attack", Move::SandAttack},
     {"Headbutt", Move::Headbutt},
     {"Horn Attack", Move::HornAttack},
     {"Fury Attack", Move::FuryAttack},
@@ -1462,6 +1464,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Take Down", Move::TakeDown},
     {"Thrash", Move::Thrash},
     {"Double-edge", Move::DoubleEdge},
+    {"Double-Edge", Move::DoubleEdge},
     {"Tail Whip", Move::TailWhip},
     {"Poison Sting", Move::PoisonSting},
     {"Twineedle", Move::Twineedle},
@@ -1485,6 +1488,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Blizzard", Move::Blizzard},
     {"Psybeam", Move::Psybeam},
     {"Bubblebeam", Move::Bubblebeam},
+    {"Bubble Beam", Move::Bubblebeam},
     {"Aurora Beam", Move::AuroraBeam},
     {"Hyper Beam", Move::HyperBeam},
     {"Peck", Move::Peck},
@@ -1500,7 +1504,9 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Growth", Move::Growth},
     {"Razor Leaf", Move::RazorLeaf},
     {"Solarbeam", Move::SolarBeam},
+    {"Solar Beam", Move::SolarBeam},
     {"Poisonpowder", Move::PoisonPowder},
+    {"Poison Powder", Move::PoisonPowder},
     {"Stun Spore", Move::StunSpore},
     {"Sleep Powder", Move::SleepPowder},
     {"Petal Dance", Move::PetalDance},
@@ -1532,6 +1538,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Harden", Move::Harden},
     {"Minimize", Move::Minimize},
     {"Smokescreen", Move::Smokescreen},
+    {"SmokeScreen", Move::Smokescreen},
     {"Confuse Ray", Move::ConfuseRay},
     {"Withdraw", Move::Withdraw},
     {"Defense Curl", Move::DefenseCurl},
@@ -1559,7 +1566,9 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Amnesia", Move::Amnesia},
     {"Kinesis", Move::Kinesis},
     {"Softboiled", Move::Softboiled},
+    {"Soft-Boiled", Move::Softboiled},
     {"Hi Jump Kick", Move::HighJumpKick},
+    {"High Jump Kick", Move::HighJumpKick},
     {"Glare", Move::Glare},
     {"Dream Eater", Move::DreamEater},
     {"Poison Gas", Move::PoisonGas},
@@ -1609,10 +1618,12 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Mach Punch", Move::MachPunch},
     {"Scary Face", Move::ScaryFace},
     {"Faint Attack", Move::FaintAttack},
+    {"Feint Attack", Move::FaintAttack},
     {"Sweet Kiss", Move::SweetKiss},
     {"Belly Drum", Move::BellyDrum},
     {"Sludge Bomb", Move::SludgeBomb},
     {"Mud-slap", Move::MudSlap},
+    {"Mud-Slap", Move::MudSlap},
     {"Octazooka", Move::Octazooka},
     {"Spikes", Move::Spikes},
     {"Zap Cannon", Move::ZapCannon},
@@ -1647,6 +1658,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Sacred Fire", Move::SacredFire},
     {"Magnitude", Move::Magnitude},
     {"Dynamicpunch", Move::Dynamicpunch},
+    {"Dynamic Punch", Move::Dynamicpunch},
     {"Megahorn", Move::Megahorn},
     {"Dragonbreath", Move::DragonBreath},
     {"Baton Pass", Move::BatonPass},
@@ -1669,7 +1681,9 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Mirror Coat", Move::MirrorCoat},
     {"Psych Up", Move::PsychUp},
     {"Extremespeed", Move::ExtremeSpeed},
+    {"Extreme Speed", Move::ExtremeSpeed},
     {"Ancientpower", Move::Ancientpower},
+    {"Ancient Power", Move::Ancientpower},
     {"Shadow Ball", Move::ShadowBall},
     {"Future Sight", Move::FutureSight},
     {"Rock Smash", Move::RockSmash},
@@ -1685,6 +1699,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Torment", Move::Torment},
     {"Flatter", Move::Flatter},
     {"Will-o-wisp", Move::WillOWisp},
+    {"Will-O-Wisp", Move::WillOWisp},
     {"Memento", Move::Memento},
     {"Facade", Move::Facade},
     {"Focus Punch", Move::FocusPunch},
@@ -1721,6 +1736,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Luster Purge", Move::LusterPurge},
     {"Mist Ball", Move::MistBall},
     {"Featherdance", Move::Featherdance},
+    {"Feather Dance", Move::Featherdance},
     {"Teeter Dance", Move::TeeterDance},
     {"Blaze Kick", Move::BlazeKick},
     {"Mud Sport", Move::MudSport},
@@ -1828,6 +1844,7 @@ static std::unordered_map<std::string, Move> move_map = {
     {"Seed Bomb", Move::SeedBomb},
     {"Air Slash", Move::AirSlash},
     {"X-scissor", Move::XScissor},
+    {"X-Scissor", Move::XScissor},
     {"Bug Buzz", Move::BugBuzz},
     {"Dragon Pulse", Move::DragonPulse},
     {"Dragon Rush", Move::DragonRush},
@@ -1898,7 +1915,7 @@ inline void verify_map() {
     for (int i = 0; i < static_cast<int>(Move::Count); ++i) {
         moves.insert(static_cast<Move>(i));
     }
-    for (Move value : move_map | std::ranges::views::values) {
+    for (Move value : MOVE_MAP | std::ranges::views::values) {
         moves.erase(value);
     }
     if (moves.size() != 0) {

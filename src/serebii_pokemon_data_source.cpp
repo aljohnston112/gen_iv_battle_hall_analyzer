@@ -4,6 +4,8 @@
 #include <iostream>
 #include <ranges>
 
+#include "moves.h"
+
 std::unordered_map<std::string, PokemonType> pokemon_type_map{
     {"normal", PokemonType::NORMAL},
     {"fighting", PokemonType::FIGHTING},
@@ -67,33 +69,36 @@ double extract_right_double(const std::string& line) {
     return std::stod(line.substr(colon + 1));
 }
 
-MoveInfo parse_attack(std::ifstream& in) {
-    MoveInfo attack;
+MoveInfo parse_move(
+    std::ifstream& in
+) {
+    MoveInfo move_info;
     std::string line;
     while (std::getline(in, line)) {
         if (line.find('}') != std::string::npos) {
             break;
         }
         if (line.find("name") != std::string::npos) {
-            attack.name = extract_right_string(line);
+            move_info.name = extract_right_string(line);
+            move_info.move = MOVE_MAP.at(move_info.name);
         } else if (line.find("move_type") != std::string::npos) {
-            attack.move_type =
+            move_info.move_type =
                 pokemon_type_map[extract_right_string(line)];
         } else if (line.find("category") != std::string::npos) {
-            attack.category =
+            move_info.category =
                 move_category_map[extract_right_string(line)];
         } else if (line.find("power") != std::string::npos) {
-            attack.power =
+            move_info.power =
                 extract_right_int(line);
         } else if (line.find("accuracy") != std::string::npos) {
-            attack.accuracy =
+            move_info.accuracy =
                 extract_right_int(line);
         } else if (line.find("effect_percent") != std::string::npos) {
-            attack.
+            move_info.
                 effect_percent = extract_right_int(line);
         }
     }
-    return attack;
+    return move_info;
 }
 
 SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
@@ -120,7 +125,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
             } else {
                 const auto start_i = line.find('"') + 1;
                 const auto end_i = line.find('"', start_i);
-                serebii_pokemon.types.push_back(
+                serebii_pokemon.types.insert(
                     pokemon_type_map[
                         line.substr(start_i, end_i - start_i)
                     ]
@@ -148,12 +153,12 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
         } else if (in_lvl) {
             if (line.find('}') != std::string::npos) {
                 in_lvl = false;
-            } else if (line.find("[") != std::string::npos) {
+            } else if (line.find('[') != std::string::npos) {
                 current_level = extract_left_int(line);
                 serebii_pokemon.level_to_moves[current_level] = {};
-            } else if (line.find("{") != std::string::npos) {
+            } else if (line.find('{') != std::string::npos) {
                 serebii_pokemon.level_to_moves[current_level].push_back(
-                    parse_attack(input_stream)
+                    parse_move(input_stream)
                 );
             }
         } else if (
@@ -170,7 +175,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                     const size_t q2 = line.find('"', q1 + 1);
                     const std::string key =
                         line.substr(q1 + 1, q2 - q1 - 1);
-                    serebii_pokemon.tm_or_hm_to_move[key] = parse_attack(
+                    serebii_pokemon.tm_or_hm_to_move[key] = parse_move(
                         input_stream);
                 }
             }
@@ -188,7 +193,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                     }
                     if (line.find('{') != std::string::npos) {
                         serebii_pokemon.egg_moves.push_back(
-                            parse_attack(input_stream)
+                            parse_move(input_stream)
                         );
                     }
                 }
@@ -233,7 +238,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                                             pre_idx][
                                             level
                                         ].push_back(
-                                            parse_attack(input_stream)
+                                            parse_move(input_stream)
                                         );
                                     }
                                 }
@@ -252,7 +257,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                 }
                 if (line.find('{') != std::string::npos) {
                     serebii_pokemon.move_tutor_attacks.push_back(
-                        parse_attack(input_stream));
+                        parse_move(input_stream));
                 }
             }
         } else if (line.find("\"game_to_level_to_moves\"") != std::string::npos
@@ -285,7 +290,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                             if (line.find('{') != std::string::npos) {
                                 serebii_pokemon.game_to_level_to_moves[game][
                                     lvl
-                                ].push_back(parse_attack(input_stream));
+                                ].push_back(parse_move(input_stream));
                             }
                         }
                     }
@@ -305,7 +310,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                     }
                     if (line.find('{') != std::string::npos) {
                         serebii_pokemon.special_moves.push_back(
-                            parse_attack(input_stream)
+                            parse_move(input_stream)
                         );
                     }
                 }
@@ -369,7 +374,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                                     serebii_pokemon.form_to_level_up_moves[
                                         form
                                     ][lvl].push_back(
-                                        parse_attack(input_stream)
+                                        parse_move(input_stream)
                                     );
                                 }
                             }
@@ -398,7 +403,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                         }
                         const std::string tm = extract_left_string(line);
                         serebii_pokemon.form_to_tm_or_hm_to_move[form][tm] =
-                            parse_attack(input_stream);
+                            parse_move(input_stream);
                     }
                 }
             }
@@ -424,13 +429,13 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                         if (line.find('{') != std::string::npos) {
                             serebii_pokemon.form_to_move_tutor_moves[
                                 form
-                            ].push_back(parse_attack(input_stream));
+                            ].push_back(parse_move(input_stream));
                         }
                     }
                 }
             }
         } else if ((line.find("},") != std::string::npos ||
-                line.find("}") != std::string::npos) &&
+                line.find('}') != std::string::npos) &&
             line.find("{}") == std::string::npos
         ) {
             break;
@@ -439,7 +444,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
     return serebii_pokemon;
 }
 
-std::unordered_map<std::string, SerebiiPokemon> get_serebii_pokemon() {
+std::unordered_map<std::string, SerebiiPokemon> get_all_serebii_pokemon() {
     std::ifstream input_stream("./data/fresh/all_pokemon.json");
     std::unordered_map<std::string, SerebiiPokemon> pokedex;
 
@@ -458,14 +463,14 @@ std::unordered_map<std::string, SerebiiPokemon> get_serebii_pokemon() {
 
 void print_serebii_pokemon() {
     std::unordered_map<std::string, SerebiiPokemon> pokedex =
-        get_serebii_pokemon();
+        get_all_serebii_pokemon();
     for (const auto& p : pokedex | std::views::values) {
         std::cout << p.id << ", " << p.name << "\n";
     }
 }
 
 std::unordered_map<std::string, std::unordered_set<MoveInfo>>
-get_all_serebii_moves(
+get_moves_for_serebii_pokemon(
     const SerebiiPokemon& serebii_pokemon
 ) {
     std::unordered_set<MoveInfo> shared_moves;
@@ -544,20 +549,22 @@ get_all_serebii_moves(
     return moves_by_form;
 }
 
-std::unordered_set<MoveInfo> get_all_pokemon_moves(
+std::unordered_map<Move, MoveInfo> get_all_pokemon_moves(
     std::unordered_map<std::string, SerebiiPokemon> pokedex
 ) {
-    std::unordered_set<MoveInfo> all_moves;
+    std::unordered_map<Move, MoveInfo> all_moves;
     for (const auto& serebii_pokemon :
          pokedex | std::ranges::views::values
     ) {
         std::unordered_map<std::string, std::unordered_set<MoveInfo>>
             form_to_moves =
-                get_all_serebii_moves(serebii_pokemon);
+                get_moves_for_serebii_pokemon(serebii_pokemon);
         for (const auto& moves : form_to_moves |
              std::ranges::views::values
         ) {
-            all_moves.insert(moves.begin(), moves.end());
+            for (const auto& move: moves) {
+                all_moves[move.move] = move;
+            }
         }
     }
     return all_moves;

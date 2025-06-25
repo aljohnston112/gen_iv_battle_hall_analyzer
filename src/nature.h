@@ -233,4 +233,22 @@ static const std::unordered_map<std::string, NatureEnum> STRING_TO_NATURE = {
     {"Quirky", NatureEnum::QUIRKY}
 };
 
+static const std::unordered_map<NatureEnum, std::string> NATURE_TO_STRING = [] {
+    std::unordered_map<NatureEnum, std::string> map;
+    for (const auto& [str, nature] : STRING_TO_NATURE) {
+        map[nature] = str;
+    }
+    return map;
+}();
+
+uint16_t get_stat(
+    uint8_t level,
+    Stat stat,
+    uint8_t base,
+    uint8_t iv,
+    u_int16_t ev,
+    Nature nature
+);
+
+
 #endif //NATURE_H
