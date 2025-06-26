@@ -7,19 +7,7 @@
 int main() {
     const auto start = std::chrono::high_resolution_clock::now();
 
-    // analyze();
-
-    const auto all_serebii_pokemon =
-        get_all_serebii_pokemon();
-    const auto all_possible_opponents =
-        get_all_custom_hall_pokemon(
-            all_serebii_pokemon,
-            get_all_battle_hall_pokemon(
-                get_all_pokemon_moves(
-                    all_serebii_pokemon
-                )
-            )
-        );
+    analyze();
 
     const auto end = std::chrono::high_resolution_clock::now();
     const std::chrono::duration<double> elapsed = end - start;

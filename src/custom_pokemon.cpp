@@ -69,7 +69,6 @@ std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
         size_t type_count;
         input_stream >> type_count;
         input_stream.ignore();
-
         for (size_t i = 0; i < type_count; ++i) {
             std::getline(input_stream, line);
             std::istringstream stat_string_stream(line);
@@ -77,7 +76,7 @@ std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
             int type_int;
             stat_string_stream >> type_int;
             stat_string_stream.ignore();
-            custom_pokemon.types.insert(static_cast<PokemonType>(type_int));
+            custom_pokemon.types.emplace(std::move(static_cast<PokemonType>(type_int)));
         }
 
         size_t move_count;
@@ -112,7 +111,7 @@ std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
 
             move_string_stream >> move_info.effect_percent;
 
-            custom_pokemon.moves.insert(move_info);
+            custom_pokemon.moves.emplace(std::move(move_info));
         }
 
         size_t stat_count;

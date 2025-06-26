@@ -317,14 +317,6 @@ uint8_t get_hall_pokemon_level(
     );
 }
 
-constexpr uint8_t NUMBER_OF_TYPES = 17;
-const std::unordered_map<uint8_t, std::vector<uint8_t>> GROUP_TO_RANKS = {
-    {1, {1, 2, 3, 4, 5}},
-    {2, {3, 4, 5, 6, 7, 8}},
-    {3, {6, 7, 8, 9, 10}},
-    {4, {9, 10}},
-};
-
 void write_all_hall_pokemon_as_custom(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const AllBattleHallPokemon& all_battle_hall_pokemon

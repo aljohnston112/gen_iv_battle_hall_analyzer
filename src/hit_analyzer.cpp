@@ -82,17 +82,33 @@ std::unordered_map<std::string, CustomPokemon> convert_serebii_to_custom(
 void analyze() {
     const auto all_serebii_pokemon =
         get_all_serebii_pokemon();
-    const auto all_moves =
-        get_all_pokemon_moves(all_serebii_pokemon);
-    const auto all_hall_pokemon =
-        get_all_battle_hall_pokemon(all_moves);
+    const auto group_to_rank_to_over_2 =
+        get_all_custom_hall_pokemon(
+            all_serebii_pokemon,
+            get_all_battle_hall_pokemon(
+                get_all_pokemon_moves(
+                    all_serebii_pokemon
+                )
+            )
+        );
 
+    for (uint8_t group_number = 4; group_number > 0; group_number--) {
+        const auto& rank_to_over_2 =
+            group_to_rank_to_over_2.at(group_number);
+        for (auto it = GROUP_TO_RANKS.at(group_number).rbegin();
+             it != GROUP_TO_RANKS.at(group_number).rend();
+             ++it
+        ) {
+            uint8_t rank = *it;
+            const auto& over_2_to_hall_pokemon =
+                rank_to_over_2.at(rank);
+            for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
+                const auto& hall_pokemon =
+                    over_2_to_hall_pokemon.at(over_2);
 
-    // std::unordered_set<Move> all_move_enums;
-    // for (int i = 0; i < static_cast<int>(Move::Count); ++i) {
-    //     all_move_enums.insert(static_cast<Move>(i));
-    // }
-    // for (const auto& move_info : all_moves) {
-    //     all_move_enums.erase(move_map[move_info.name]);
-    // }
+            }
+        }
+    }
+
+    std::printf("");
 }

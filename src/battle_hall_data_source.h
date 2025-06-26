@@ -1,6 +1,8 @@
 #ifndef BATTLE_HALL_DATA_SOURCE_H
 #define BATTLE_HALL_DATA_SOURCE_H
 #include <cstdint>
+#include <map>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -11,6 +13,14 @@
 
 constexpr int NUMBER_OF_MOVES = 4;
 constexpr int NUMBER_OF_EVS = 6;
+
+constexpr uint8_t NUMBER_OF_TYPES = 17;
+const std::map<uint8_t, std::set<uint8_t>> GROUP_TO_RANKS = {
+    {1, {1, 2, 3, 4, 5}},
+    {2, {3, 4, 5, 6, 7, 8}},
+    {3, {6, 7, 8, 9, 10}},
+    {4, {9, 10}},
+};
 
 struct BattleHallPokemon {
     std::string name;
