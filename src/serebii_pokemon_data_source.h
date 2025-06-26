@@ -25,7 +25,8 @@ enum class PokemonType {
     PSYCHIC,
     ICE,
     DRAGON,
-    DARK
+    DARK,
+    COUNT
 };
 
 extern std::unordered_map<std::string, PokemonType> pokemon_type_map;
@@ -41,7 +42,7 @@ extern std::unordered_map<std::string, Category> move_category_map;
 struct MoveInfo {
     std::string name;
     Move move;
-    PokemonType move_type;
+    PokemonType type;
     Category category;
     int power;
     int accuracy;
@@ -77,7 +78,7 @@ struct SerebiiPokemon {
     int id = -1;
     std::string ability;
     double pounds = 0;
-    std::unordered_map<Stat, int> base_stats;
+    std::unordered_map<Stat, uint16_t> base_stats;
     std::unordered_map<int, std::vector<MoveInfo>> level_to_moves;
     std::unordered_map<std::string, MoveInfo> tm_or_hm_to_move;
     std::vector<MoveInfo> egg_moves;
@@ -93,7 +94,7 @@ struct SerebiiPokemon {
     std::vector<MoveInfo> special_moves;
     std::unordered_map<
         std::string,
-        std::unordered_map<Stat, int>
+        std::unordered_map<Stat, uint16_t>
     > form_to_base_stats;
     std::unordered_map<
         std::string,

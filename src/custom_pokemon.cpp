@@ -96,7 +96,7 @@ std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
             int type_int;
             move_string_stream >> type_int;
             move_string_stream.ignore();
-            move_info.move_type = static_cast<PokemonType>(type_int);
+            move_info.type = static_cast<PokemonType>(type_int);
 
             int category_int;
             move_string_stream >> category_int;

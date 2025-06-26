@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.31)
 project(gen_iv_battle_hall_analyzer)
 
 set(CMAKE_CXX_STANDARD 26)
-set(CMAKE_CXX_FLAGS_DEBUG "-g3 -Og -fno-inline -fno-omit-frame-pointer -D_GLIBCXX_DEBUG")
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -fno-inline -fno-omit-frame-pointer -D_GLIBCXX_DEBUG")
 add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/battle_hall_data_source.cpp
         src/battle_hall_data_source.h
@@ -14,6 +15,8 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/custom_pokemon.cpp
         src/custom_pokemon.h
         src/nature.cpp
+        src/battle_simulator.cpp
+        src/battle_simulator.h
 )
 
 add_custom_command(

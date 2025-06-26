@@ -8,6 +8,19 @@
 #include "config.h"
 #include "custom_pokemon.h"
 
+std::string trim(const std::string& string) {
+    auto start = string.begin();
+    while (start != string.end() && std::isspace(*start)) {
+        ++start;
+    }
+    auto end = string.end();
+    do {
+        --end;
+    }
+    while (std::distance(start, end) > 0 && std::isspace(*end));
+    return {start, end + 1};
+}
+
 std::string replace_gender_symbols(const std::string& pokemon_name) {
     std::string result = pokemon_name;
     size_t i;
@@ -42,12 +55,16 @@ BattleHallPokemon parse_pokemon_line(
     pokemon.moves.reserve(NUMBER_OF_MOVES);
     for (int i = 0; i < NUMBER_OF_MOVES; ++i) {
         std::getline(string_stream, token, '\t');
-        pokemon.moves.push_back(all_moves.at(MOVE_MAP.at(token)));
+        if (token != "- ") {
+            pokemon.moves.push_back(
+                all_moves.at(MOVE_MAP.at(trim(token)))
+                );
+        }
     }
     // Get nature
     std::string nature;
     std::getline(string_stream, nature, '\t');
-    pokemon.nature = NATURE_MAP.at(STRING_TO_NATURE.at(nature));
+    pokemon.nature = NATURE_MAP.at(STRING_TO_NATURE.at(trim(nature)));
     // Get EVs
     pokemon.evs.reserve(NUMBER_OF_EVS);
     for (int i = 0; i < NUMBER_OF_EVS; ++i) {
@@ -106,8 +123,13 @@ void write_battle_hall_data(
             out << static_cast<int>(group_number) << ','
                 << name << ','
                 << item << ',';
+            auto moves_size = moves.size();
             for (int i = 0; i < 4; i++) {
-                out << moves[i].name << ',';
+                if (i < moves_size) {
+                    out << moves[i].name << ',';
+                } else {
+                    out << "-,";
+                }
             }
             out << NATURE_TO_STRING.at(nature.nature) << ',';
             for (size_t i = 0; i < evs.size() - 1; i++) {
@@ -118,19 +140,6 @@ void write_battle_hall_data(
             ) << '\n';
         }
     }
-}
-
-std::string trim(const std::string& string) {
-    auto start = string.begin();
-    while (start != string.end() && std::isspace(*start)) {
-        ++start;
-    }
-    auto end = string.end();
-    do {
-        --end;
-    }
-    while (std::distance(start, end) > 0 && std::isspace(*end));
-    return {start, end + 1};
 }
 
 AllBattleHallPokemon get_all_battle_hall_pokemon(
@@ -233,7 +242,7 @@ void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data) {
     }
 }
 
-std::unordered_map<Stat, int> get_stats_for_battle_hall_pokemon(
+std::unordered_map<Stat, uint16_t> get_stats_for_battle_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const uint8_t level,
     const BattleHallPokemon& hall_pokemon
@@ -243,7 +252,7 @@ std::unordered_map<Stat, int> get_stats_for_battle_hall_pokemon(
         name = "Wormadam";
     }
     const auto& serebii_pokemon = all_serebii_pokemon.at(name);
-    std::unordered_map<Stat, int> base_stats =
+    std::unordered_map<Stat, uint16_t> base_stats =
         serebii_pokemon.base_stats;
     if (serebii_pokemon.form_to_base_stats.size() != 0) {
         if (name.contains("Wormadam")) {
@@ -260,7 +269,7 @@ std::unordered_map<Stat, int> get_stats_for_battle_hall_pokemon(
             throw std::runtime_error{""};
         }
     }
-    std::unordered_map<Stat, int> stats;
+    std::unordered_map<Stat, uint16_t> stats;
     for (const auto& [stat, value] : base_stats) {
         stats[stat] = get_stat(
             level,

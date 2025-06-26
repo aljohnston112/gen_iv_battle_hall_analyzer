@@ -11,7 +11,7 @@ struct CustomPokemon {
     std::string item;
     std::unordered_set<PokemonType> types;
     std::unordered_set<MoveInfo> moves;
-    std::unordered_map<Stat, int> stats;
+    std::unordered_map<Stat, uint16_t> stats;
 };
 
 void save_custom_pokemon(

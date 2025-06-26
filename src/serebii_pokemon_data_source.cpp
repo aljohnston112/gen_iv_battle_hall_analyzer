@@ -82,7 +82,7 @@ MoveInfo parse_move(
             move_info.name = extract_right_string(line);
             move_info.move = MOVE_MAP.at(move_info.name);
         } else if (line.find("move_type") != std::string::npos) {
-            move_info.move_type =
+            move_info.type =
                 pokemon_type_map[extract_right_string(line)];
         } else if (line.find("category") != std::string::npos) {
             move_info.category =
