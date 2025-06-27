@@ -25,7 +25,7 @@ const std::map<uint8_t, std::set<uint8_t>> GROUP_TO_RANKS = {
 struct BattleHallPokemon {
     std::string name;
     std::string item;
-    std::vector<MoveInfo> moves;
+    std::vector<const MoveInfo*> moves;
     Nature nature;
     std::unordered_map<Stat, uint8_t> evs;
 };
@@ -34,7 +34,7 @@ using AllBattleHallPokemon =
 std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>;
 
 AllBattleHallPokemon get_all_battle_hall_pokemon(
-    const std::unordered_map<Move, MoveInfo>& all_moves
+    const std::unordered_map<Move, const MoveInfo*>& all_moves
 );
 
 void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data);
@@ -46,7 +46,8 @@ std::unordered_map<
     >
 > get_all_custom_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
-    const AllBattleHallPokemon& all_battle_hall_pokemon
+    const AllBattleHallPokemon& all_battle_hall_pokemon,
+    const std::unordered_map<Move, const MoveInfo*>& all_moves
 );
 
 

@@ -1,89 +1,12 @@
 #include "hit_analyzer.h"
 
-#include <cmath>
 #include <ranges>
 
 #include "battle_hall_data_source.h"
 #include "battle_simulator.h"
-#include "config.h"
 #include "custom_pokemon.h"
-#include "nature.h"
 #include "serebii_pokemon_data_source.h"
 
-uint get_damage_to_defender(
-    const CustomPokemon& attacker,
-    const CustomPokemon& defender,
-    const MoveInfo& move
-) {
-    return 0;
-}
-
-std::optional<MoveInfo> get_best_move_against_defender(
-    const CustomPokemon& attacker,
-    const CustomPokemon& defender
-) {
-    std::optional<MoveInfo> best_move;
-    uint best_damage = 0;
-    for (const auto& move : attacker.moves) {
-        if (const uint damage =
-                get_damage_to_defender(attacker, defender, move);
-            damage > best_damage
-        ) {
-            best_damage = damage;
-            best_move.value() = move;
-        }
-    }
-    return best_move;
-}
-
-std::unordered_map<Stat, uint16_t> get_stats_for_serebii(
-    const std::string& form,
-    const SerebiiPokemon& serebii_pokemon
-) {
-    std::unordered_map<Stat, uint16_t> base_stats;
-    if (form == "all" ||
-        form == "Plant Cloak" ||
-        form == "Normal Forme" ||
-        form == "Land Forme" ||
-        form == "Altered Forme"
-    ) {
-        base_stats = serebii_pokemon.base_stats;
-    } else {
-        base_stats = serebii_pokemon.form_to_base_stats.at(form);
-    }
-    std::unordered_map<Stat, uint16_t> stats;
-    for (const auto& [stat, value] : base_stats) {
-        stats[stat] = get_stat(
-            LEVEL,
-            stat,
-            value,
-            0,
-            0,
-            NATURE_MAP.at(NatureEnum::HARDY)
-        );
-    }
-    return stats;
-}
-
-std::unordered_map<std::string, CustomPokemon> convert_serebii_to_custom(
-    const SerebiiPokemon& serebii_pokemon
-) {
-    std::unordered_map<std::string, CustomPokemon> customs;
-    const auto moves =
-        get_moves_for_serebii_pokemon(serebii_pokemon);
-    for (const auto& [form, form_moves] : moves) {
-        customs[form] =
-        {
-            .name = serebii_pokemon.name,
-            .level = LEVEL,
-            .item = "",
-            .types = serebii_pokemon.types,
-            .moves = form_moves,
-            .stats = get_stats_for_serebii(form, serebii_pokemon)
-        };
-    }
-    return customs;
-}
 
 void analyze() {
     const auto all_serebii_pokemon =
@@ -92,14 +15,17 @@ void analyze() {
     // const auto& player_pokemon_forms =
     //     convert_serebii_to_custom(serebii_pokemon);
 
+    const auto all_moves =
+        get_all_pokemon_moves(
+            all_serebii_pokemon
+        );
     const auto group_to_rank_to_over_2 =
         get_all_custom_hall_pokemon(
             all_serebii_pokemon,
             get_all_battle_hall_pokemon(
-                get_all_pokemon_moves(
-                    all_serebii_pokemon
-                )
-            )
+                all_moves
+            ),
+            all_moves
         );
 
     for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {

@@ -275,50 +275,6 @@ double get_effectiveness(
 }
 
 
-const std::unordered_set IGNORED_MOVES = {
-    Move::Snore,
-    Move::SolarBeam,
-};
-
-std::unordered_map<
-    Category,
-    std::array<MoveInfo*, static_cast<int>(PokemonType::COUNT)>
-> gather_moves(
-    const CustomPokemon& pokemon,
-    const uint16_t defender_health,
-    const bool is_player
-) {
-    // TODO handle solar beam with or without power herb
-    //      No use in using if can ko
-    std::unordered_map<
-        Category,
-        std::array<MoveInfo*, static_cast<int>(PokemonType::COUNT)>
-    > moves;
-    const uint8_t min_accuracy = is_player ? 100 : 0;
-    for (auto move : pokemon.moves) {
-        if (move.power == 0 ||
-            move.accuracy < min_accuracy ||
-            IGNORED_MOVES.contains(move.move)
-        ) {
-            continue;
-        }
-
-        // if (move.power == -1) {
-        //     printf(move.name.c_str());
-        //     printf("\n");
-        //     exit(1);
-        //     continue;
-        // }
-        auto& type_map = moves[move.category];
-        if (const auto current_move = type_map[static_cast<int>(move.type)];
-            current_move != nullptr && move.power > current_move->power
-        ) {
-            type_map[static_cast<int>(move.type)] = &move;
-        }
-    }
-    return moves;
-}
-
 struct PokemonState {
     const CustomPokemon& pokemon;
     const uint8_t level;
@@ -336,77 +292,70 @@ uint get_damage(
     const uint16_t defense,
     const MoveInfo* move
 ) {
-    uint damage = std::floor((2 * attacker_level) / 5) + 2;
-    damage = std::floor(damage * move->power * attack / defense);
-    damage = std::floor(damage / 50);
+    uint damage = ((2 * attacker_level) / 5) + 2;
+    damage = damage * move->power * attack / defense;
+    damage = damage / 50;
     return damage;
 }
 
-MoveInfo* get_best_move_against_defender(
-    std::unordered_map<
-        Category,
-        std::array<MoveInfo*, static_cast<int>(PokemonType::COUNT)>
-    > attacker_moves,
+std::optional<const MoveInfo*> get_best_move_against_defender(
+    const std::vector<const MoveInfo*>& attacker_moves,
     const PokemonState& attacker_state,
     const PokemonState& defender_state
 ) {
-    MoveInfo* best_move = nullptr;
+    std::optional<const MoveInfo*> best_move{};
     uint best_damage = 0;
 
     const uint8_t attacker_level = attacker_state.level;
-    auto attack = attacker_state.attack;
-    auto defense = defender_state.defense;
-    if (attacker_moves.contains(Category::PHYSICAL)) {
-        for (const auto& move_array = attacker_moves.at(Category::PHYSICAL);
-             const auto move : move_array
-        ) {
-            if (move == nullptr) {
-                continue;
-            }
-            if (const auto damage =
-                    get_damage(attacker_level, attack, defense, move);
-                damage > best_damage
-            ) {
-                best_damage = damage;
-                best_move = move;
-            }
+    const auto attack = attacker_state.attack;
+    const auto defense = defender_state.defense;
+    const auto special_attack = attacker_state.special_attack;
+    const auto special_defense = defender_state.special_defense;
+    for (const auto& move : attacker_moves) {
+        if (move->category == Category::STATUS) {
+            continue;
         }
-    }
-    attack = attacker_state.special_attack;
-    defense = defender_state.special_defense;
-    if (attacker_moves.contains(Category::SPECIAL)) {
-        for (const auto& move_array = attacker_moves.at(Category::SPECIAL);
-             const auto move : move_array
-        ) {
-            if (move == nullptr) {
-                continue;
-            }
-            if (const auto damage =
-                    get_damage(attacker_level, attack, defense, move);
-                damage > best_damage
-            ) {
-                best_damage = damage;
-                best_move = move;
-            }
+        const bool is_special = move->category == Category::SPECIAL;
+        const auto damage =
+            is_special
+                ? get_damage(
+                    attacker_level,
+                    special_attack,
+                    special_defense,
+                    move
+                )
+                : get_damage(
+                    attacker_level,
+                    attack,
+                    defense,
+                    move
+                );
+        if (damage > best_damage) {
+            best_damage = damage;
+            best_move = move;
         }
     }
     return best_move;
 }
 
 void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
-    const auto player_stats = player.stats;
-    const auto player_hp = player_stats.at(Stat::HEALTH);
-    const auto player_attack = player_stats.at(Stat::ATTACK);
-    const auto player_defense = player_stats.at(Stat::DEFENSE);
+    const auto& player_stats = player.stats;
+    const auto player_health =
+        player_stats[static_cast<int>(Stat::HEALTH)];
+    const auto player_attack =
+        player_stats[static_cast<int>(Stat::ATTACK)];
+    const auto player_defense =
+        player_stats[static_cast<int>(Stat::DEFENSE)];
     const auto player_special_attack =
-        player_stats.at(Stat::SPECIAL_ATTACK);
+        player_stats[static_cast<int>(Stat::SPECIAL_ATTACK)];
     const auto player_special_defense =
-        player_stats.at(Stat::SPECIAL_DEFENSE);
-    const auto player_speed = player_stats.at(Stat::SPEED);
+        player_stats[static_cast<int>(Stat::SPECIAL_DEFENSE)];
+    const auto player_speed =
+        player_stats[static_cast<int>(Stat::SPEED)];
     const auto player_state = PokemonState{
         .pokemon = player,
         .level = player.level,
-        .health = player_hp,
+        .health = player_health,
         .attack = player_attack,
         .defense = player_defense,
         .special_attack = player_special_attack,
@@ -414,19 +363,23 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         .speed = player_speed
     };
 
-    const auto opponent_stats = opponent.stats;
-    const auto opponent_hp = opponent_stats.at(Stat::HEALTH);
-    const auto opponent_attack = opponent_stats.at(Stat::ATTACK);
-    const auto opponent_defense = opponent_stats.at(Stat::DEFENSE);
+    const auto& opponent_stats = opponent.stats;
+    const auto opponent_health =
+        opponent_stats[static_cast<int>(Stat::HEALTH)];
+    const auto opponent_attack =
+        opponent_stats[static_cast<int>(Stat::ATTACK)];
+    const auto opponent_defense =
+        opponent_stats[static_cast<int>(Stat::DEFENSE)];
     const auto opponent_special_attack =
-        opponent_stats.at(Stat::SPECIAL_ATTACK);
+        opponent_stats[static_cast<int>(Stat::SPECIAL_ATTACK)];
     const auto opponent_special_defense =
-        opponent_stats.at(Stat::SPECIAL_DEFENSE);
-    const auto opponent_speed = opponent_stats.at(Stat::SPEED);
+        opponent_stats[static_cast<int>(Stat::SPECIAL_DEFENSE)];
+    const auto opponent_speed =
+        opponent_stats[static_cast<int>(Stat::SPEED)];
     const auto opponent_state = PokemonState{
         .pokemon = opponent,
         .level = opponent.level,
-        .health = opponent_hp,
+        .health = opponent_health,
         .attack = opponent_attack,
         .defense = opponent_defense,
         .special_attack = opponent_special_attack,
@@ -434,24 +387,13 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         .speed = opponent_speed
     };
 
-    const auto player_moves = gather_moves(
-        player,
-        opponent_state.health,
-        true
-    );
     const auto player_move = get_best_move_against_defender(
-        player_moves,
+        player.moves,
         player_state,
         opponent_state
     );
-
-    const auto opponent_moves = gather_moves(
-        opponent,
-        player_state.health,
-        false
-    );
     const auto opponent_move = get_best_move_against_defender(
-        opponent_moves,
+        opponent.moves,
         opponent_state,
         player_state
     );

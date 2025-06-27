@@ -6,75 +6,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "custom_pokemon.h"
 #include "moves.h"
-
-enum class PokemonType {
-    NORMAL,
-    FIGHTING,
-    FLYING,
-    POISON,
-    GROUND,
-    ROCK,
-    BUG,
-    GHOST,
-    STEEL,
-    FIRE,
-    WATER,
-    GRASS,
-    ELECTRIC,
-    PSYCHIC,
-    ICE,
-    DRAGON,
-    DARK,
-    COUNT
-};
-
-extern std::unordered_map<std::string, PokemonType> pokemon_type_map;
-
-enum class Category {
-    PHYSICAL,
-    SPECIAL,
-    STATUS
-};
-
-extern std::unordered_map<std::string, Category> move_category_map;
-
-struct MoveInfo {
-    std::string name;
-    Move move;
-    PokemonType type;
-    Category category;
-    int power;
-    int accuracy;
-    int effect_percent;
-
-    bool operator==(const MoveInfo& other) const {
-        return name == other.name;
-    }
-};
-
-template <>
-struct std::hash<MoveInfo> {
-    size_t operator()(const MoveInfo& a) const noexcept {
-        return static_cast<size_t>(a.move);
-    }
-};
-
-enum class Stat {
-    HEALTH,
-    ATTACK,
-    DEFENSE,
-    SPECIAL_ATTACK,
-    SPECIAL_DEFENSE,
-    SPEED,
-    NO_STAT
-};
-
-extern std::unordered_map<std::string, Stat> stat_map;
+#include "nature.h"
 
 struct SerebiiPokemon {
     std::string name;
-    std::unordered_set<PokemonType> types;
+    std::vector<PokemonType> types;
     int id = -1;
     std::string ability;
     double pounds = 0;
@@ -114,11 +52,15 @@ std::unordered_map<std::string, SerebiiPokemon> get_all_serebii_pokemon();
 
 void print_serebii_pokemon();
 
-std::unordered_map<std::string, std::unordered_set<MoveInfo>>
+std::unordered_map<std::string, std::vector<const MoveInfo*>>
 get_moves_for_serebii_pokemon(const SerebiiPokemon& serebii_pokemon);
 
-std::unordered_map<Move, MoveInfo> get_all_pokemon_moves(
+std::unordered_map<Move, const MoveInfo*> get_all_pokemon_moves(
     std::unordered_map<std::string, SerebiiPokemon> pokedex
+);
+
+std::unordered_map<std::string, CustomPokemon> convert_serebii_to_custom(
+    const SerebiiPokemon& serebii_pokemon
 );
 
 

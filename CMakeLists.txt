@@ -3,7 +3,7 @@ project(gen_iv_battle_hall_analyzer)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -fno-inline -fno-omit-frame-pointer -D_GLIBCXX_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -fno-inline -fno-omit-frame-pointer")
 add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/battle_hall_data_source.cpp
         src/battle_hall_data_source.h

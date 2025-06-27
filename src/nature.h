@@ -1,6 +1,76 @@
 #ifndef NATURE_H
 #define NATURE_H
-#include "serebii_pokemon_data_source.h"
+
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+
+#include "moves.h"
+
+enum class PokemonType {
+    NORMAL,
+    FIGHTING,
+    FLYING,
+    POISON,
+    GROUND,
+    ROCK,
+    BUG,
+    GHOST,
+    STEEL,
+    FIRE,
+    WATER,
+    GRASS,
+    ELECTRIC,
+    PSYCHIC,
+    ICE,
+    DRAGON,
+    DARK,
+    COUNT
+};
+
+enum class Stat {
+    HEALTH,
+    ATTACK,
+    DEFENSE,
+    SPECIAL_ATTACK,
+    SPECIAL_DEFENSE,
+    SPEED,
+    NO_STAT
+};
+
+
+extern std::unordered_map<std::string, PokemonType> pokemon_type_map;
+
+enum class Category {
+    PHYSICAL,
+    SPECIAL,
+    STATUS
+};
+
+extern std::unordered_map<std::string, Category> move_category_map;
+
+struct MoveInfo {
+    std::string name;
+    Move move;
+    PokemonType type;
+    Category category;
+    int power;
+    int accuracy;
+    int effect_percent;
+
+    bool operator==(const MoveInfo& other) const {
+        return name == other.name;
+    }
+};
+
+template <>
+struct std::hash<MoveInfo> {
+    size_t operator()(const MoveInfo& a) const noexcept {
+        return static_cast<size_t>(a.move);
+    }
+};
+
+extern std::unordered_map<std::string, Stat> stat_map;
 
 enum class NatureEnum {
     HARDY,

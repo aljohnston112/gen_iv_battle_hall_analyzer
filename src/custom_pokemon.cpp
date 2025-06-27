@@ -18,8 +18,8 @@ void save_custom_pokemon(
          ] : pokemon_list
     ) {
         output_stream << pokemon_name << '|'
-        << std::to_string(level) << '|'
-        << item << '\n';
+            << std::to_string(level) << '|'
+            << item << '\n';
 
         output_stream << types.size() << '\n';
         for (const auto& type : types) {
@@ -27,18 +27,18 @@ void save_custom_pokemon(
         }
 
         output_stream << moves.size() << '\n';
-        for (const auto& [
-                 move_name,
-                 move,
-                 move_type,
-                 category,
-                 power,
-                 accuracy,
-                 effect_percent
-             ] : moves
-        ) {
+        for (const auto move : moves) {
+            const auto& [
+                move_name,
+                move_enum,
+                move_type,
+                category,
+                power,
+                accuracy,
+                effect_percent
+            ] = *move;
             output_stream << move_name << ','
-                << static_cast<int>(move) << ','
+                << static_cast<int>(move_enum) << ','
                 << static_cast<int>(move_type) << ','
                 << static_cast<int>(category) << ','
                 << power << ','
@@ -46,14 +46,18 @@ void save_custom_pokemon(
                 << effect_percent << '\n';
         }
         output_stream << stats.size() << '\n';
-        for (const auto& [stat, value] : stats) {
-            output_stream << static_cast<int>(stat) << ','
-                << value << '\n';
+        uint8_t i = 0;
+        for (const auto& stat : stats) {
+            output_stream << i++ << ','
+                << stat << '\n';
         }
     }
 }
 
-std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
+std::vector<CustomPokemon> load_custom_pokemon(
+    const std::string& filename,
+    const std::unordered_map<Move, const MoveInfo*>& all_moves
+) {
     std::ifstream input_stream(filename);
     std::vector<CustomPokemon> all_custom_pokemon;
     std::string line;
@@ -76,7 +80,9 @@ std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
             int type_int;
             stat_string_stream >> type_int;
             stat_string_stream.ignore();
-            custom_pokemon.types.emplace(std::move(static_cast<PokemonType>(type_int)));
+            custom_pokemon.types.emplace_back(
+                std::move(static_cast<PokemonType>(type_int))
+            );
         }
 
         size_t move_count;
@@ -111,7 +117,9 @@ std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
 
             move_string_stream >> move_info.effect_percent;
 
-            custom_pokemon.moves.emplace(std::move(move_info));
+            custom_pokemon.moves.emplace_back(
+                all_moves.at(static_cast<Move>(move_int))
+            );
         }
 
         size_t stat_count;
@@ -128,7 +136,7 @@ std::vector<CustomPokemon> load_custom_pokemon(const std::string& filename) {
 
             int value;
             stat_string_stream >> value;
-            custom_pokemon.stats[static_cast<Stat>(stat_int)] = value;
+            custom_pokemon.stats[stat_int] = value;
         }
 
         all_custom_pokemon.push_back(std::move(custom_pokemon));

@@ -16,8 +16,7 @@ std::string trim(const std::string& string) {
     auto end = string.end();
     do {
         --end;
-    }
-    while (std::distance(start, end) > 0 && std::isspace(*end));
+    } while (std::distance(start, end) > 0 && std::isspace(*end));
     return {start, end + 1};
 }
 
@@ -34,7 +33,7 @@ std::string replace_gender_symbols(const std::string& pokemon_name) {
 }
 
 BattleHallPokemon parse_pokemon_line(
-    const std::unordered_map<Move, MoveInfo>& all_moves,
+    const std::unordered_map<Move, const MoveInfo*>& all_moves,
     const std::string& line
 ) {
     std::istringstream string_stream(line);
@@ -58,7 +57,7 @@ BattleHallPokemon parse_pokemon_line(
         if (token != "- ") {
             pokemon.moves.push_back(
                 all_moves.at(MOVE_MAP.at(trim(token)))
-                );
+            );
         }
     }
     // Get nature
@@ -80,7 +79,7 @@ BattleHallPokemon parse_pokemon_line(
 
 AllBattleHallPokemon parse_file(
     const std::string& filename,
-    const std::unordered_map<Move, MoveInfo>& all_moves
+    const std::unordered_map<Move, const MoveInfo*>& all_moves
 ) {
     std::ifstream file(filename);
     std::string line;
@@ -126,7 +125,7 @@ void write_battle_hall_data(
             auto moves_size = moves.size();
             for (int i = 0; i < 4; i++) {
                 if (i < moves_size) {
-                    out << moves[i].name << ',';
+                    out << moves[i]->name << ',';
                 } else {
                     out << "-,";
                 }
@@ -143,7 +142,7 @@ void write_battle_hall_data(
 }
 
 AllBattleHallPokemon get_all_battle_hall_pokemon(
-    const std::unordered_map<Move, MoveInfo>& all_moves
+    const std::unordered_map<Move, const MoveInfo*>& all_moves
 ) {
     const auto file = "./data/fresh/battle_hall_pokemon";
     if (!std::filesystem::exists(file)) {
@@ -177,7 +176,7 @@ AllBattleHallPokemon get_all_battle_hall_pokemon(
         BattleHallPokemon pokemon;
         pokemon.name = cells[1];
         pokemon.item = cells[2];
-        pokemon.moves = std::vector<MoveInfo>{};
+        pokemon.moves = std::vector<const MoveInfo*>{};
         for (int i = 3; i <= 6; ++i) {
             if (cells[i] != "-") {
                 pokemon.moves.push_back(
@@ -229,7 +228,7 @@ void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data) {
                 << std::setw(15) << name
                 << std::setw(15) << item;
             for (int i = 0; i < 4; ++i) {
-                std::cout << std::setw(15) << moves[i].name;
+                std::cout << std::setw(15) << moves[i]->name;
             }
             std::cout << std::setw(15) << NATURE_TO_STRING.at(nature.nature);
             for (const auto& ev : evs) {
@@ -242,7 +241,8 @@ void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data) {
     }
 }
 
-std::unordered_map<Stat, uint16_t> get_stats_for_battle_hall_pokemon(
+std::array<uint16_t, static_cast<int>(Stat::NO_STAT)>
+get_stats_for_battle_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const uint8_t level,
     const BattleHallPokemon& hall_pokemon
@@ -269,9 +269,9 @@ std::unordered_map<Stat, uint16_t> get_stats_for_battle_hall_pokemon(
             throw std::runtime_error{""};
         }
     }
-    std::unordered_map<Stat, uint16_t> stats;
+    std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats;
     for (const auto& [stat, value] : base_stats) {
-        stats[stat] = get_stat(
+        stats[static_cast<int>(stat)] = get_stat(
             level,
             stat,
             value,
@@ -297,10 +297,7 @@ CustomPokemon convert_hall_to_custom(
         .level = level,
         .item = hall_pokemon.item,
         .types = all_serebii_pokemon.at(name).types,
-        .moves = std::unordered_set(
-            hall_pokemon.moves.begin(),
-            hall_pokemon.moves.end()
-        ),
+        .moves = hall_pokemon.moves,
         .stats = get_stats_for_battle_hall_pokemon(
             all_serebii_pokemon,
             level,
@@ -387,7 +384,8 @@ std::unordered_map<
     >
 > get_all_custom_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
-    const AllBattleHallPokemon& all_battle_hall_pokemon
+    const AllBattleHallPokemon& all_battle_hall_pokemon,
+    const std::unordered_map<Move, const MoveInfo*>& all_moves
 ) {
     namespace fs = std::filesystem;
     std::unordered_map<
@@ -423,7 +421,8 @@ std::unordered_map<
                     throw std::runtime_error("Not all files were generated");
                 }
                 std::vector<CustomPokemon> loaded = load_custom_pokemon(
-                    filename
+                    filename,
+                    all_moves
                 );
                 result[group_number][rank][types_past_2] = std::move(loaded);
             }
