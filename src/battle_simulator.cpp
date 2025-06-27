@@ -210,51 +210,25 @@ const std::unordered_map<
     },
 };
 
-
-struct PokemonTypeSetHash {
-    std::size_t operator()(
-        const std::unordered_set<PokemonType>& types
-    ) const noexcept {
-        std::vector<std::size_t> hashes;
-        for (const PokemonType type : types) {
-            hashes.push_back(std::hash<PokemonType>{}(type));
-        }
-        std::sort(hashes.begin(), hashes.end());
-        std::size_t hash = 0;
-        for (const auto h : hashes) {
-            hash ^= h + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-        }
-        return hash;
-    }
-};
-
-struct PokemonTypeSetEqual {
-    bool operator()(
-        const std::unordered_set<PokemonType>& a,
-        const std::unordered_set<PokemonType>& b
-    ) const noexcept {
-        return a == b;
-    }
-};
-
 double get_effectiveness(
-    const std::unordered_set<PokemonType>& defender_types,
+    const std::vector<PokemonType>& defender_types,
     const PokemonType& attack_type
 ) {
-    static std::unordered_map<
-        std::unordered_set<PokemonType>,
-        std::unordered_map<PokemonType, double>,
-        PokemonTypeSetHash,
-        PokemonTypeSetEqual
-    > cache;
-    if (const auto it = cache.find(defender_types);
-        it != cache.end()
+    static constexpr int number_of_types = static_cast<int>(PokemonType::COUNT);
+    auto key = number_of_types * static_cast<int>(defender_types[0]);
+    if (defender_types.size() > 1) {
+        key += static_cast<int>(defender_types[1]);
+    }
+    static constexpr int cache_size = number_of_types * number_of_types;
+    static std::array<double, cache_size> cache = [] {
+        std::array<double, cache_size> arr{};
+        arr.fill(-1.0);
+        return arr;
+    }();
+    if (const auto value = cache[key];
+        value != -1.0
     ) {
-        if (const auto it_2 = it->second.find(attack_type);
-            it_2 != it->second.end()
-        ) {
-            return it_2->second;
-        }
+        return value;
     }
 
     double multiplier = 1.0;
@@ -270,7 +244,7 @@ double get_effectiveness(
             }
         }
     }
-    cache[defender_types][attack_type] = multiplier;
+    cache[key] = multiplier;
     return multiplier;
 }
 
@@ -278,7 +252,7 @@ double get_effectiveness(
 struct PokemonState {
     const CustomPokemon& pokemon;
     const uint8_t level;
-    uint16_t health;
+    int health;
     uint16_t attack;
     uint16_t defense;
     uint16_t special_attack;
@@ -286,26 +260,42 @@ struct PokemonState {
     uint16_t speed;
 };
 
-uint get_damage(
+int get_damage(
     const uint8_t attacker_level,
+    const std::vector<PokemonType>& attacker_types,
     const uint16_t attack,
+    const std::vector<PokemonType>& defender_types,
     const uint16_t defense,
     const MoveInfo* move
 ) {
-    uint damage = ((2 * attacker_level) / 5) + 2;
+    int damage = ((2 * attacker_level) / 5) + 2;
     damage = damage * move->power * attack / defense;
     damage = damage / 50;
+
+    damage = damage + 2;
+    const auto move_type = move->type;
+    if (attacker_types[0] == move_type ||
+        (attacker_types.size() > 1 && attacker_types[1] == move_type)
+    ) {
+        damage = static_cast<int>(damage * 1.5);
+    }
+    damage = static_cast<int>(damage * get_effectiveness(
+        defender_types, move_type));
+
     return damage;
 }
 
-const MoveInfo* get_best_move_against_defender(
+struct BestMove {
+    const MoveInfo* move = nullptr;
+    int damage = 0;
+};
+
+BestMove get_best_move_against_defender(
     const std::vector<const MoveInfo*>& attacker_moves,
     const PokemonState& attacker_state,
     const PokemonState& defender_state
 ) {
-    const MoveInfo* best_move = nullptr;
-    uint best_damage = 0;
-
+    BestMove best_move{};
     const uint8_t attacker_level = attacker_state.level;
     const auto attack = attacker_state.attack;
     const auto defense = defender_state.defense;
@@ -321,23 +311,65 @@ const MoveInfo* get_best_move_against_defender(
             is_special
                 ? get_damage(
                     attacker_level,
+                    attacker_state.pokemon.types,
                     special_attack,
+                    defender_state.pokemon.types,
                     special_defense,
                     move
                 )
                 : get_damage(
                     attacker_level,
+                    attacker_state.pokemon.types,
                     attack,
+                    defender_state.pokemon.types,
                     defense,
                     move
                 );
-        if (damage > best_damage) {
-            best_damage = damage;
-            best_move = move;
+        if (damage > best_move.damage) {
+            best_move.damage = damage;
+            best_move.move = move;
         }
     }
     return best_move;
 }
+
+void pre_turn_state_update(
+    PokemonState& attacker_state,
+    PokemonState& defender_state
+) {}
+
+bool is_player_first(
+    const PokemonState& attacker_state,
+    const BestMove attacker_move,
+    const PokemonState& defender_state,
+    const BestMove defender_move
+) {
+    return attacker_state.speed > defender_state.speed;
+}
+
+void apply_post_attack_effects(
+    PokemonState& attacker_state,
+    const BestMove& attacker_move,
+    PokemonState& defender_state
+) {}
+
+void execute_move(
+    PokemonState& attacker_state,
+    const BestMove& attacker_move,
+    PokemonState& defender_state
+) {
+    defender_state.health -= attacker_move.damage;
+    apply_post_attack_effects(
+        attacker_state,
+        attacker_move,
+        defender_state
+    );
+}
+
+void apply_end_of_turn_effects(
+    PokemonState& attacker_state,
+    PokemonState& defender_state
+) {}
 
 void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
     const auto& player_stats = player.stats;
@@ -353,7 +385,7 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         player_stats[static_cast<int>(Stat::SPECIAL_DEFENSE)];
     const auto player_speed =
         player_stats[static_cast<int>(Stat::SPEED)];
-    const auto player_state = PokemonState{
+    auto player_state = PokemonState{
         .pokemon = player,
         .level = player.level,
         .health = player_health,
@@ -377,7 +409,7 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         opponent_stats[static_cast<int>(Stat::SPECIAL_DEFENSE)];
     const auto opponent_speed =
         opponent_stats[static_cast<int>(Stat::SPEED)];
-    const auto opponent_state = PokemonState{
+    auto opponent_state = PokemonState{
         .pokemon = opponent,
         .level = opponent.level,
         .health = opponent_health,
@@ -388,14 +420,66 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         .speed = opponent_speed
     };
 
-    const auto player_move = get_best_move_against_defender(
-        player.moves,
-        player_state,
-        opponent_state
-    );
-    const auto opponent_move = get_best_move_against_defender(
-        opponent.moves,
-        opponent_state,
-        player_state
-    );
+    while (player_state.health > 0 && opponent_state.health > 0) {
+        pre_turn_state_update(player_state, opponent_state);
+        const auto player_move = get_best_move_against_defender(
+            player.moves,
+            player_state,
+            opponent_state
+        );
+        const auto opponent_move = get_best_move_against_defender(
+            opponent.moves,
+            opponent_state,
+            player_state
+        );
+        const bool player_goes_first = is_player_first(
+            player_state,
+            player_move,
+            opponent_state,
+            opponent_move
+        );
+        if (player_move.damage == 0 && opponent_move.damage == 0) {
+            break;
+        }
+
+        if (player_goes_first) {
+            execute_move(
+                player_state,
+                player_move,
+                opponent_state
+            );
+            if (player_state.health <= 0 || opponent_state.health <= 0) {
+                break;
+            }
+            execute_move(
+                opponent_state,
+                opponent_move,
+                player_state
+            );
+            if (player_state.health <= 0 || opponent_state.health <= 0) {
+                break;
+            }
+        } else {
+            execute_move(
+                opponent_state,
+                opponent_move,
+                player_state
+            );
+            if (player_state.health <= 0 || opponent_state.health <= 0) {
+                break;
+            }
+            execute_move(
+                player_state,
+                player_move,
+                opponent_state
+            );
+            if (player_state.health <= 0 || opponent_state.health <= 0) {
+                break;
+            }
+        }
+        apply_end_of_turn_effects(
+            player_state,
+            opponent_state
+        );
+    }
 }

@@ -585,7 +585,8 @@ static std::unordered_set POWER_MOVES = {
     Move::IcyWind,
     Move::BoneRush,
     Move::Outrage,
-
+    Move::GigaDrain,
+    Move::Spark
 };
 
 static std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
@@ -594,7 +595,8 @@ static std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
     Move::Recover,
     Move::Softboiled,
     Move::LeechLife,
-
+    Move::GigaDrain,
+    Move::MilkDrink,
 };
 
 static std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
@@ -648,9 +650,14 @@ static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_CRIT_RATE = {
     Move::FocusEnergy
 };
 
+static std::unordered_set MOVES_THAT_RAISE_DEFENDER_ATTACK = {
+    Move::Swagger
+};
+
 static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ATTACK = {
     Move::Growl,
     Move::AuroraBeam,
+    Move::Charm,
 
 };
 
@@ -703,6 +710,13 @@ static std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
     Move::Splash
 };
 
+
+static std::unordered_set PROTECTION_MOVES = {
+    Move::Detect,
+    Move::Protect,
+};
+
+
 static std::unordered_set OTHER_MOVES = {
     Move::Disable,
     Move::Mist,
@@ -742,14 +756,18 @@ static std::unordered_set OTHER_MOVES = {
     Move::Conversion2,
     Move::Reversal,
     Move::Spite,
-    Move::Protect,
     Move::Spikes,
     Move::Foresight,
     Move::DestinyBond,
     Move::PerishSong,
-    Move::Detect,
     Move::LockOn,
+    Move::Rollout,
+    Move::FalseSwipe,
 
+};
+
+static std::unordered_set MOVES_THAT_CHANGE_WEATHER = {
+    Move::Sandstorm,
 };
 
 static std::unordered_set MOVES_THAT_FORCE_USER_OUT = {
@@ -844,6 +862,7 @@ static std::unordered_set MOVES_THAT_PARALYZE = {
     Move::Lick,
     Move::Glare,
     Move::ZapCannon,
+    Move::Spark,
 };
 
 static std::unordered_set MOVES_THAT_POISON = {
@@ -874,7 +893,8 @@ static std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
     Move::Confusion,
     Move::ConfuseRay,
     Move::DizzyPunch,
-    Move::SweetKiss
+    Move::SweetKiss,
+    Move::Swagger,
 };
 
 static std::unordered_set MOVES_THAT_FLINCH = {
@@ -933,7 +953,7 @@ static std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_GROUND = {
     Move::Fissure
 };
 
-static std::unordered_set MOVES_THAT_HIT_UNDER_WATER = {
+static std::unordered_set MOVES_THAT_GO_UNDER_WATER = {
     Move::Dive,
 };
 

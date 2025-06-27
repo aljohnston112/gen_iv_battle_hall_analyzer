@@ -2,7 +2,6 @@
 #define CUSTOMPOKEMON_H
 #include <cstdint>
 #include <string>
-#include <unordered_set>
 
 #include "nature.h"
 

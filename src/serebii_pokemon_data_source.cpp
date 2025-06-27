@@ -131,6 +131,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                         line.substr(start_i, end_i - start_i)
                     ]
                 );
+                std::sort(serebii_pokemon.types.begin(), serebii_pokemon.types.end());
             }
         } else if (line.find("\"base_stats\"") != std::string::npos) {
             in_base = true;
