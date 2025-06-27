@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.31)
 project(gen_iv_battle_hall_analyzer)
 
 set(CMAKE_CXX_STANDARD 26)
-set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -fno-inline -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -march=native -flto -DNDEBUG")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/battle_hall_data_source.cpp
         src/battle_hall_data_source.h

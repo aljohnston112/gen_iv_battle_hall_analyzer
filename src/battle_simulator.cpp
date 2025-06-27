@@ -298,12 +298,12 @@ uint get_damage(
     return damage;
 }
 
-std::optional<const MoveInfo*> get_best_move_against_defender(
+const MoveInfo* get_best_move_against_defender(
     const std::vector<const MoveInfo*>& attacker_moves,
     const PokemonState& attacker_state,
     const PokemonState& defender_state
 ) {
-    std::optional<const MoveInfo*> best_move{};
+    const MoveInfo* best_move = nullptr;
     uint best_damage = 0;
 
     const uint8_t attacker_level = attacker_state.level;
@@ -312,10 +312,11 @@ std::optional<const MoveInfo*> get_best_move_against_defender(
     const auto special_attack = attacker_state.special_attack;
     const auto special_defense = defender_state.special_defense;
     for (const auto& move : attacker_moves) {
-        if (move->category == Category::STATUS) {
+        const auto category = move->category;
+        if (category == Category::STATUS) {
             continue;
         }
-        const bool is_special = move->category == Category::SPECIAL;
+        const bool is_special = category == Category::SPECIAL;
         const auto damage =
             is_special
                 ? get_damage(

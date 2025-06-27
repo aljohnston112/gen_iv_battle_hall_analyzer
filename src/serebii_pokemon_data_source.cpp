@@ -470,85 +470,106 @@ void print_serebii_pokemon() {
     }
 }
 
-std::unordered_map<std::string, std::vector<const MoveInfo*>>
+std::unordered_map<std::string, std::unordered_map<Move, const MoveInfo*>>
 get_moves_for_serebii_pokemon(
     const SerebiiPokemon& serebii_pokemon
 ) {
-    std::vector<const MoveInfo*> shared_moves;
-    for (const auto& moves : serebii_pokemon.level_to_moves | std::views::values) {
+    std::unordered_map<Move, const MoveInfo*> shared_moves;
+    for (const auto& moves : serebii_pokemon.level_to_moves |
+         std::views::values) {
         for (const auto& move : moves) {
-            shared_moves.push_back(&move);
+            shared_moves[move.move] = &move;
         }
     }
-    for (const auto& move : serebii_pokemon.tm_or_hm_to_move | std::views::values) {
-        shared_moves.push_back(&move);
+    for (const auto& move : serebii_pokemon.tm_or_hm_to_move |
+         std::views::values) {
+        shared_moves[move.move] = &move;
     }
     for (const auto& move : serebii_pokemon.egg_moves) {
-        shared_moves.push_back(&move);
+        shared_moves[move.move] = &move;
     }
     for (const auto& move : serebii_pokemon.move_tutor_attacks) {
-        shared_moves.push_back(&move);
+        shared_moves[move.move] = &move;
     }
-    for (const auto& level_map : serebii_pokemon.pre_evolution_moves | std::views::values) {
+    for (const auto& level_map : serebii_pokemon.pre_evolution_moves |
+         std::views::values) {
         for (const auto& moves : level_map | std::views::values) {
             for (const auto& move : moves) {
-                shared_moves.push_back(&move);
+                shared_moves[move.move] = &move;
             }
         }
     }
     for (const auto& move : serebii_pokemon.special_moves) {
-        shared_moves.push_back(&move);
+        shared_moves[move.move] = &move;
     }
-    for (const auto& level_map : serebii_pokemon.game_to_level_to_moves | std::views::values) {
+    for (const auto& level_map : serebii_pokemon.game_to_level_to_moves |
+         std::views::values) {
         for (const auto& moves : level_map | std::views::values) {
             for (const auto& move : moves) {
-                shared_moves.push_back(&move);
+                shared_moves[move.move] = &move;
             }
         }
     }
-    std::unordered_map<std::string, std::vector<const MoveInfo*>> moves_by_form;
+    std::unordered_map<
+        std::string,
+        std::unordered_map<Move, const MoveInfo*>
+    > moves_by_form;
     moves_by_form["all"] = shared_moves;
-    for (const auto& [form_name, level_map] : serebii_pokemon.form_to_level_up_moves) {
+    for (const auto& [form_name, level_map] : serebii_pokemon.
+         form_to_level_up_moves) {
         auto& form_moves = moves_by_form[form_name];
-        form_moves.insert(form_moves.end(), shared_moves.begin(), shared_moves.end());
+        for (const auto& move : shared_moves) {
+            form_moves.insert(move);
+        }
         for (const auto& moves : level_map | std::views::values) {
             for (const auto& move : moves) {
-                form_moves.push_back(&move);
+                form_moves[move.move] = &move;
             }
         }
     }
-    for (const auto& [form_name, tm_map] : serebii_pokemon.form_to_tm_or_hm_to_move) {
+    for (const auto& [form_name, tm_map] : serebii_pokemon.
+         form_to_tm_or_hm_to_move) {
         auto& form_moves = moves_by_form[form_name];
-        form_moves.insert(form_moves.end(), shared_moves.begin(), shared_moves.end());
+        for (const auto& move : shared_moves) {
+            form_moves.insert(move);
+        }
         for (const auto& move : tm_map | std::views::values) {
-            form_moves.push_back(&move);
+            form_moves[move.move] = &move;
         }
     }
-    for (const auto& [form_name, moves] : serebii_pokemon.form_to_move_tutor_moves) {
+    for (const auto& [form_name, moves] : serebii_pokemon.
+         form_to_move_tutor_moves) {
         auto& form_moves = moves_by_form[form_name];
-        form_moves.insert(form_moves.end(), shared_moves.begin(), shared_moves.end());
+        for (const auto& move : shared_moves) {
+            form_moves.insert(move);
+        }
         for (const auto& move : moves) {
-            form_moves.push_back(&move);
+            form_moves[move.move] = &move;
         }
     }
     return moves_by_form;
 }
 
-std::unordered_map<Move, const MoveInfo*> get_all_pokemon_moves(
-    std::unordered_map<std::string, SerebiiPokemon> pokedex
+std::vector<const MoveInfo*> get_all_pokemon_moves(
+    const std::unordered_map<std::string, SerebiiPokemon>& pokedex
 ) {
-    std::unordered_map<Move, const MoveInfo*> all_moves;
+    std::vector<const MoveInfo*> all_moves{
+        static_cast<int>(Move::Count),
+        nullptr
+    };
     for (const auto& serebii_pokemon :
          pokedex | std::ranges::views::values
     ) {
-        std::unordered_map<std::string, std::vector<const MoveInfo*>>
-            form_to_moves =
-                get_moves_for_serebii_pokemon(serebii_pokemon);
+        std::unordered_map<
+            std::string,
+            std::unordered_map<Move, const MoveInfo*>
+        > form_to_moves =
+            get_moves_for_serebii_pokemon(serebii_pokemon);
         for (const auto& moves : form_to_moves |
              std::ranges::views::values
         ) {
-            for (const auto& move : moves) {
-                all_moves[move->move] = move;
+            for (const auto& [move_enum, move] : moves) {
+                all_moves[static_cast<int>(move_enum)] = move;
             }
         }
     }
@@ -570,7 +591,7 @@ std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> get_stats_for_serebii(
     } else {
         base_stats = serebii_pokemon.form_to_base_stats.at(form);
     }
-    std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats;
+    std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats{};
     for (const auto& [stat, value] : base_stats) {
         stats[static_cast<int>(stat)] = get_stat(
             LEVEL,
@@ -593,7 +614,7 @@ std::unordered_map<
     std::string,
     std::unordered_set<const MoveInfo*>
 > gather_moves(
-    std::unordered_map<std::string, CustomPokemon> pokemon_forms,
+    const std::unordered_map<std::string, CustomPokemon>& pokemon_forms,
     const bool is_player
 ) {
     std::unordered_map<
@@ -606,7 +627,7 @@ std::unordered_map<
             std::array<const MoveInfo*, static_cast<int>(PokemonType::COUNT)>
         > moves;
         const uint8_t min_accuracy = is_player ? 100 : 0;
-        for (const auto move : pokemon.moves) {
+        for (const auto& move : pokemon.moves) {
             if (move->power == 0 ||
                 move->accuracy < min_accuracy ||
                 IGNORED_MOVES.contains(move->move)
@@ -655,13 +676,17 @@ std::unordered_map<std::string, CustomPokemon> convert_serebii_to_custom(
              form_moves
          ] : moves
     ) {
+        std::vector<const MoveInfo*> move_vector{};
+        for (const auto& [move_enum, move] : form_moves) {
+            move_vector.push_back(move);
+        }
         customs[form] =
         {
             .name = serebii_pokemon.name,
             .level = LEVEL,
             .item = "",
             .types = serebii_pokemon.types,
-            .moves = form_moves,
+            .moves = move_vector,
             .stats = get_stats_for_serebii(form, serebii_pokemon)
         };
     }

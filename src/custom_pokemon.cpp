@@ -48,7 +48,7 @@ void save_custom_pokemon(
         output_stream << stats.size() << '\n';
         uint8_t i = 0;
         for (const auto& stat : stats) {
-            output_stream << i++ << ','
+            output_stream << static_cast<int>(i++) << ','
                 << stat << '\n';
         }
     }
@@ -56,7 +56,7 @@ void save_custom_pokemon(
 
 std::vector<CustomPokemon> load_custom_pokemon(
     const std::string& filename,
-    const std::unordered_map<Move, const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_moves
 ) {
     std::ifstream input_stream(filename);
     std::vector<CustomPokemon> all_custom_pokemon;
@@ -81,7 +81,7 @@ std::vector<CustomPokemon> load_custom_pokemon(
             stat_string_stream >> type_int;
             stat_string_stream.ignore();
             custom_pokemon.types.emplace_back(
-                std::move(static_cast<PokemonType>(type_int))
+                static_cast<PokemonType>(type_int)
             );
         }
 
@@ -117,9 +117,7 @@ std::vector<CustomPokemon> load_custom_pokemon(
 
             move_string_stream >> move_info.effect_percent;
 
-            custom_pokemon.moves.emplace_back(
-                all_moves.at(static_cast<Move>(move_int))
-            );
+            custom_pokemon.moves.emplace_back(all_moves.at(move_int));
         }
 
         size_t stat_count;

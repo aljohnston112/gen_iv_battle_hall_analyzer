@@ -34,7 +34,7 @@ using AllBattleHallPokemon =
 std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>;
 
 AllBattleHallPokemon get_all_battle_hall_pokemon(
-    const std::unordered_map<Move, const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_moves
 );
 
 void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data);
@@ -47,7 +47,7 @@ std::unordered_map<
 > get_all_custom_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const AllBattleHallPokemon& all_battle_hall_pokemon,
-    const std::unordered_map<Move, const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_moves
 );
 
 

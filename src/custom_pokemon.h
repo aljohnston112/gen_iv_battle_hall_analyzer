@@ -23,6 +23,6 @@ void save_custom_pokemon(
 
 std::vector<CustomPokemon> load_custom_pokemon(
     const std::string& filename,
-    const std::unordered_map<Move, const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_moves
 );
 #endif //CUSTOMPOKEMON_H

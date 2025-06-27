@@ -16,7 +16,8 @@ std::string trim(const std::string& string) {
     auto end = string.end();
     do {
         --end;
-    } while (std::distance(start, end) > 0 && std::isspace(*end));
+    }
+    while (std::distance(start, end) > 0 && std::isspace(*end));
     return {start, end + 1};
 }
 
@@ -33,7 +34,7 @@ std::string replace_gender_symbols(const std::string& pokemon_name) {
 }
 
 BattleHallPokemon parse_pokemon_line(
-    const std::unordered_map<Move, const MoveInfo*>& all_moves,
+    const std::vector<const MoveInfo*>& all_moves,
     const std::string& line
 ) {
     std::istringstream string_stream(line);
@@ -56,7 +57,7 @@ BattleHallPokemon parse_pokemon_line(
         std::getline(string_stream, token, '\t');
         if (token != "- ") {
             pokemon.moves.push_back(
-                all_moves.at(MOVE_MAP.at(trim(token)))
+                all_moves.at(static_cast<int>(MOVE_MAP.at(trim(token))))
             );
         }
     }
@@ -79,7 +80,7 @@ BattleHallPokemon parse_pokemon_line(
 
 AllBattleHallPokemon parse_file(
     const std::string& filename,
-    const std::unordered_map<Move, const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_moves
 ) {
     std::ifstream file(filename);
     std::string line;
@@ -122,7 +123,7 @@ void write_battle_hall_data(
             out << static_cast<int>(group_number) << ','
                 << name << ','
                 << item << ',';
-            auto moves_size = moves.size();
+            const auto moves_size = moves.size();
             for (int i = 0; i < 4; i++) {
                 if (i < moves_size) {
                     out << moves[i]->name << ',';
@@ -142,7 +143,7 @@ void write_battle_hall_data(
 }
 
 AllBattleHallPokemon get_all_battle_hall_pokemon(
-    const std::unordered_map<Move, const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_moves
 ) {
     const auto file = "./data/fresh/battle_hall_pokemon";
     if (!std::filesystem::exists(file)) {
@@ -180,7 +181,7 @@ AllBattleHallPokemon get_all_battle_hall_pokemon(
         for (int i = 3; i <= 6; ++i) {
             if (cells[i] != "-") {
                 pokemon.moves.push_back(
-                    all_moves.at(MOVE_MAP.at(cells[i]))
+                    all_moves.at(static_cast<int>(MOVE_MAP.at(cells[i])))
                 );
             }
         }
@@ -254,7 +255,7 @@ get_stats_for_battle_hall_pokemon(
     const auto& serebii_pokemon = all_serebii_pokemon.at(name);
     std::unordered_map<Stat, uint16_t> base_stats =
         serebii_pokemon.base_stats;
-    if (serebii_pokemon.form_to_base_stats.size() != 0) {
+    if (!serebii_pokemon.form_to_base_stats.empty()) {
         if (name.contains("Wormadam")) {
             if (hall_pokemon.name == "WormadamT") {
                 base_stats =
@@ -269,7 +270,7 @@ get_stats_for_battle_hall_pokemon(
             throw std::runtime_error{""};
         }
     }
-    std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats;
+    std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats{};
     for (const auto& [stat, value] : base_stats) {
         stats[static_cast<int>(stat)] = get_stat(
             level,
@@ -349,13 +350,12 @@ void write_all_hall_pokemon_as_custom(
                     rank
                 );
                 for (const auto& hall_pokemon : group_pokemon) {
-                    converted[rank][types_past_2].emplace_back(
-                        convert_hall_to_custom(
-                            all_serebii_pokemon,
-                            hall_pokemon,
-                            level
-                        )
+                    const auto stats = convert_hall_to_custom(
+                        all_serebii_pokemon,
+                        hall_pokemon,
+                        level
                     );
+                    converted[rank][types_past_2].emplace_back(stats);
                 }
             }
         }
@@ -385,7 +385,7 @@ std::unordered_map<
 > get_all_custom_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const AllBattleHallPokemon& all_battle_hall_pokemon,
-    const std::unordered_map<Move, const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_moves
 ) {
     namespace fs = std::filesystem;
     std::unordered_map<

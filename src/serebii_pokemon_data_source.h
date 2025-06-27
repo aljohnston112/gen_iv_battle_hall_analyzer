@@ -52,11 +52,11 @@ std::unordered_map<std::string, SerebiiPokemon> get_all_serebii_pokemon();
 
 void print_serebii_pokemon();
 
-std::unordered_map<std::string, std::vector<const MoveInfo*>>
+std::unordered_map<std::string, std::unordered_map<Move, const MoveInfo*>>
 get_moves_for_serebii_pokemon(const SerebiiPokemon& serebii_pokemon);
 
-std::unordered_map<Move, const MoveInfo*> get_all_pokemon_moves(
-    std::unordered_map<std::string, SerebiiPokemon> pokedex
+std::vector<const MoveInfo*> get_all_pokemon_moves(
+    const std::unordered_map<std::string, SerebiiPokemon>& pokedex
 );
 
 std::unordered_map<std::string, CustomPokemon> convert_serebii_to_custom(
