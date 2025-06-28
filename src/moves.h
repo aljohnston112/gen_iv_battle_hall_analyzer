@@ -463,7 +463,7 @@ enum class Move {
     WoodHammer,
     AquaJet,
     AttackOrder,
-    DefenseOrder,
+    DefendOrder,
     HealOrder,
     HeadSmash,
     DoubleHit,
@@ -477,6 +477,68 @@ enum class Move {
     OminousWind,
     ShadowForce,
     Count
+};
+
+static std::unordered_set PRIORITY_MOVES_PLUS_5 = {
+    Move::HelpingHand
+};
+
+static std::unordered_set PRIORITY_MOVES_PLUS_4 = {
+    Move::MagicCoat,
+    Move::Snatch
+};
+
+static std::unordered_set PRIORITY_MOVES_PLUS_3 = {
+    Move::Detect,
+    Move::Endure,
+    Move::FollowMe,
+    Move::Protect
+};
+
+static std::unordered_set PRIORITY_MOVES_PLUS_2 = {
+    Move::Feint
+};
+
+static std::unordered_set PRIORITY_MOVES_PLUS_1 = {
+    Move::AquaJet,
+    Move::Bide,
+    Move::BulletPunch,
+    Move::ExtremeSpeed,
+    Move::FakeOut,
+    Move::IceShard,
+    Move::MachPunch,
+    Move::QuickAttack,
+    Move::ShadowSneak,
+    Move::SuckerPunch,
+    Move::VacuumWave
+};
+
+static std::unordered_set PRIORITY_MOVES_MINUS_1 = {
+    Move::VitalThrow
+};
+
+static std::unordered_set PRIORITY_MOVES_MINUS_3 = {
+    Move::FocusPunch
+};
+
+static std::unordered_set PRIORITY_MOVES_MINUS_4 = {
+    Move::Avalanche,
+    Move::Revenge
+};
+
+static std::unordered_set PRIORITY_MOVES_MINUS_5 = {
+    Move::Counter,
+    Move::MirrorCoat
+};
+
+static std::unordered_set PRIORITY_MOVES_MINUS_6 = {
+    Move::Roar,
+    Move::Whirlwind
+};
+
+
+static std::unordered_set PRIORITY_MOVES_MINUS_7 = {
+    Move::TrickRoom
 };
 
 static std::unordered_set POWER_MOVES = {
@@ -586,7 +648,123 @@ static std::unordered_set POWER_MOVES = {
     Move::BoneRush,
     Move::Outrage,
     Move::GigaDrain,
-    Move::Spark
+    Move::Spark,
+    Move::SteelWing,
+    Move::Return,
+    Move::Frustration,
+    Move::SacredFire,
+    Move::Dynamicpunch,
+    Move::Megahorn,
+    Move::DragonBreath,
+    Move::IronTail,
+    Move::MetalClaw,
+    Move::VitalThrow,
+    Move::CrossChop,
+    Move::Twister,
+    Move::Crunch,
+    Move::ExtremeSpeed,
+    Move::Ancientpower,
+    Move::ShadowBall,
+    Move::RockSmash,
+    Move::Whirlpool,
+    Move::HeatWave,
+    Move::Superpower,
+    Move::Dive,
+    Move::ArmThrust,
+    Move::LusterPurge,
+    Move::MistBall,
+    Move::BlazeKick,
+    Move::NeedleArm,
+    Move::HyperVoice,
+    Move::PoisonFang,
+    Move::CrushClaw,
+    Move::BlastBurn,
+    Move::HydroCannon,
+    Move::MeteorMash,
+    Move::Astonish,
+    Move::AirCutter,
+    Move::Overheat,
+    Move::RockTomb,
+    Move::SilverWind,
+    Move::SignalBeam,
+    Move::ShadowPunch,
+    Move::Extrasensory,
+    Move::SkyUppercut,
+    Move::SandTomb,
+    Move::MuddyWater,
+    Move::BulletSeed,
+    Move::AerialAce,
+    Move::IcicleSpear,
+    Move::DragonClaw,
+    Move::FrenzyPlant,
+    Move::Bounce,
+    Move::MudShot,
+    Move::PoisonTail,
+    Move::VoltTackle,
+    Move::MagicalLeaf,
+    Move::LeafBlade,
+    Move::RockBlast,
+    Move::ShockWave,
+    Move::WaterPulse,
+    Move::PsychoBoost,
+    Move::HammerArm,
+    Move::CloseCombat,
+    Move::FlareBlitz,
+    Move::ForcePalm,
+    Move::AuraSphere,
+    Move::PoisonJab,
+    Move::DarkPulse,
+    Move::NightSlash,
+    Move::AquaTail,
+    Move::SeedBomb,
+    Move::AirSlash,
+    Move::XScissor,
+    Move::BugBuzz,
+    Move::DragonPulse,
+    Move::DragonRush,
+    Move::PowerGem,
+    Move::DrainPunch,
+    Move::VacuumWave,
+    Move::FocusBlast,
+    Move::EnergyBall,
+    Move::BraveBird,
+    Move::EarthPower,
+    Move::GigaImpact,
+    Move::BulletPunch,
+    Move::IceShard,
+    Move::ShadowClaw,
+    Move::ThunderFang,
+    Move::IceFang,
+    Move::FireFang,
+    Move::ShadowSneak,
+    Move::MudBomb,
+    Move::PsychoCut,
+    Move::ZenHeadbutt,
+    Move::MirrorShot,
+    Move::FlashCannon,
+    Move::RockClimb,
+    Move::DracoMeteor,
+    Move::Discharge,
+    Move::LavaPlume,
+    Move::LeafStorm,
+    Move::PowerWhip,
+    Move::RockWrecker,
+    Move::CrossPoison,
+    Move::GunkShot,
+    Move::IronHead,
+    Move::MagnetBomb,
+    Move::StoneEdge,
+    Move::ChargeBeam,
+    Move::WoodHammer,
+    Move::AquaJet,
+    Move::AttackOrder,
+    Move::HeadSmash,
+    Move::DoubleHit,
+    Move::RoarOfTime,
+    Move::SpacialRend,
+    Move::SeedFlare,
+    Move::OminousWind,
+    Move::ShadowForce
 };
 
 static std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
@@ -597,6 +775,12 @@ static std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
     Move::LeechLife,
     Move::GigaDrain,
     Move::MilkDrink,
+    Move::MorningSun,
+    Move::Synthesis,
+    Move::Moonlight,
+    Move::SlackOff,
+    Move::DrainPunch,
+    Move::HealOrder
 };
 
 static std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
@@ -610,34 +794,86 @@ static std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
     Move::Withdraw,
     Move::Amnesia,
     Move::AcidArmor,
-    Move::Sharpen
+    Move::Sharpen,
+    Move::TailGlow,
+    Move::CosmicPower,
+    Move::IronDefense,
+    Move::Howl,
+    Move::BulkUp,
+    Move::CalmMind,
+    Move::DragonDance,
+    Move::RockPolish,
+    Move::NastyPlot,
+    Move::DefendOrder
 };
 
 static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_ATTACK = {
     Move::SwordsDance,
     Move::Meditate,
     Move::Sharpen,
-    Move::BellyDrum
+    Move::BellyDrum,
+    Move::MetalClaw,
+    Move::MeteorMash,
+    Move::Howl,
+    Move::BulkUp,
+    Move::DragonDance
+};
 
+static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_ATTACK = {
+    Move::Superpower
 };
 
 static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_DEFENSE = {
     Move::Harden,
     Move::Withdraw,
     Move::SkullBash,
-    Move::AcidArmor
+    Move::AcidArmor,
+    Move::SteelWing,
+    Move::CosmicPower,
+    Move::IronDefense,
+    Move::BulkUp,
+    Move::DefendOrder
+};
+
+static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_DEFENSE = {
+    Move::Superpower,
+    Move::CloseCombat
+};
+
+static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_ATTACK = {
+    Move::Overheat,
+    Move::PsychoBoost,
+    Move::DracoMeteor,
+    Move::LeafStorm
 };
 
 static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_ATTACK = {
-    Move::Growth
+    Move::Growth,
+    Move::TailGlow,
+    Move::CalmMind,
+    Move::NastyPlot,
+    Move::ChargeBeam
 };
 
 static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_DEFENSE = {
-    Move::Amnesia
+    Move::Amnesia,
+    Move::CosmicPower,
+    Move::CalmMind,
+    Move::DefendOrder
+};
+
+static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_DEFENSE = {
+    Move::CloseCombat
 };
 
 static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPEED = {
-    Move::Agility
+    Move::Agility,
+    Move::DragonDance,
+    Move::RockPolish
+};
+
+static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPEED = {
+    Move::HammerArm
 };
 
 static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_EVASION = {
@@ -650,6 +886,12 @@ static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_CRIT_RATE = {
     Move::FocusEnergy
 };
 
+static std::unordered_set MOVES_THAT_OMNI_BOOST_ATTACKER = {
+    Move::Ancientpower,
+    Move::SilverWind,
+    Move::OminousWind
+};
+
 static std::unordered_set MOVES_THAT_RAISE_DEFENDER_ATTACK = {
     Move::Swagger
 };
@@ -658,20 +900,44 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ATTACK = {
     Move::Growl,
     Move::AuroraBeam,
     Move::Charm,
+    Move::Memento,
+    Move::Featherdance,
+    Move::Tickle
+};
 
+static std::unordered_set MOVES_THAT_RAISE_DEFENDER_SPECIAL_ATTACK = {
+    Move::Flatter
+};
+
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_ATTACK = {
+    Move::Memento,
+    Move::MistBall,
 };
 
 static std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
     Move::TailWhip,
     Move::Leer,
     Move::Screech,
-
+    Move::IronTail,
+    Move::Crunch,
+    Move::RockSmash,
+    Move::CrushClaw,
+    Move::Tickle
 };
 
 static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE = {
     Move::Acid,
     Move::Psychic,
-
+    Move::ShadowBall,
+    Move::LusterPurge,
+    Move::FakeTears,
+    Move::MetalSound,
+    Move::BugBuzz,
+    Move::FocusBlast,
+    Move::EnergyBall,
+    Move::EarthPower,
+    Move::FlashCannon,
+    Move::SeedFlare
 };
 
 static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPEED = {
@@ -681,7 +947,9 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPEED = {
     Move::Bubble,
     Move::CottonSpore,
     Move::ScaryFace,
-    Move::IcyWind
+    Move::IcyWind,
+    Move::RockTomb,
+    Move::MudShot
 };
 
 static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
@@ -691,14 +959,27 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
     Move::Flash,
     Move::MudSlap,
     Move::Octazooka,
+    Move::MuddyWater,
+    Move::MudBomb,
+    Move::MirrorShot
+};
 
+static std::unordered_set MOVES_THAT_LOWER_DEFENDER_EVASION = {
+    Move::SweetScent
 };
 
 static std::unordered_set MOVES_THAT_MAY_BYPASS_ACCURACY = {
     Move::Blizzard,
     Move::Thunder,
     Move::Swift,
-    Move::FaintAttack
+    Move::FaintAttack,
+    Move::VitalThrow,
+    Move::ShadowPunch,
+    Move::AerialAce,
+    Move::MagicalLeaf,
+    Move::ShockWave,
+    Move::AuraSphere,
+    Move::MagnetBomb
 };
 
 static std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
@@ -710,12 +991,10 @@ static std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
     Move::Splash
 };
 
-
 static std::unordered_set PROTECTION_MOVES = {
     Move::Detect,
     Move::Protect,
 };
-
 
 static std::unordered_set OTHER_MOVES = {
     Move::Disable,
@@ -763,11 +1042,125 @@ static std::unordered_set OTHER_MOVES = {
     Move::LockOn,
     Move::Rollout,
     Move::FalseSwipe,
-
+    Move::FuryCutter,
+    Move::MeanLook,
+    Move::Attract,
+    Move::SleepTalk,
+    Move::HealBell,
+    Move::Present,
+    Move::Safeguard,
+    Move::PainSplit,
+    Move::Magnitude,
+    Move::BatonPass,
+    Move::Encore,
+    Move::Pursuit,
+    Move::RapidSpin,
+    Move::HiddenPower,
+    Move::MirrorCoat,
+    Move::PsychUp,
+    Move::FutureSight,
+    Move::BeatUp,
+    Move::FakeOut,
+    Move::Uproar,
+    Move::Stockpile,
+    Move::SpitUp,
+    Move::Swallow,
+    Move::Torment,
+    Move::Facade,
+    Move::FocusPunch,
+    Move::Smellingsalt,
+    Move::FollowMe,
+    Move::NaturePower,
+    Move::Charge,
+    Move::Taunt,
+    Move::HelpingHand,
+    Move::Trick,
+    Move::RolePlay,
+    Move::Wish,
+    Move::Assist,
+    Move::Ingrain,
+    Move::MagicCoat,
+    Move::Recycle,
+    Move::Revenge,
+    Move::BrickBreak,
+    Move::Yawn,
+    Move::KnockOff,
+    Move::Endeavor,
+    Move::Eruption,
+    Move::SkillSwap,
+    Move::Imprison,
+    Move::Refresh,
+    Move::Grudge,
+    Move::Snatch,
+    Move::SecretPower,
+    Move::Camouflage,
+    Move::MudSport,
+    Move::IceBall,
+    Move::WeatherBall,
+    Move::Aromatherapy,
+    Move::OdorSleuth,
+    Move::WaterSpout,
+    Move::Block,
+    Move::Covet,
+    Move::WaterSport,
+    Move::DoomDesire,
+    Move::Roost,
+    Move::Gravity,
+    Move::MiracleEye,
+    Move::WakeUpSlap,
+    Move::GyroBall,
+    Move::HealingWish,
+    Move::Brine,
+    Move::NaturalGift,
+    Move::Feint,
+    Move::Pluck,
+    Move::Tailwind,
+    Move::Acupressure,
+    Move::MetalBurst,
+    Move::UTurn,
+    Move::Payback,
+    Move::Assurance,
+    Move::Embargo,
+    Move::Fling,
+    Move::PsychoShift,
+    Move::TrumpCard,
+    Move::HealBlock,
+    Move::WringOut,
+    Move::PowerTrick,
+    Move::GastroAcid,
+    Move::LuckyChant,
+    Move::MeFirst,
+    Move::Copycat,
+    Move::PowerSwap,
+    Move::GuardSwap,
+    Move::Punishment,
+    Move::LastResort,
+    Move::WorrySeed,
+    Move::SuckerPunch,
+    Move::ToxicSpikes,
+    Move::HeartSwap,
+    Move::AquaRing,
+    Move::MagnetRise,
+    Move::Switcheroo,
+    Move::Avalanche,
+    Move::Defog,
+    Move::TrickRoom,
+    Move::Captivate,
+    Move::StealthRock,
+    Move::GrassKnot,
+    Move::Chatter,
+    Move::Judgment,
+    Move::BugBite,
+    Move::LunarDance,
+    Move::CrushGrip,
+    Move::MagmaStorm
 };
 
 static std::unordered_set MOVES_THAT_CHANGE_WEATHER = {
     Move::Sandstorm,
+    Move::RainDance,
+    Move::SunnyDay,
+    Move::Hail
 };
 
 static std::unordered_set MOVES_THAT_FORCE_USER_OUT = {
@@ -779,12 +1172,13 @@ static std::unordered_set ONE_HIT_KO_MOVES = {
     Move::Guillotine,
     Move::HornDrill,
     Move::Fissure,
-
+    Move::SheerCold
 };
 
 static std::unordered_set MOVES_THAT_MAKE_ATTACKER_FAINT = {
     Move::Selfdestruct,
-    Move::Explosion
+    Move::Explosion,
+    Move::Memento
 };
 
 static std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
@@ -795,7 +1189,18 @@ static std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
     Move::Crabhammer,
     Move::Slash,
     Move::Aeroblast,
-
+    Move::CrossChop,
+    Move::BlazeKick,
+    Move::AirCutter,
+    Move::PoisonTail,
+    Move::LeafBlade,
+    Move::NightSlash,
+    Move::ShadowClaw,
+    Move::PsychoCut,
+    Move::CrossPoison,
+    Move::StoneEdge,
+    Move::AttackOrder,
+    Move::SpacialRend
 };
 
 static std::unordered_set MOVES_THAT_REQUIRE_CHARGING_TURN = {
@@ -807,32 +1212,26 @@ static std::unordered_set MOVES_THAT_REQUIRE_CHARGING_TURN = {
 
 static std::unordered_set MOVES_THAT_REQUIRE_RECHARGE_TURN = {
     Move::HyperBeam,
-
+    Move::BlastBurn,
+    Move::HydroCannon,
+    Move::FrenzyPlant,
+    Move::GigaImpact,
+    Move::RockWrecker,
+    Move::RoarOfTime
 };
 
 static std::unordered_set MOVES_THAT_DEAL_DOUBLE_AFTER_MINIMIZE = {
     Move::Stomp
 };
 
-static std::unordered_set MULTI_HIT_MOVES = {
-    Move::DoubleSlap,
-    Move::CometPunch,
-    Move::DoubleKick,
-    Move::FuryAttack,
-    Move::Twineedle,
-    Move::PinMissile,
-    Move::SpikeCannon,
-    Move::Barrage,
-    Move::FuryAttack,
-    Move::Bonemerang,
-    Move::BoneRush,
-};
-
 static std::unordered_set MOVES_THAT_CONTINUE = {
     Move::Bind,
     Move::Wrap,
     Move::FireSpin,
-    Move::Clamp
+    Move::Clamp,
+    Move::Whirlpool,
+    Move::SandTomb,
+    Move::MagmaStorm
 };
 
 static std::unordered_set MOVES_THAT_BURN = {
@@ -841,7 +1240,13 @@ static std::unordered_set MOVES_THAT_BURN = {
     Move::Flamethrower,
     Move::FireBlast,
     Move::FlameWheel,
-
+    Move::SacredFire,
+    Move::HeatWave,
+    Move::WillOWisp,
+    Move::BlazeKick,
+    Move::FlareBlitz,
+    Move::FireFang,
+    Move::LavaPlume
 };
 
 static std::unordered_set MOVES_THAT_FREEZE = {
@@ -849,6 +1254,7 @@ static std::unordered_set MOVES_THAT_FREEZE = {
     Move::IceBeam,
     Move::Blizzard,
     Move::PowderSnow,
+    Move::IceFang
 };
 
 static std::unordered_set MOVES_THAT_PARALYZE = {
@@ -863,6 +1269,12 @@ static std::unordered_set MOVES_THAT_PARALYZE = {
     Move::Glare,
     Move::ZapCannon,
     Move::Spark,
+    Move::DragonBreath,
+    Move::Bounce,
+    Move::VoltTackle,
+    Move::ForcePalm,
+    Move::ThunderFang,
+    Move::Discharge
 };
 
 static std::unordered_set MOVES_THAT_POISON = {
@@ -872,11 +1284,16 @@ static std::unordered_set MOVES_THAT_POISON = {
     Move::Smog,
     Move::Sludge,
     Move::PoisonGas,
-    Move::SludgeBomb
+    Move::SludgeBomb,
+    Move::PoisonTail,
+    Move::PoisonJab,
+    Move::CrossPoison,
+    Move::GunkShot
 };
 
 static std::unordered_set MOVES_THAT_BADLY_POISON = {
-    Move::Toxic
+    Move::Toxic,
+    Move::PoisonFang
 };
 
 static std::unordered_set MOVES_THAT_MAKE_DEFENDER_SLEEP = {
@@ -884,7 +1301,9 @@ static std::unordered_set MOVES_THAT_MAKE_DEFENDER_SLEEP = {
     Move::SleepPowder,
     Move::Hypnosis,
     Move::LovelyKiss,
-    Move::Spore
+    Move::Spore,
+    Move::Grasswhistle,
+    Move::DarkVoid
 };
 
 static std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
@@ -895,6 +1314,12 @@ static std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
     Move::DizzyPunch,
     Move::SweetKiss,
     Move::Swagger,
+    Move::Dynamicpunch,
+    Move::Flatter,
+    Move::TeeterDance,
+    Move::SignalBeam,
+    Move::WaterPulse,
+    Move::RockClimb
 };
 
 static std::unordered_set MOVES_THAT_FLINCH = {
@@ -905,7 +1330,19 @@ static std::unordered_set MOVES_THAT_FLINCH = {
     Move::BoneClub,
     Move::Waterfall,
     Move::SkyAttack,
-    Move::HyperFang
+    Move::HyperFang,
+    Move::Twister,
+    Move::NeedleArm,
+    Move::Astonish,
+    Move::Extrasensory,
+    Move::DarkPulse,
+    Move::AirSlash,
+    Move::DragonRush,
+    Move::ThunderFang,
+    Move::IceFang,
+    Move::FireFang,
+    Move::ZenHeadbutt,
+    Move::IronHead
 };
 
 static std::unordered_set MOVES_WITH_RECOIL = {
@@ -915,6 +1352,31 @@ static std::unordered_set MOVES_WITH_RECOIL = {
     Move::Submission,
     Move::HighJumpKick,
     Move::BellyDrum,
+    Move::VoltTackle,
+    Move::FlareBlitz,
+    Move::BraveBird,
+    Move::WoodHammer,
+    Move::HeadSmash
+};
+
+
+static std::unordered_set MULTI_HIT_MOVES = {
+    Move::DoubleSlap,
+    Move::CometPunch,
+    Move::DoubleKick,
+    Move::FuryAttack,
+    Move::Twineedle,
+    Move::PinMissile,
+    Move::SpikeCannon,
+    Move::Barrage,
+    Move::FuryAttack,
+    Move::Bonemerang,
+    Move::BoneRush,
+    Move::ArmThrust,
+    Move::BulletSeed,
+    Move::IcicleSpear,
+    Move::RockBlast,
+    Move::DoubleHit
 };
 
 static std::unordered_set MULTI_TURN_MOVES = {
@@ -1201,7 +1663,7 @@ static std::unordered_set MOVES_THAT_CAN_BE_SNATCHED = {
     Move::Camouflage,
     Move::Charge,
     Move::CosmicPower,
-    Move::DefenseOrder,
+    Move::DefendOrder,
     Move::DefenseCurl,
     Move::DoubleTeam,
     Move::DragonDance,
@@ -1915,7 +2377,7 @@ static std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Wood Hammer", Move::WoodHammer},
     {"Aqua Jet", Move::AquaJet},
     {"Attack Order", Move::AttackOrder},
-    {"Defend Order", Move::DefenseOrder},
+    {"Defend Order", Move::DefendOrder},
     {"Heal Order", Move::HealOrder},
     {"Head Smash", Move::HeadSmash},
     {"Double Hit", Move::DoubleHit},
