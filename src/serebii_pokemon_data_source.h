@@ -12,7 +12,7 @@
 
 struct SerebiiPokemon {
     std::string name;
-    std::vector<PokemonType> types;
+    std::set<PokemonType> types;
     int id = -1;
     std::string ability;
     double pounds = 0;

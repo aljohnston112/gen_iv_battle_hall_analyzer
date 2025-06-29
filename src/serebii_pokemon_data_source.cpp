@@ -126,14 +126,10 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
             } else {
                 const auto start_i = line.find('"') + 1;
                 const auto end_i = line.find('"', start_i);
-                serebii_pokemon.types.emplace_back(
+                serebii_pokemon.types.insert(
                     pokemon_type_map[
                         line.substr(start_i, end_i - start_i)
                     ]
-                );
-                std::sort(
-                    serebii_pokemon.types.begin(),
-                    serebii_pokemon.types.end()
                 );
             }
         } else if (line.find("\"base_stats\"") != std::string::npos) {
@@ -618,6 +614,8 @@ std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> get_stats_for_serebii(
 const std::unordered_set IGNORED_MOVES = {
     Move::Snore,
     Move::SolarBeam,
+    Move::LastResort,
+    Move::DreamEater
 };
 
 std::unordered_map<
