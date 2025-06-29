@@ -59,7 +59,10 @@ std::vector<const MoveInfo*> get_all_pokemon_moves(
     const std::unordered_map<std::string, SerebiiPokemon>& pokedex
 );
 
-std::unordered_map<std::string, CustomPokemon> convert_serebii_to_custom(
+std::unordered_map<
+    std::string,
+    std::vector<CustomPokemon>
+> convert_serebii_to_custom(
     const SerebiiPokemon& serebii_pokemon
 );
 

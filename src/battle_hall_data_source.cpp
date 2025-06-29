@@ -16,8 +16,7 @@ std::string trim(const std::string& string) {
     auto end = string.end();
     do {
         --end;
-    }
-    while (std::distance(start, end) > 0 && std::isspace(*end));
+    } while (std::distance(start, end) > 0 && std::isspace(*end));
     return {start, end + 1};
 }
 
@@ -284,27 +283,56 @@ get_stats_for_battle_hall_pokemon(
     return stats;
 }
 
-CustomPokemon convert_hall_to_custom(
+std::vector<CustomPokemon> convert_hall_to_custom(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const BattleHallPokemon& hall_pokemon,
     const uint8_t level
 ) {
-    std::string name = hall_pokemon.name;
-    if (name.contains("Wormadam")) {
-        name = "Wormadam";
+    auto serebii_name = hall_pokemon.name;
+    if (serebii_name == "WormadamP" ||
+        serebii_name == "WormadamS" ||
+        serebii_name == "WormadamT"
+    ) {
+        serebii_name = "Wormadam";
     }
-    return CustomPokemon{
-        .name = hall_pokemon.name,
-        .level = level,
-        .item = hall_pokemon.item,
-        .types = all_serebii_pokemon.at(name).types,
-        .moves = hall_pokemon.moves,
-        .stats = get_stats_for_battle_hall_pokemon(
-            all_serebii_pokemon,
-            level,
-            hall_pokemon
-        )
-    };
+    auto name = hall_pokemon.name;
+    if (name == "Burmy") {
+        name = "PlantBurmy";
+    }
+    const Pokemon name_enum = STRING_TO_POKEMON.at(name);
+    const std::vector<Ability> abilities = ABILITY_MAP.at(name_enum);
+    std::vector<CustomPokemon> pokemon{};
+    for (const auto& ability : abilities) {
+        auto types = all_serebii_pokemon.at(serebii_name).types;
+        if (name_enum == Pokemon::WormadamP) {
+            types = { PokemonType::BUG, PokemonType::GRASS };
+        } else if (name_enum == Pokemon::WormadamS) {
+            types = { PokemonType::BUG, PokemonType::GROUND };
+        }  else if (name_enum == Pokemon::WormadamT) {
+            types = { PokemonType::BUG, PokemonType::GRASS };
+        }
+
+        if (serebii_name == "Wormadam"
+        ) {
+            printf("");
+        }
+        pokemon.emplace_back(
+            CustomPokemon{
+                .name = name_enum,
+                .ability = ability,
+                .level = level,
+                .item = hall_pokemon.item,
+                .types = types,
+                .moves = hall_pokemon.moves,
+                .stats = get_stats_for_battle_hall_pokemon(
+                    all_serebii_pokemon,
+                    level,
+                    hall_pokemon
+                )
+            }
+        );
+    }
+    return pokemon;
 }
 
 uint8_t get_hall_pokemon_level(
@@ -350,12 +378,14 @@ void write_all_hall_pokemon_as_custom(
                     rank
                 );
                 for (const auto& hall_pokemon : group_pokemon) {
-                    const auto stats = convert_hall_to_custom(
+                    const auto customs = convert_hall_to_custom(
                         all_serebii_pokemon,
                         hall_pokemon,
                         level
                     );
-                    converted[rank][types_past_2].emplace_back(stats);
+                    for (const auto& custom : customs) {
+                        converted[rank][types_past_2].emplace_back(custom);
+                    }
                 }
             }
         }

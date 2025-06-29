@@ -2405,5 +2405,4 @@ inline void verify_map() {
     }
 }
 
-
 #endif //ATTACKS_H

@@ -18,6 +18,7 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/nature.cpp
         src/battle_simulator.cpp
         src/battle_simulator.h
+        src/abilities.h
 )
 
 add_custom_command(

@@ -45,10 +45,14 @@ void analyze() {
                     const auto& hall_pokemon =
                         over_2_to_hall_pokemon.at(over_2);
                     for (const auto& opponent_pokemon : hall_pokemon) {
-                        for (const auto& player_pokemon :
-                             player_pokemon_forms
+                        for (const auto& [
+                                 form,
+                                 player_pokemon_
+                             ] : player_pokemon_forms
                         ) {
-                            battle(player_pokemon.second, opponent_pokemon);
+                            for (const auto& player_pokemon : player_pokemon_) {
+                                battle(player_pokemon, opponent_pokemon);
+                            }
                         }
                     }
                 }

@@ -10,6 +10,7 @@ void save_custom_pokemon(
     std::ofstream output_stream(filename);
     for (const auto& [
              pokemon_name,
+             ability,
              level,
              item,
              types,
@@ -17,7 +18,8 @@ void save_custom_pokemon(
              stats
          ] : pokemon_list
     ) {
-        output_stream << pokemon_name << '|'
+        output_stream << static_cast<int>(pokemon_name) << '|'
+            << static_cast<int>(ability) << '|'
             << std::to_string(level) << '|'
             << item << '\n';
 
@@ -64,7 +66,12 @@ std::vector<CustomPokemon> load_custom_pokemon(
     while (std::getline(input_stream, line)) {
         CustomPokemon custom_pokemon;
         std::istringstream header(line);
-        std::getline(header, custom_pokemon.name, '|');
+        std::string name_enum;
+        std::getline(header, name_enum, '|');
+        custom_pokemon.name = static_cast<Pokemon>(std::stoi(name_enum));
+        std::string ability_enum;
+        std::getline(header, ability_enum, '|');
+        custom_pokemon.ability = static_cast<Ability>(std::stoi(ability_enum));
         std::string level;
         std::getline(header, level, '|');
         custom_pokemon.level = std::stoi(level);

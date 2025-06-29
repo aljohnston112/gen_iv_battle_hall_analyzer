@@ -3,11 +3,13 @@
 #include <cstdint>
 #include <string>
 
+#include "abilities.h"
 #include "nature.h"
 
 
 struct CustomPokemon {
-    std::string name;
+    Pokemon name;
+    Ability ability;
     uint8_t level;
     std::string item;
     std::vector<PokemonType> types;
