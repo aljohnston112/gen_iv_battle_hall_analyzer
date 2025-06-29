@@ -11,7 +11,7 @@ struct CustomPokemon {
     Pokemon name;
     Ability ability;
     uint8_t level;
-    std::string item;
+    Item item;
     std::vector<PokemonType> types;
     std::vector<const MoveInfo*> moves;
     std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats;

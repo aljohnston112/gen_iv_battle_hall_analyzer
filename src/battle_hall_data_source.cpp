@@ -295,10 +295,7 @@ std::vector<CustomPokemon> convert_hall_to_custom(
     ) {
         serebii_name = "Wormadam";
     }
-    auto name = hall_pokemon.name;
-    if (name == "Burmy") {
-        name = "PlantBurmy";
-    }
+    const auto name = hall_pokemon.name;
     const Pokemon name_enum = STRING_TO_POKEMON.at(name);
     const std::vector<Ability> abilities = ABILITY_MAP.at(name_enum);
     std::vector<CustomPokemon> pokemon{};
@@ -321,7 +318,7 @@ std::vector<CustomPokemon> convert_hall_to_custom(
                 .name = name_enum,
                 .ability = ability,
                 .level = level,
-                .item = hall_pokemon.item,
+                .item = STRING_TO_ITEM.at(hall_pokemon.item),
                 .types = types,
                 .moves = hall_pokemon.moves,
                 .stats = get_stats_for_battle_hall_pokemon(

@@ -21,7 +21,7 @@ void save_custom_pokemon(
         output_stream << static_cast<int>(pokemon_name) << '|'
             << static_cast<int>(ability) << '|'
             << std::to_string(level) << '|'
-            << item << '\n';
+            << static_cast<int>(item) << '\n';
 
         output_stream << types.size() << '\n';
         for (const auto& type : types) {
@@ -75,7 +75,9 @@ std::vector<CustomPokemon> load_custom_pokemon(
         std::string level;
         std::getline(header, level, '|');
         custom_pokemon.level = std::stoi(level);
-        std::getline(header, custom_pokemon.item);
+        std::string item_enum;
+        std::getline(header, item_enum, '|');
+        custom_pokemon.item = static_cast<Item>(std::stoi(item_enum));
 
         size_t type_count;
         input_stream >> type_count;

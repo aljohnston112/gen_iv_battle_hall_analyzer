@@ -698,13 +698,17 @@ std::unordered_map<
             move_vector.push_back(move);
         }
         auto name = serebii_pokemon.name;
+        auto types = serebii_pokemon.types;
         if (name == "Wormadam") {
             if (form == "Plant Cloak") {
                 name = "WormadamP";
+                types = {PokemonType::BUG, PokemonType::GRASS};
             } else if (form == "Sandy Cloak") {
                 name = "WormadamS";
+                types = {PokemonType::GROUND, PokemonType::GRASS};
             } else if (form == "Trash Cloak") {
                 name = "WormadamT";
+                types = {PokemonType::STEEL, PokemonType::GRASS};
             }
         } else if (name == "Deoxys") {
             if (form == "Normal Forme") {
@@ -719,8 +723,10 @@ std::unordered_map<
         } else if (name == "Shaymin") {
             if (form == "Land Forme") {
                 name = "LandShaymin";
+                types = {PokemonType::GRASS};
             } else if (form == "Sky Forme") {
                 name = "SkyShaymin";
+                types = {PokemonType::GRASS, PokemonType::FLYING};
             }
         } else if (name == "Giratina") {
             if (form == "Altered Forme") {
@@ -738,8 +744,8 @@ std::unordered_map<
                     .name = name_enum,
                     .ability = ability,
                     .level = LEVEL,
-                    .item = "",
-                    .types = serebii_pokemon.types,
+                    .item = STRING_TO_ITEM.at(""),
+                    .types = types,
                     .moves = move_vector,
                     .stats = get_stats_for_serebii(form, serebii_pokemon)
                 }
