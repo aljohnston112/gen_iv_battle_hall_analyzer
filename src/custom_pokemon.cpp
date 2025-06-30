@@ -89,9 +89,7 @@ std::vector<CustomPokemon> load_custom_pokemon(
             int type_int;
             stat_string_stream >> type_int;
             stat_string_stream.ignore();
-            custom_pokemon.types.insert(
-                static_cast<PokemonType>(type_int)
-            );
+            custom_pokemon.types[i] = static_cast<PokemonType>(type_int);
         }
 
         size_t move_count;

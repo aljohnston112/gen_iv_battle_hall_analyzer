@@ -1,5 +1,6 @@
 #ifndef BATTLE_HALL_DATA_SOURCE_H
 #define BATTLE_HALL_DATA_SOURCE_H
+
 #include <cstdint>
 #include <map>
 #include <set>
@@ -49,6 +50,5 @@ std::unordered_map<
     const AllBattleHallPokemon& all_battle_hall_pokemon,
     const std::vector<const MoveInfo*>& all_moves
 );
-
 
 #endif //BATTLE_HALL_DATA_SOURCE_H

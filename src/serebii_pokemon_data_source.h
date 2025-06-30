@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <unordered_set>
 
 #include "custom_pokemon.h"
 #include "moves.h"
@@ -12,7 +11,7 @@
 
 struct SerebiiPokemon {
     std::string name;
-    std::set<PokemonType> types;
+    std::vector<PokemonType> types;
     int id = -1;
     std::string ability;
     double pounds = 0;

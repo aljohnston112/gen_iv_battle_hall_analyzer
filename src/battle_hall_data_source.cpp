@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include "custom_pokemon.h"
+#include "Items.h"
 
 std::string trim(const std::string& string) {
     auto start = string.begin();
@@ -266,7 +267,7 @@ get_stats_for_battle_hall_pokemon(
                 throw std::runtime_error{""};
             }
         } else if (hall_pokemon.name != "Rotom") {
-            throw std::runtime_error{""};
+            throw std::runtime_error{"Unexpected form from: " + name};
         }
     }
     std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats{};
@@ -300,26 +301,26 @@ std::vector<CustomPokemon> convert_hall_to_custom(
     const std::vector<Ability> abilities = ABILITY_MAP.at(name_enum);
     std::vector<CustomPokemon> pokemon{};
     for (const auto& ability : abilities) {
-        auto types = all_serebii_pokemon.at(serebii_name).types;
+        auto types =
+            all_serebii_pokemon.at(serebii_name).types;
         if (name_enum == Pokemon::WormadamP) {
-            types = { PokemonType::BUG, PokemonType::GRASS };
+            types = {PokemonType::BUG, PokemonType::GRASS};
         } else if (name_enum == Pokemon::WormadamS) {
-            types = { PokemonType::BUG, PokemonType::GROUND };
-        }  else if (name_enum == Pokemon::WormadamT) {
-            types = { PokemonType::BUG, PokemonType::GRASS };
+            types = {PokemonType::BUG, PokemonType::GROUND};
+        } else if (name_enum == Pokemon::WormadamT) {
+            types = {PokemonType::BUG, PokemonType::GRASS};
         }
-
-        if (serebii_name == "Wormadam"
-        ) {
-            printf("");
+        if (types.size() == 1) {
+            types.emplace_back(PokemonType::COUNT);
         }
+        std::sort(types.begin(), types.end());
         pokemon.emplace_back(
             CustomPokemon{
                 .name = name_enum,
                 .ability = ability,
                 .level = level,
                 .item = STRING_TO_ITEM.at(hall_pokemon.item),
-                .types = types,
+                .types = {types[0], types[1]},
                 .moves = hall_pokemon.moves,
                 .stats = get_stats_for_battle_hall_pokemon(
                     all_serebii_pokemon,
@@ -343,7 +344,7 @@ uint8_t get_hall_pokemon_level(
         LEVEL,
         static_cast<uint8_t>(
             std::ceil(
-                base_level + (types_past_2 / 2.0) + (rank - 1) * increment
+                base_level + (types_past_2 / 2) + (rank - 1) * increment
             )
         )
     );
@@ -375,11 +376,12 @@ void write_all_hall_pokemon_as_custom(
                     rank
                 );
                 for (const auto& hall_pokemon : group_pokemon) {
-                    const auto customs = convert_hall_to_custom(
-                        all_serebii_pokemon,
-                        hall_pokemon,
-                        level
-                    );
+                    const auto customs =
+                        convert_hall_to_custom(
+                            all_serebii_pokemon,
+                            hall_pokemon,
+                            level
+                        );
                     for (const auto& custom : customs) {
                         converted[rank][types_past_2].emplace_back(custom);
                     }

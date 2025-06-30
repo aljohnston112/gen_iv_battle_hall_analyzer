@@ -28,6 +28,42 @@ enum class PokemonType {
     COUNT
 };
 
+static std::unordered_map<std::string, PokemonType> pokemon_type_map{
+    {"normal", PokemonType::NORMAL},
+    {"fighting", PokemonType::FIGHTING},
+    {"flying", PokemonType::FLYING},
+    {"poison", PokemonType::POISON},
+    {"ground", PokemonType::GROUND},
+    {"rock", PokemonType::ROCK},
+    {"bug", PokemonType::BUG},
+    {"ghost", PokemonType::GHOST},
+    {"steel", PokemonType::STEEL},
+    {"fire", PokemonType::FIRE},
+    {"water", PokemonType::WATER},
+    {"grass", PokemonType::GRASS},
+    {"electric", PokemonType::ELECTRIC},
+    {"psychic", PokemonType::PSYCHIC},
+    {"ice", PokemonType::ICE},
+    {"dragon", PokemonType::DRAGON},
+    {"dark", PokemonType::DARK}
+};
+
+static std::unordered_map<PokemonType, std::string> create_reverse_type_map() {
+    std::unordered_map<PokemonType, std::string> reverse_map;
+    for (const auto& [str, type] : pokemon_type_map) {
+        reverse_map[type] = str;
+    }
+    return reverse_map;
+}
+
+static const auto TYPE_TO_STRING =
+    create_reverse_type_map();
+
+static std::string get_type_name(const PokemonType type) {
+    const auto it = TYPE_TO_STRING.find(type);
+    return (it != TYPE_TO_STRING.end()) ? it->second : "unknown";
+}
+
 enum class Stat {
     HEALTH,
     ATTACK,
@@ -38,8 +74,14 @@ enum class Stat {
     NO_STAT
 };
 
-
-extern std::unordered_map<std::string, PokemonType> pokemon_type_map;
+static std::unordered_map<std::string, Stat> stat_map{
+    {"health", Stat::HEALTH},
+    {"attack", Stat::ATTACK},
+    {"defense", Stat::DEFENSE},
+    {"special_attack", Stat::SPECIAL_ATTACK},
+    {"special_defense", Stat::SPECIAL_DEFENSE},
+    {"speed", Stat::SPEED}
+};
 
 enum class Category {
     PHYSICAL,
@@ -47,7 +89,11 @@ enum class Category {
     STATUS
 };
 
-extern std::unordered_map<std::string, Category> move_category_map;
+static std::unordered_map<std::string, Category> move_category_map{
+    {"physical", Category::PHYSICAL},
+    {"special", Category::SPECIAL},
+    {"status", Category::STATUS}
+};
 
 struct MoveInfo {
     std::string name;
@@ -69,8 +115,6 @@ struct std::hash<MoveInfo> {
         return static_cast<size_t>(a.move);
     }
 };
-
-extern std::unordered_map<std::string, Stat> stat_map;
 
 enum class NatureEnum {
     HARDY,

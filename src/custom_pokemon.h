@@ -1,10 +1,11 @@
 #ifndef CUSTOMPOKEMON_H
 #define CUSTOMPOKEMON_H
+
 #include <cstdint>
-#include <set>
 #include <string>
 
 #include "abilities.h"
+#include "Items.h"
 #include "nature.h"
 
 
@@ -13,7 +14,7 @@ struct CustomPokemon {
     Ability ability;
     uint8_t level;
     Item item;
-    std::set<PokemonType> types;
+    std::array<PokemonType, 2> types;
     std::vector<const MoveInfo*> moves;
     std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats;
 };

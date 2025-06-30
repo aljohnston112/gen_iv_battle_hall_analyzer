@@ -7,41 +7,6 @@
 #include "config.h"
 #include "nature.h"
 
-std::unordered_map<std::string, PokemonType> pokemon_type_map{
-    {"normal", PokemonType::NORMAL},
-    {"fighting", PokemonType::FIGHTING},
-    {"flying", PokemonType::FLYING},
-    {"poison", PokemonType::POISON},
-    {"ground", PokemonType::GROUND},
-    {"rock", PokemonType::ROCK},
-    {"bug", PokemonType::BUG},
-    {"ghost", PokemonType::GHOST},
-    {"steel", PokemonType::STEEL},
-    {"fire", PokemonType::FIRE},
-    {"water", PokemonType::WATER},
-    {"grass", PokemonType::GRASS},
-    {"electric", PokemonType::ELECTRIC},
-    {"psychic", PokemonType::PSYCHIC},
-    {"ice", PokemonType::ICE},
-    {"dragon", PokemonType::DRAGON},
-    {"dark", PokemonType::DARK}
-};
-
-std::unordered_map<std::string, Category> move_category_map{
-    {"physical", Category::PHYSICAL},
-    {"special", Category::SPECIAL},
-    {"status", Category::STATUS}
-};
-
-std::unordered_map<std::string, Stat> stat_map{
-    {"health", Stat::HEALTH},
-    {"attack", Stat::ATTACK},
-    {"defense", Stat::DEFENSE},
-    {"special_attack", Stat::SPECIAL_ATTACK},
-    {"special_defense", Stat::SPECIAL_DEFENSE},
-    {"speed", Stat::SPEED}
-};
-
 std::string extract_left_string(const std::string& line) {
     const auto first = line.find('"') + 1;
     const auto colon_i = line.find(':') - 1;
@@ -126,7 +91,7 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
             } else {
                 const auto start_i = line.find('"') + 1;
                 const auto end_i = line.find('"', start_i);
-                serebii_pokemon.types.insert(
+                serebii_pokemon.types.emplace_back(
                     pokemon_type_map[
                         line.substr(start_i, end_i - start_i)
                     ]
@@ -625,7 +590,7 @@ std::unordered_map<
     const std::unordered_map<
         std::string,
         std::unordered_map<Move, const MoveInfo*>
-    > form_moves,
+    >& form_moves,
     const bool is_player
 ) {
     std::unordered_map<
@@ -733,6 +698,10 @@ std::unordered_map<
                 name = "OriginGiratina";
             }
         }
+        if (types.size() == 1) {
+            types.emplace_back(PokemonType::COUNT);
+        }
+        std::sort(types.begin(), types.end());
         const Pokemon name_enum = STRING_TO_POKEMON.at(name);
         const std::vector<Ability> abilities = ABILITY_MAP.at(name_enum);
         std::vector<CustomPokemon> pokemon{};
@@ -743,7 +712,7 @@ std::unordered_map<
                     .ability = ability,
                     .level = LEVEL,
                     .item = STRING_TO_ITEM.at(""),
-                    .types = types,
+                    .types = {types[0], types[1]},
                     .moves = move_vector,
                     .stats = get_stats_for_serebii(form, serebii_pokemon)
                 }

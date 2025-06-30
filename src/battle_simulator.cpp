@@ -1,10 +1,13 @@
 #include "battle_simulator.h"
 
+#include <algorithm>
 #include <cmath>
 #include <set>
 
 #include "custom_pokemon.h"
+#include "Items.h"
 #include  "serebii_pokemon_data_source.h"
+#include "type_effectiveness.h"
 
 /*
  All move sets:
@@ -144,269 +147,34 @@
     PROTECTION_MOVES,
  */
 
-constexpr double not_effective = 0.0;
-constexpr double not_very_effective = 0.5;
-constexpr double super_effective = 2.0;
-
-const std::unordered_map<
-    PokemonType,
-    std::unordered_map<PokemonType, double>
-> defender_type_map = {
-    {
-        PokemonType::NORMAL,
-        {
-            {PokemonType::FIGHTING, super_effective},
-            {PokemonType::GHOST, not_effective},
-        }
-    },
-    {
-        PokemonType::FIRE,
-        {
-            {PokemonType::FIRE, not_very_effective},
-            {PokemonType::WATER, super_effective},
-            {PokemonType::GRASS, not_very_effective},
-            {PokemonType::ICE, not_very_effective},
-            {PokemonType::GROUND, super_effective},
-            {PokemonType::BUG, not_very_effective},
-            {PokemonType::ROCK, super_effective},
-            {PokemonType::STEEL, not_very_effective},
-        }
-    },
-    {
-        PokemonType::WATER,
-        {
-            {PokemonType::FIRE, not_very_effective},
-            {PokemonType::WATER, not_very_effective},
-            {PokemonType::ELECTRIC, super_effective},
-            {PokemonType::GRASS, super_effective},
-            {PokemonType::ICE, not_very_effective},
-            {PokemonType::STEEL, not_very_effective},
-        }
-    },
-    {
-        PokemonType::ELECTRIC,
-        {
-            {PokemonType::ELECTRIC, not_very_effective},
-            {PokemonType::GROUND, super_effective},
-            {PokemonType::FLYING, not_very_effective},
-            {PokemonType::STEEL, not_very_effective},
-        }
-    },
-    {
-        PokemonType::GRASS,
-        {
-            {PokemonType::FIRE, super_effective},
-            {PokemonType::WATER, not_very_effective},
-            {PokemonType::ELECTRIC, not_very_effective},
-            {PokemonType::GRASS, not_very_effective},
-            {PokemonType::ICE, super_effective},
-            {PokemonType::POISON, super_effective},
-            {PokemonType::GROUND, not_very_effective},
-            {PokemonType::FLYING, super_effective},
-            {PokemonType::BUG, super_effective},
-        }
-    },
-    {
-        PokemonType::ICE,
-        {
-            {PokemonType::FIRE, super_effective},
-            {PokemonType::ICE, not_very_effective},
-            {PokemonType::FIGHTING, super_effective},
-            {PokemonType::ROCK, super_effective},
-            {PokemonType::STEEL, super_effective},
-        }
-    },
-    {
-        PokemonType::FIGHTING,
-        {
-            {PokemonType::FLYING, super_effective},
-            {PokemonType::PSYCHIC, super_effective},
-            {PokemonType::BUG, not_very_effective},
-            {PokemonType::ROCK, not_very_effective},
-            {PokemonType::DARK, not_very_effective},
-        }
-    },
-    {
-        PokemonType::POISON,
-        {
-            {PokemonType::GRASS, not_very_effective},
-            {PokemonType::FIGHTING, not_very_effective},
-            {PokemonType::POISON, not_very_effective},
-            {PokemonType::GROUND, super_effective},
-            {PokemonType::PSYCHIC, super_effective},
-            {PokemonType::BUG, not_very_effective},
-        }
-    },
-    {
-        PokemonType::GROUND,
-        {
-            {PokemonType::WATER, super_effective},
-            {PokemonType::ELECTRIC, not_effective},
-            {PokemonType::GRASS, super_effective},
-            {PokemonType::ICE, super_effective},
-            {PokemonType::POISON, not_very_effective},
-            {PokemonType::ROCK, not_very_effective},
-        }
-    },
-    {
-        PokemonType::FLYING,
-        {
-            {PokemonType::ELECTRIC, super_effective},
-            {PokemonType::GRASS, not_very_effective},
-            {PokemonType::ICE, super_effective},
-            {PokemonType::FIGHTING, not_very_effective},
-            {PokemonType::GROUND, not_effective},
-            {PokemonType::BUG, not_very_effective},
-            {PokemonType::ROCK, super_effective},
-        }
-    },
-    {
-        PokemonType::PSYCHIC,
-        {
-            {PokemonType::FIGHTING, not_very_effective},
-            {PokemonType::PSYCHIC, not_very_effective},
-            {PokemonType::BUG, super_effective},
-            {PokemonType::GHOST, super_effective},
-            {PokemonType::DARK, super_effective},
-        }
-    },
-    {
-        PokemonType::BUG,
-        {
-            {PokemonType::FIRE, super_effective},
-            {PokemonType::GRASS, not_very_effective},
-            {PokemonType::FIGHTING, not_very_effective},
-            {PokemonType::GROUND, not_very_effective},
-            {PokemonType::FLYING, super_effective},
-            {PokemonType::ROCK, super_effective},
-        }
-    },
-    {
-        PokemonType::ROCK,
-        {
-            {PokemonType::NORMAL, not_very_effective},
-            {PokemonType::FIRE, not_very_effective},
-            {PokemonType::WATER, super_effective},
-            {PokemonType::GRASS, super_effective},
-            {PokemonType::FIGHTING, super_effective},
-            {PokemonType::POISON, not_very_effective},
-            {PokemonType::GROUND, super_effective},
-            {PokemonType::FLYING, not_very_effective},
-            {PokemonType::STEEL, super_effective},
-        }
-    },
-    {
-        PokemonType::GHOST,
-        {
-            {PokemonType::NORMAL, not_effective},
-            {PokemonType::FIGHTING, not_effective},
-            {PokemonType::POISON, not_very_effective},
-            {PokemonType::BUG, not_very_effective},
-            {PokemonType::GHOST, super_effective},
-            {PokemonType::DARK, super_effective},
-        }
-    },
-    {
-        PokemonType::DRAGON,
-        {
-            {PokemonType::FIRE, not_very_effective},
-            {PokemonType::WATER, not_very_effective},
-            {PokemonType::ELECTRIC, not_very_effective},
-            {PokemonType::GRASS, not_very_effective},
-            {PokemonType::ICE, super_effective},
-            {PokemonType::DRAGON, super_effective},
-        }
-    },
-    {
-        PokemonType::DARK,
-        {
-            {PokemonType::FIGHTING, super_effective},
-            {PokemonType::PSYCHIC, not_effective},
-            {PokemonType::BUG, super_effective},
-            {PokemonType::GHOST, not_very_effective},
-            {PokemonType::DARK, not_very_effective},
-        }
-    },
-    {
-        PokemonType::STEEL,
-        {
-            {PokemonType::NORMAL, not_very_effective},
-            {PokemonType::FIRE, super_effective},
-            {PokemonType::GRASS, not_very_effective},
-            {PokemonType::ICE, not_very_effective},
-            {PokemonType::FIGHTING, super_effective},
-            {PokemonType::POISON, not_effective},
-            {PokemonType::GROUND, super_effective},
-            {PokemonType::FLYING, not_very_effective},
-            {PokemonType::PSYCHIC, not_very_effective},
-            {PokemonType::BUG, not_very_effective},
-            {PokemonType::ROCK, not_very_effective},
-            {PokemonType::GHOST, not_very_effective},
-            {PokemonType::DRAGON, not_very_effective},
-            {PokemonType::DARK, not_very_effective},
-            {PokemonType::STEEL, not_very_effective},
-        }
-    },
+enum class Status {
+    BURN,
+    POISON,
+    SLEEP,
+    NONE
 };
 
-double get_effectiveness(
-    const std::set<PokemonType>& defender_types,
-    const PokemonType& attack_type
-) {
-    static constexpr int number_of_types = static_cast<int>(PokemonType::COUNT);
-    auto key = number_of_types * number_of_types * static_cast<int>(
-        attack_type);
-    if (auto it = defender_types.begin();
-        it != defender_types.end()
-    ) {
-        key += number_of_types * static_cast<int>(*it);
-        ++it;
-        if (it != defender_types.end()) {
-            key += static_cast<int>(*it);
-        }
-    }
-    static constexpr int cache_size = number_of_types * number_of_types *
-        number_of_types;
-    static std::array<double, cache_size> cache = [] {
-        std::array<double, cache_size> arr{};
-        arr.fill(-1.0);
-        return arr;
-    }();
-    if (const auto value = cache[key];
-        value != -1.0
-    ) {
-        return value;
-    }
-
-    double multiplier = 1.0;
-    for (const auto defender_type : defender_types) {
-        if (const auto defender_it = defender_type_map.find(defender_type);
-            defender_it != defender_type_map.end()
-        ) {
-            const auto& inner_map = defender_it->second;
-            if (const auto attacker_it = inner_map.find(attack_type);
-                attacker_it != inner_map.end()
-            ) {
-                multiplier *= attacker_it->second;
-            }
-        }
-    }
-    cache[key] = multiplier;
-    return multiplier;
-}
-
+enum class FieldLocation {
+    IN_AIR,
+    UNDER_GROUND,
+    UNDER_WATER,
+    IN_THE_VOID,
+    ON_FIELD
+};
 
 struct PokemonState {
     const bool is_player;
     const CustomPokemon& pokemon;
 
     const uint8_t level = pokemon.level;
-    const std::set<PokemonType> types = pokemon.types;
+    const std::array<PokemonType, 2> types = pokemon.types;
     Item item = pokemon.item;
+    Ability ability = pokemon.ability;
+    FieldLocation field_location = FieldLocation::ON_FIELD;
 
     int max_health =
         pokemon.stats.at(static_cast<int>(Stat::HEALTH));
-    std::array<uint16_t, 6> current_stats = {
+    std::array<int, 6> current_stats = {
         pokemon.stats.at(static_cast<int>(Stat::HEALTH)),
         pokemon.stats.at(static_cast<int>(Stat::ATTACK)),
         pokemon.stats.at(static_cast<int>(Stat::DEFENSE)),
@@ -414,38 +182,104 @@ struct PokemonState {
         pokemon.stats.at(static_cast<int>(Stat::SPECIAL_DEFENSE)),
         pokemon.stats.at(static_cast<int>(Stat::SPEED))
     };
-    std::array<uint16_t, 6> stat_stages = {
+    std::array<int, 6> stat_stages = {
         0, 0, 0, 0, 0, 0
     };
 
 
-    bool burned = false;
+    Status status = Status::NONE;
+    bool confused = false;
     bool recharging = false;
 };
 
 int get_damage(
     const PokemonState& attacker_state,
     const uint16_t attack,
-    const std::set<PokemonType>& defender_types,
+    const PokemonState& defender_state,
     const uint16_t defense,
-    const MoveInfo* move
+    const MoveInfo* move,
+    const bool recalculate
 ) {
     int damage = ((2 * attacker_state.level) / 5) + 2;
-    damage = damage * move->power * attack / defense;
-    damage = damage / 50;
+    int power = move->power;
 
+    if (move->move == Move::Eruption) {
+        power = std::min(
+            1,
+            static_cast<int>(
+                std::floor(
+                    150 * attacker_state.current_stats[
+                        static_cast<int>(Stat::HEALTH)
+                    ] / attacker_state.max_health
+                )
+            )
+        );
+    }
+
+    // Field location
+    const bool attacker_faster =
+        attacker_state.current_stats.at(static_cast<int>(Stat::SPEED)) >
+        defender_state.current_stats.at(static_cast<int>(Stat::SPEED));
+    if (const auto field_location = defender_state.field_location;
+        field_location != FieldLocation::ON_FIELD
+    ) {
+        if (!attacker_faster && !recalculate) {
+            return 0;
+        }
+        if (field_location == FieldLocation::IN_AIR) {
+            if (MOVES_THAT_HIT_DEFENDER_IN_AIR.contains(move->move)
+            ) {
+                if (move->move == Move::Gust ||
+                    move->move == Move::Twister
+                ) {
+                    power *= 2;
+                }
+            } else {
+                return 0;
+            }
+        } else if (field_location == FieldLocation::IN_THE_VOID) {
+            return 0;
+        } else if (field_location == FieldLocation::UNDER_GROUND) {
+            if (MOVES_THAT_HIT_DEFENDER_UNDER_GROUND.contains(move->move)) {
+                if (move->move == Move::Earthquake ||
+                    move->move == Move::Magnitude
+                ) {
+                    power *= 2;
+                }
+            } else {
+                return 0;
+            }
+        } else if (field_location == FieldLocation::UNDER_WATER) {
+            if (MOVES_THAT_HIT_DEFENDER_UNDER_WATER.contains(move->move)) {
+                power *= 2;
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    damage = damage * power * attack / defense;
+    damage = damage / 50;
     damage = damage + 2;
+
+    // Type effectiveness
     const auto move_type = move->type;
-    if (const auto attacker_types = attacker_state.types;
-        attacker_types.contains(move_type)
+    if (attacker_state.types[0] == move_type ||
+        attacker_state.types[1] == move_type
     ) {
         damage = static_cast<int>(damage * 1.5);
     }
     const auto effectiveness =
-        get_effectiveness(defender_types, move_type);
+        get_effectiveness(defender_state.types, move_type);
     damage = static_cast<int>(damage * effectiveness);
 
-    if (attacker_state.burned &&
+    // Random
+    if (attacker_state.is_player) {
+        damage = std::floor(damage * 0.85);
+    }
+
+    // Burn
+    if (attacker_state.status == Status::BURN &&
         move->category == Category::PHYSICAL &&
         !MOVES_THAT_HAVE_FIXED_DAMAGE.contains(move->move)
     ) {
@@ -462,8 +296,15 @@ struct BestMove {
 BestMove get_best_move_against_defender(
     const std::vector<const MoveInfo*>& attacker_moves,
     PokemonState& attacker_state,
-    const PokemonState& defender_state
+    const PokemonState& defender_state,
+    const bool recalculate,
+    const BestMove& last_picked_move
 ) {
+    if (attacker_state.field_location != FieldLocation::ON_FIELD
+    ) {
+        return last_picked_move;
+    }
+
     BestMove best_move{};
     if (attacker_state.recharging) {
         attacker_state.recharging = false;
@@ -490,16 +331,18 @@ BestMove get_best_move_against_defender(
                 ? get_damage(
                     attacker_state,
                     special_attack,
-                    defender_state.pokemon.types,
+                    defender_state,
                     special_defense,
-                    move
+                    move,
+                    recalculate
                 )
                 : get_damage(
                     attacker_state,
                     attack,
-                    defender_state.pokemon.types,
+                    defender_state,
                     defense,
-                    move
+                    move,
+                    recalculate
                 );
         if (damage > best_move.damage) {
             best_move.damage = damage;
@@ -514,18 +357,54 @@ void pre_turn_state_update(
     PokemonState& defender_state
 ) {}
 
-bool is_player_first(
-    const PokemonState& attacker_state,
-    const BestMove attacker_move,
-    const PokemonState& defender_state,
-    const BestMove defender_move
-) {
-    return attacker_state.current_stats.at(static_cast<int>(Stat::SPEED)) >
-        defender_state.current_stats.at(static_cast<int>(Stat::SPEED));
+int get_move_priority(const BestMove& best_move) {
+    int priority = 0;
+    if (best_move.move == nullptr) {
+        return 0;
+    }
+    if (const auto move = best_move.move->move; PRIORITY_MOVES_MINUS_7.
+        contains(move)) {
+        priority = -7;
+    } else if (PRIORITY_MOVES_MINUS_6.contains(move)) {
+        priority = -6;
+    } else if (PRIORITY_MOVES_MINUS_5.contains(move)) {
+        priority = -5;
+    } else if (PRIORITY_MOVES_MINUS_4.contains(move)) {
+        priority = -4;
+    } else if (PRIORITY_MOVES_MINUS_3.contains(move)) {
+        priority = -3;
+    } else if (PRIORITY_MOVES_MINUS_1.contains(move)) {
+        priority = -1;
+    } else if (PRIORITY_MOVES_PLUS_1.contains(move)) {
+        priority = 1;
+    } else if (PRIORITY_MOVES_PLUS_2.contains(move)) {
+        priority = 2;
+    } else if (PRIORITY_MOVES_PLUS_3.contains(move)) {
+        priority = 3;
+    } else if (PRIORITY_MOVES_PLUS_4.contains(move)) {
+        priority = 4;
+    } else if (PRIORITY_MOVES_PLUS_5.contains(move)) {
+        priority = 5;
+    }
+    return priority;
 }
 
-int calculate_state_boost(const uint16_t stat, const uint8_t stage) {
-    // TODO other modifiers?
+bool is_player_first(
+    const PokemonState& player_state,
+    const BestMove player_move,
+    const PokemonState& opponent_state,
+    const BestMove opponent_move
+) {
+    const int player_priority = get_move_priority(player_move);
+    const int opponent_priority = get_move_priority(opponent_move);
+    if (player_priority != opponent_priority) {
+        return player_priority > opponent_priority;
+    }
+    return player_state.current_stats.at(static_cast<int>(Stat::SPEED)) >
+        opponent_state.current_stats.at(static_cast<int>(Stat::SPEED));
+}
+
+int calculate_state_boost(const uint16_t stat, const int stage) {
     switch (stage) {
     case -6:
         return 2 * stat / 8;
@@ -559,14 +438,70 @@ int calculate_state_boost(const uint16_t stat, const uint8_t stage) {
     throw std::runtime_error("Bad stage");
 }
 
-void boost_stat(PokemonState& pokemon_state, const Stat stat) {
+void change_stat_modifier(
+    PokemonState& pokemon_state,
+    const Stat stat,
+    const int change
+) {
     const int index = static_cast<int>(stat);
     const auto stage = pokemon_state.stat_stages.at(index);
-    pokemon_state.stat_stages[index] = std::min(stage + 1, 6);
+    if (change > 0) {
+        pokemon_state.stat_stages[index] = std::min(stage + change, 6);
+    } else {
+        pokemon_state.stat_stages[index] = std::max(stage + change, -6);
+    }
     pokemon_state.current_stats[index] = calculate_state_boost(
         pokemon_state.pokemon.stats.at(index),
         pokemon_state.stat_stages[index]
     );
+}
+
+void apply_berry(PokemonState& pokemon_state) {
+    if (const auto berry = pokemon_state.item;
+        berry == Item::ApicotBerry
+    ) {
+        change_stat_modifier(pokemon_state, Stat::SPECIAL_DEFENSE, 1);
+    } else if (berry == Item::ChestoBerry) {
+        if (pokemon_state.status == Status::SLEEP) {
+            pokemon_state.status = Status::NONE;
+        }
+    } else if (berry == Item::GanlonBerry) {
+        change_stat_modifier(pokemon_state, Stat::DEFENSE, 1);
+    } else if (berry == Item::LiechiBerry) {
+        change_stat_modifier(pokemon_state, Stat::ATTACK, 1);
+    } else if (berry == Item::LumBerry) {
+        if (pokemon_state.status != Status::NONE) {
+            pokemon_state.status = Status::NONE;
+        }
+        if (pokemon_state.confused) {
+            pokemon_state.confused = false;
+        }
+    } else if (berry == Item::PersimBerry) {
+        if (pokemon_state.confused) {
+            pokemon_state.confused = false;
+        }
+    } else if (berry == Item::PetayaBerry) {
+        change_stat_modifier(pokemon_state, Stat::SPECIAL_ATTACK, 1);
+    } else if (berry == Item::SalacBerry) {
+        change_stat_modifier(pokemon_state, Stat::SPEED, 1);
+    } else if (berry == Item::SitrusBerry) {
+        const auto current_health =
+            pokemon_state.current_stats[static_cast<int>(Stat::HEALTH)];
+        const int max_health = pokemon_state.max_health;
+        pokemon_state.current_stats[static_cast<int>(Stat::HEALTH)] =
+            std::max(max_health, current_health + max_health / 4);
+    }
+    pokemon_state.item = Item::None;
+}
+
+void try_apply_berry(PokemonState pokemon_state, const bool eaten) {
+    if (const auto item = pokemon_state.item;
+        BERRIES.contains(item)
+    ) {
+        if (eaten) {
+            apply_berry(pokemon_state);
+        }
+    }
 }
 
 void apply_post_attack_effects(
@@ -582,9 +517,72 @@ void apply_post_attack_effects(
         attacker_state.recharging = true;
     }
 
+    // Recoil
+    if (MOVES_WITH_RECOIL.contains(move)) {
+        if (move == Move::HeadSmash ||
+            (attacker_state.is_player &&
+                move == Move::JumpKick ||
+                move == Move::HighJumpKick)
+        ) {
+            attacker_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                attacker_move.damage / 2;
+        } else if (
+            move == Move::BraveBird ||
+            move == Move::DoubleEdge ||
+            move == Move::FlareBlitz ||
+            move == Move::VoltTackle ||
+            move == Move::WoodHammer
+        ) {
+            attacker_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                attacker_move.damage / 3;
+        } else if (
+            move == Move::Submission ||
+            move == Move::TakeDown
+        ) {
+            attacker_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                attacker_move.damage / 4;
+        } else if (move == Move::BellyDrum) {
+            attacker_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                attacker_state.max_health / 2;
+            change_stat_modifier(attacker_state, Stat::ATTACK, 6);
+        }
+    }
+
+    // Contact moves
+    if (MOVES_THAT_MAKE_CONTACT.contains(move)) {
+        const auto defender_ability = defender_state.ability;
+        if (attacker_state.is_player) {
+            if (defender_state.status == Status::NONE) {
+                if (defender_ability == Ability::EffectSpore ||
+                    defender_ability == Ability::PoisonPoint
+                ) {
+                    defender_state.status = Status::POISON;
+                } else if (defender_ability == Ability::FlameBody) {
+                    defender_state.status = Status::BURN;
+                }
+            }
+        }
+        if (defender_ability == Ability::RoughSkin) {
+            attacker_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                attacker_state.max_health / 8;
+        }
+        if (attacker_state.item == Item::RockyHelmet) {
+            defender_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                defender_state.max_health / 6;
+        }
+        if (attacker_state.item == Item::None &&
+            defender_state.item == Item::StickyBarb
+        ) {
+            attacker_state.item = Item::StickyBarb;
+            defender_state.item = Item::None;
+        }
+    }
+
     // Burn
     const bool is_fling = move == Move::Fling;
-    if (!defender_state.types.contains(PokemonType::FIRE)) {
+    if (defender_state.types[0] != PokemonType::FIRE &&
+        defender_state.types[1] != PokemonType::FIRE
+    ) {
         const bool flung_flame_orb =
             (is_fling && attacker_state.item == Item::FlameOrb);
         if (MOVES_THAT_BURN.contains(move) ||
@@ -592,11 +590,70 @@ void apply_post_attack_effects(
         ) {
             if (attacker_state.is_player) {
                 if (flung_flame_orb || move == Move::WillOWisp) {
-                    defender_state.burned = true;
+                    if (defender_state.status == Status::NONE) {
+                        defender_state.status = Status::BURN;
+                    }
                 }
             } else {
-                defender_state.burned = true;
+                if (defender_state.status == Status::NONE) {
+                    defender_state.status = Status::BURN;
+                }
             }
+        }
+    }
+
+    // Poison
+    if (defender_state.types[0] != PokemonType::POISON &&
+        defender_state.types[1] != PokemonType::POISON &&
+        defender_state.types[0] != PokemonType::STEEL &&
+        defender_state.types[1] != PokemonType::STEEL
+    ) {
+        const bool flung_poison_barb =
+            (is_fling && attacker_state.item == Item::PoisonBarb);
+        if (MOVES_THAT_POISON.contains(move) ||
+            flung_poison_barb
+        ) {
+            if (attacker_state.is_player) {
+                if (flung_poison_barb ||
+                    move == Move::PoisonGas ||
+                    move == Move::PoisonPowder
+                ) {
+                    if (defender_state.status == Status::NONE) {
+                        defender_state.status = Status::POISON;
+                    }
+                }
+            } else {
+                if (defender_state.status == Status::NONE) {
+                    defender_state.status = Status::POISON;
+                }
+            }
+        }
+    }
+
+    // Special Attack
+    if (MOVES_THAT_LOWER_ATTACKERS_SPECIAL_ATTACK.contains(move)) {
+        change_stat_modifier(attacker_state, Stat::SPECIAL_ATTACK, -2);
+    }
+
+    // Special Defense
+    if (MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE.contains(move)) {
+        if (move == Move::SeedFlare ||
+            move == Move::MetalSound ||
+            move == Move::FakeTears
+        ) {
+            change_stat_modifier(defender_state, Stat::SPECIAL_DEFENSE, -2);
+        }
+        if (move == Move::ShadowBall ||
+            move == Move::Psychic ||
+            move == Move::Acid ||
+            move == Move::LusterPurge ||
+            move == Move::BugBuzz ||
+            move == Move::FocusBlast ||
+            move == Move::EnergyBall ||
+            move == Move::EarthPower ||
+            move == Move::FlashCannon
+        ) {
+            change_stat_modifier(defender_state, Stat::SPECIAL_DEFENSE, -1);
         }
     }
 
@@ -604,15 +661,14 @@ void apply_post_attack_effects(
     if (!attacker_state.is_player &&
         MOVES_THAT_OMNI_BOOST_ATTACKER.contains(move)
     ) {
-        boost_stat(attacker_state, Stat::ATTACK);
-        boost_stat(attacker_state, Stat::DEFENSE);
-        boost_stat(attacker_state, Stat::SPECIAL_ATTACK);
-        boost_stat(attacker_state, Stat::SPECIAL_DEFENSE);
-        boost_stat(attacker_state, Stat::SPEED);
+        change_stat_modifier(attacker_state, Stat::ATTACK, 1);
+        change_stat_modifier(attacker_state, Stat::DEFENSE, 1);
+        change_stat_modifier(attacker_state, Stat::SPECIAL_ATTACK, 1);
+        change_stat_modifier(attacker_state, Stat::SPECIAL_DEFENSE, 1);
+        change_stat_modifier(attacker_state, Stat::SPEED, 1);
     }
 
-    if
-    (is_fling) {
+    if (is_fling) {
         // TODO other items
         attacker_state.item = Item::None;
     }
@@ -620,36 +676,97 @@ void apply_post_attack_effects(
 
 void execute_move(
     PokemonState& attacker_state,
-    const BestMove& attacker_move,
-    PokemonState& defender_state
+    BestMove& attacker_move,
+    PokemonState& defender_state,
+    BestMove& defender_move
 ) {
-    defender_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
-        attacker_move.damage;
-    apply_post_attack_effects(
-        attacker_state,
-        attacker_move,
-        defender_state
-    );
+    if (attacker_move.move == nullptr) {
+        return;
+    }
+
+    bool attacker_vanished = false;
+    if (const bool on_field =
+            attacker_state.field_location == FieldLocation::ON_FIELD;
+        MOVES_THAT_GO_INTO_AIR.contains(attacker_move.move->move) && on_field
+    ) {
+        attacker_state.field_location = FieldLocation::IN_AIR;
+        attacker_vanished = true;
+    } else if (MOVES_THAT_GO_UNDER_GROUND.contains(attacker_move.move->move) &&
+        on_field
+    ) {
+        attacker_state.field_location = FieldLocation::UNDER_GROUND;
+        attacker_vanished = true;
+    } else if (MOVES_THAT_GO_UNDER_WATER.contains(attacker_move.move->move) &&
+        on_field
+    ) {
+        attacker_state.field_location = FieldLocation::UNDER_WATER;
+        attacker_vanished = true;
+    } else if (MOVES_THAT_VANISH_USER.contains(attacker_move.move->move) &&
+        on_field
+    ) {
+        attacker_state.field_location = FieldLocation::IN_THE_VOID;
+        attacker_vanished = true;
+    }
+    if (!attacker_vanished &&
+        attacker_state.field_location != FieldLocation::ON_FIELD
+    ) {
+        attacker_state.field_location = FieldLocation::ON_FIELD;
+    }
+
+    if (attacker_state.field_location != FieldLocation::ON_FIELD) {
+        // Recalculate the damage of the next move of the opponent
+        auto [move, damage] = get_best_move_against_defender(
+            {defender_move.move},
+            defender_state,
+            attacker_state,
+            true,
+            defender_move
+        );
+        defender_move.damage = damage;
+    }
+
+    if (attacker_state.field_location == FieldLocation::ON_FIELD) {
+        if (attacker_move.move->move == Move::SuckerPunch &&
+            defender_move.move->category == Category::STATUS
+        ) {
+            attacker_move.damage = 0;
+        }
+        defender_state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+            attacker_move.damage;
+        apply_post_attack_effects(
+            attacker_state,
+            attacker_move,
+            defender_state
+        );
+    }
 }
 
 void apply_end_of_turn_effects(
     PokemonState& state
 ) {
-    if (state.burned) {
-        state.current_stats[static_cast<int>(Stat::HEALTH)] -=
-            state.max_health / 8;
+    if (state.ability != Ability::MagicGuard) {
+        if (state.status == Status::BURN ||
+            state.status == Status::POISON
+        ) {
+            state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                state.max_health / 8;
+        }
+        if (state.item == Item::StickyBarb) {
+            state.current_stats[static_cast<int>(Stat::HEALTH)] -=
+                state.max_health / 8;
+        }
     }
 }
 
 void apply_end_of_turn_effects(
-    PokemonState& attacker_state,
-    PokemonState& defender_state
+    PokemonState& player_state,
+    PokemonState& opponent_state
 ) {
-    apply_end_of_turn_effects(attacker_state);
-    apply_end_of_turn_effects(defender_state);
+    apply_end_of_turn_effects(player_state);
+    apply_end_of_turn_effects(opponent_state);
 }
 
-void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
+bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
     auto player_state = PokemonState{
         .is_player = true,
         .pokemon = player
@@ -659,22 +776,29 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         .pokemon = opponent
     };
 
-    while (player_state.current_stats.at(static_cast<int>(Stat::HEALTH)) > 0 &&
-        opponent_state.current_stats.at(static_cast<int>(Stat::HEALTH)) > 0
+    constexpr int heath_index = static_cast<int>(Stat::HEALTH);
+    BestMove player_move;
+    BestMove opponent_move;
+    while (player_state.current_stats.at(heath_index) > 0 &&
+        opponent_state.current_stats.at(heath_index) > 0
     ) {
         pre_turn_state_update(
             player_state,
             opponent_state
         );
-        const auto player_move = get_best_move_against_defender(
+        player_move = get_best_move_against_defender(
             player.moves,
             player_state,
-            opponent_state
+            opponent_state,
+            false,
+            player_move
         );
-        const auto opponent_move = get_best_move_against_defender(
+        opponent_move = get_best_move_against_defender(
             opponent.moves,
             opponent_state,
-            player_state
+            player_state,
+            false,
+            opponent_move
         );
         const bool player_goes_first = is_player_first(
             player_state,
@@ -683,6 +807,7 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             opponent_move
         );
 
+        // For debugging unimplemented attacks
         std::array<Move, 2> moves = {};
         if (player_move.move) {
             moves[0] = player_move.move->move;
@@ -696,7 +821,9 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         }
         for (const auto move : moves) {
             if (move != Move::Count &&
-                !MOVES_THAT_REQUIRE_RECHARGE_TURN.contains(move) &&
+                move != Move::Eruption &&
+                move != Move::SuckerPunch &&
+                move != Move::BugBite &&
                 (ATTACKER_STAT_BOOST_MOVES.contains(move) ||
                     MOVES_THAT_BADLY_POISON.contains(move) ||
                     MOVES_THAT_BOOST_ATTACKERS_ATTACK.contains(move) ||
@@ -710,46 +837,23 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                     MOVES_THAT_CAN_BE_SNATCHED.contains(move) ||
                     MOVES_THAT_CHANGE_WEATHER.contains(move) ||
                     MOVES_THAT_CONTINUE.contains(move) ||
-                    MOVES_THAT_GO_INTO_AIR.contains(move) ||
-                    MOVES_THAT_GO_UNDER_GROUND.contains(move) ||
-                    MOVES_THAT_GO_UNDER_WATER.contains(move) ||
                     MOVES_THAT_HAVE_FIXED_DAMAGE.contains(move) ||
                     MOVES_THAT_HEAL_ATTACKER.contains(move) ||
-                    MOVES_THAT_HIT_DEFENDER_IN_AIR.contains(move) ||
-                    MOVES_THAT_HIT_DEFENDER_UNDER_GROUND.contains(move) ||
-                    MOVES_THAT_HIT_DEFENDER_UNDER_WATER.contains(move) ||
                     MOVES_THAT_LOWER_ATTACKERS_ATTACK.contains(move) ||
                     MOVES_THAT_LOWER_ATTACKERS_DEFENSE.contains(move) ||
-                    MOVES_THAT_LOWER_ATTACKERS_SPECIAL_ATTACK.contains(move) ||
                     MOVES_THAT_LOWER_ATTACKERS_SPECIAL_DEFENSE.contains(move) ||
                     MOVES_THAT_LOWER_ATTACKERS_SPEED.contains(move) ||
                     MOVES_THAT_LOWER_DEFENDER_ATTACK.contains(move) ||
                     MOVES_THAT_LOWER_DEFENDER_DEFENSE.contains(move) ||
                     MOVES_THAT_LOWER_DEFENDER_SPECIAL_ATTACK.contains(move) ||
-                    MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE.contains(move) ||
                     MOVES_THAT_LOWER_DEFENDER_SPEED.contains(move) ||
                     MOVES_THAT_MAKE_ATTACKER_FAINT.contains(move) ||
-                    MOVES_THAT_MAKE_CONTACT.contains(move) ||
-                    MOVES_THAT_POISON.contains(move) ||
                     MOVES_THAT_RAISE_DEFENDER_ATTACK.contains(move) ||
                     MOVES_THAT_RAISE_DEFENDER_SPECIAL_ATTACK.contains(move) ||
                     MOVES_THAT_REQUIRE_CHARGING_TURN.contains(move) ||
-                    MOVES_THAT_REQUIRE_RECHARGE_TURN.contains(move) ||
-                    MOVES_THAT_VANISH_USER.contains(move) ||
-                    MOVES_WITH_RECOIL.contains(move) ||
                     MULTI_HIT_MOVES.contains(move) ||
                     MULTI_TURN_MOVES.contains(move) ||
                     OTHER_MOVES.contains(move) ||
-                    PRIORITY_MOVES_MINUS_1.contains(move) ||
-                    PRIORITY_MOVES_MINUS_3.contains(move) ||
-                    PRIORITY_MOVES_MINUS_4.contains(move) ||
-                    PRIORITY_MOVES_MINUS_5.contains(move) ||
-                    PRIORITY_MOVES_MINUS_6.contains(move) ||
-                    PRIORITY_MOVES_MINUS_7.contains(move) ||
-                    PRIORITY_MOVES_PLUS_1.contains(move) ||
-                    PRIORITY_MOVES_PLUS_2.contains(move) ||
-                    PRIORITY_MOVES_PLUS_3.contains(move) ||
-                    PRIORITY_MOVES_PLUS_4.contains(move) ||
                     PROTECTION_MOVES.contains(move))
             ) {
                 printf("");
@@ -759,24 +863,22 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             execute_move(
                 player_state,
                 player_move,
-                opponent_state
+                opponent_state,
+                opponent_move
             );
-            if (player_state.current_stats.at(static_cast<int>(Stat::HEALTH)) <=
-                0 ||
-                opponent_state.current_stats.at(static_cast<int>(Stat::HEALTH))
-                <= 0
+            if (player_state.current_stats.at(heath_index) <= 0 ||
+                opponent_state.current_stats.at(heath_index) <= 0
             ) {
                 break;
             }
             execute_move(
                 opponent_state,
                 opponent_move,
-                player_state
+                player_state,
+                player_move
             );
-            if (player_state.current_stats.at(static_cast<int>(Stat::HEALTH)) <=
-                0 ||
-                opponent_state.current_stats.at(static_cast<int>(Stat::HEALTH))
-                <= 0
+            if (player_state.current_stats.at(heath_index) <= 0 ||
+                opponent_state.current_stats.at(heath_index) <= 0
             ) {
                 break;
             }
@@ -784,24 +886,22 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             execute_move(
                 opponent_state,
                 opponent_move,
-                player_state
+                player_state,
+                player_move
             );
-            if (player_state.current_stats.at(static_cast<int>(Stat::HEALTH)) <=
-                0 ||
-                opponent_state.current_stats.at(static_cast<int>(Stat::HEALTH))
-                <= 0
+            if (player_state.current_stats.at(heath_index) <= 0 ||
+                opponent_state.current_stats.at(heath_index) <= 0
             ) {
                 break;
             }
             execute_move(
                 player_state,
                 player_move,
-                opponent_state
+                opponent_state,
+                opponent_move
             );
-            if (player_state.current_stats.at(static_cast<int>(Stat::HEALTH)) <=
-                0 ||
-                opponent_state.current_stats.at(static_cast<int>(Stat::HEALTH))
-                <= 0
+            if (player_state.current_stats.at(heath_index) <= 0 ||
+                opponent_state.current_stats.at(heath_index) <= 0
             ) {
                 break;
             }
@@ -818,4 +918,16 @@ void battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             break;
         }
     }
+    if (player_state.current_stats.at(heath_index) > 0 &&
+        opponent_state.current_stats.at(heath_index) < 0 &&
+        opponent_state.ability == Ability::Aftermath &&
+        player_state.ability != Ability::Damp
+    ) {
+        player_state.current_stats[heath_index] -= player_state.max_health / 4;
+    }
+
+    if (player_state.current_stats.at(heath_index) > 0) {
+        return true;
+    }
+    return false;
 }

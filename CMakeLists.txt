@@ -19,6 +19,10 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/battle_simulator.cpp
         src/battle_simulator.h
         src/abilities.h
+        src/type_effectiveness.h
+        src/type_effectiveness.cpp
+        src/Items.h
+        src/Pokemon.h
 )
 
 add_custom_command(
