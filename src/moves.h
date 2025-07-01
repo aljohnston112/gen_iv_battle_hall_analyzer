@@ -478,27 +478,27 @@ enum class Move {
     Count
 };
 
-static std::unordered_set PRIORITY_MOVES_PLUS_5 = {
+static const std::unordered_set PRIORITY_MOVES_PLUS_5 = {
     Move::HelpingHand
 };
 
-static std::unordered_set PRIORITY_MOVES_PLUS_4 = {
+static const std::unordered_set PRIORITY_MOVES_PLUS_4 = {
     Move::MagicCoat,
     Move::Snatch
 };
 
-static std::unordered_set PRIORITY_MOVES_PLUS_3 = {
+static const std::unordered_set PRIORITY_MOVES_PLUS_3 = {
     Move::Detect,
     Move::Endure,
     Move::FollowMe,
     Move::Protect
 };
 
-static std::unordered_set PRIORITY_MOVES_PLUS_2 = {
+static const std::unordered_set PRIORITY_MOVES_PLUS_2 = {
     Move::Feint
 };
 
-static std::unordered_set PRIORITY_MOVES_PLUS_1 = {
+static const std::unordered_set PRIORITY_MOVES_PLUS_1 = {
     Move::AquaJet,
     Move::Bide,
     Move::BulletPunch,
@@ -512,35 +512,35 @@ static std::unordered_set PRIORITY_MOVES_PLUS_1 = {
     Move::VacuumWave
 };
 
-static std::unordered_set PRIORITY_MOVES_MINUS_1 = {
+static const std::unordered_set PRIORITY_MOVES_MINUS_1 = {
     Move::VitalThrow
 };
 
-static std::unordered_set PRIORITY_MOVES_MINUS_3 = {
+static const std::unordered_set PRIORITY_MOVES_MINUS_3 = {
     Move::FocusPunch
 };
 
-static std::unordered_set PRIORITY_MOVES_MINUS_4 = {
+static const std::unordered_set PRIORITY_MOVES_MINUS_4 = {
     Move::Avalanche,
     Move::Revenge
 };
 
-static std::unordered_set PRIORITY_MOVES_MINUS_5 = {
+static const std::unordered_set PRIORITY_MOVES_MINUS_5 = {
     Move::Counter,
     Move::MirrorCoat
 };
 
-static std::unordered_set PRIORITY_MOVES_MINUS_6 = {
+static const std::unordered_set PRIORITY_MOVES_MINUS_6 = {
     Move::Roar,
     Move::Whirlwind
 };
 
 
-static std::unordered_set PRIORITY_MOVES_MINUS_7 = {
+static const std::unordered_set PRIORITY_MOVES_MINUS_7 = {
     Move::TrickRoom
 };
 
-static std::unordered_set POWER_MOVES = {
+static const std::unordered_set POWER_MOVES = {
     Move::Pound,
     Move::DoubleSlap,
     Move::CometPunch,
@@ -766,7 +766,7 @@ static std::unordered_set POWER_MOVES = {
     Move::ShadowForce
 };
 
-static std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
+static const std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
     Move::Absorb,
     Move::MegaDrain,
     Move::Recover,
@@ -782,7 +782,7 @@ static std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
     Move::HealOrder
 };
 
-static std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
+static const std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
     Move::SwordsDance,
     Move::Growth,
     Move::Meditate,
@@ -806,7 +806,7 @@ static std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
     Move::DefendOrder
 };
 
-static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_ATTACK = {
+static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_ATTACK = {
     Move::SwordsDance,
     Move::Meditate,
     Move::Sharpen,
@@ -818,11 +818,11 @@ static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_ATTACK = {
     Move::DragonDance
 };
 
-static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_ATTACK = {
+static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_ATTACK = {
     Move::Superpower
 };
 
-static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_DEFENSE = {
+static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_DEFENSE = {
     Move::Harden,
     Move::Withdraw,
     Move::SkullBash,
@@ -834,19 +834,19 @@ static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_DEFENSE = {
     Move::DefendOrder
 };
 
-static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_DEFENSE = {
+static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_DEFENSE = {
     Move::Superpower,
     Move::CloseCombat
 };
 
-static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_ATTACK = {
+static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_ATTACK = {
     Move::Overheat,
     Move::PsychoBoost,
     Move::DracoMeteor,
     Move::LeafStorm
 };
 
-static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_ATTACK = {
+static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_ATTACK = {
     Move::Growth,
     Move::TailGlow,
     Move::CalmMind,
@@ -854,48 +854,48 @@ static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_ATTACK = {
     Move::ChargeBeam
 };
 
-static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_DEFENSE = {
+static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_DEFENSE = {
     Move::Amnesia,
     Move::CosmicPower,
     Move::CalmMind,
     Move::DefendOrder
 };
 
-static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_DEFENSE = {
+static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_DEFENSE = {
     Move::CloseCombat
 };
 
-static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPEED = {
+static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPEED = {
     Move::Agility,
     Move::DragonDance,
     Move::RockPolish
 };
 
-static std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPEED = {
+static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPEED = {
     Move::HammerArm
 };
 
-static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_EVASION = {
+static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_EVASION = {
     Move::DoubleTeam,
     Move::Minimize
 };
 
 
-static std::unordered_set MOVES_THAT_BOOST_ATTACKERS_CRIT_RATE = {
+static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_CRIT_RATE = {
     Move::FocusEnergy
 };
 
-static std::unordered_set MOVES_THAT_OMNI_BOOST_ATTACKER = {
+static const std::unordered_set MOVES_THAT_OMNI_BOOST_ATTACKER = {
     Move::Ancientpower,
     Move::SilverWind,
     Move::OminousWind
 };
 
-static std::unordered_set MOVES_THAT_RAISE_DEFENDER_ATTACK = {
+static const std::unordered_set MOVES_THAT_RAISE_DEFENDER_ATTACK = {
     Move::Swagger
 };
 
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ATTACK = {
+static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_ATTACK = {
     Move::Growl,
     Move::AuroraBeam,
     Move::Charm,
@@ -904,16 +904,16 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ATTACK = {
     Move::Tickle
 };
 
-static std::unordered_set MOVES_THAT_RAISE_DEFENDER_SPECIAL_ATTACK = {
+static const std::unordered_set MOVES_THAT_RAISE_DEFENDER_SPECIAL_ATTACK = {
     Move::Flatter
 };
 
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_ATTACK = {
+static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_ATTACK = {
     Move::Memento,
     Move::MistBall,
 };
 
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
+static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
     Move::TailWhip,
     Move::Leer,
     Move::Screech,
@@ -924,7 +924,7 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
     Move::Tickle
 };
 
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE = {
+static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE = {
     Move::Acid,
     Move::Psychic,
     Move::ShadowBall,
@@ -939,7 +939,7 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE = {
     Move::SeedFlare
 };
 
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPEED = {
+static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPEED = {
     Move::Bubblebeam,
     Move::StringShot,
     Move::Constrict,
@@ -951,7 +951,7 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPEED = {
     Move::MudShot
 };
 
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
+static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
     Move::SandAttack,
     Move::Smokescreen,
     Move::Kinesis,
@@ -963,11 +963,11 @@ static std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
     Move::MirrorShot
 };
 
-static std::unordered_set MOVES_THAT_LOWER_DEFENDER_EVASION = {
+static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_EVASION = {
     Move::SweetScent
 };
 
-static std::unordered_set MOVES_THAT_MAY_BYPASS_ACCURACY = {
+static const std::unordered_set MOVES_THAT_MAY_BYPASS_ACCURACY = {
     Move::Blizzard,
     Move::Thunder,
     Move::Swift,
@@ -981,7 +981,7 @@ static std::unordered_set MOVES_THAT_MAY_BYPASS_ACCURACY = {
     Move::MagnetBomb
 };
 
-static std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
+static const std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
     Move::Bounce,
     Move::Fly,
     Move::HighJumpKick,
@@ -990,12 +990,12 @@ static std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
     Move::Splash
 };
 
-static std::unordered_set PROTECTION_MOVES = {
+static const std::unordered_set PROTECTION_MOVES = {
     Move::Detect,
     Move::Protect,
 };
 
-static std::unordered_set OTHER_MOVES = {
+static const std::unordered_set OTHER_MOVES = {
     Move::Disable,
     Move::Mist,
     Move::LowKick,
@@ -1155,32 +1155,32 @@ static std::unordered_set OTHER_MOVES = {
     Move::MagmaStorm
 };
 
-static std::unordered_set MOVES_THAT_CHANGE_WEATHER = {
+static const std::unordered_set MOVES_THAT_CHANGE_WEATHER = {
     Move::Sandstorm,
     Move::RainDance,
     Move::SunnyDay,
     Move::Hail
 };
 
-static std::unordered_set MOVES_THAT_FORCE_USER_OUT = {
+static const std::unordered_set MOVES_THAT_FORCE_USER_OUT = {
     Move::Whirlwind,
     Move::Roar,
 };
 
-static std::unordered_set ONE_HIT_KO_MOVES = {
+static const std::unordered_set ONE_HIT_KO_MOVES = {
     Move::Guillotine,
     Move::HornDrill,
     Move::Fissure,
     Move::SheerCold
 };
 
-static std::unordered_set MOVES_THAT_MAKE_ATTACKER_FAINT = {
+static const std::unordered_set MOVES_THAT_MAKE_ATTACKER_FAINT = {
     Move::Selfdestruct,
     Move::Explosion,
     Move::Memento
 };
 
-static std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
+static const std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
     Move::KarateChop,
     Move::RazorWind,
     Move::RazorLeaf,
@@ -1202,14 +1202,14 @@ static std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
     Move::SpacialRend
 };
 
-static std::unordered_set MOVES_THAT_REQUIRE_CHARGING_TURN = {
+static const std::unordered_set MOVES_THAT_REQUIRE_CHARGING_TURN = {
     Move::RazorWind,
     Move::SolarBeam,
     Move::SkullBash,
     Move::SkyAttack,
 };
 
-static std::unordered_set MOVES_THAT_REQUIRE_RECHARGE_TURN = {
+static const std::unordered_set MOVES_THAT_REQUIRE_RECHARGE_TURN = {
     Move::HyperBeam,
     Move::BlastBurn,
     Move::HydroCannon,
@@ -1219,11 +1219,11 @@ static std::unordered_set MOVES_THAT_REQUIRE_RECHARGE_TURN = {
     Move::RoarOfTime
 };
 
-static std::unordered_set MOVES_THAT_DEAL_DOUBLE_AFTER_MINIMIZE = {
+static const std::unordered_set MOVES_THAT_DEAL_DOUBLE_AFTER_MINIMIZE = {
     Move::Stomp
 };
 
-static std::unordered_set MOVES_THAT_CONTINUE = {
+static const std::unordered_set MOVES_THAT_CONTINUE = {
     Move::Bind,
     Move::Wrap,
     Move::FireSpin,
@@ -1233,7 +1233,7 @@ static std::unordered_set MOVES_THAT_CONTINUE = {
     Move::MagmaStorm
 };
 
-static std::unordered_set MOVES_THAT_BURN = {
+static const std::unordered_set MOVES_THAT_BURN = {
     Move::FirePunch,
     Move::Ember,
     Move::Flamethrower,
@@ -1248,7 +1248,7 @@ static std::unordered_set MOVES_THAT_BURN = {
     Move::LavaPlume
 };
 
-static std::unordered_set MOVES_THAT_FREEZE = {
+static const std::unordered_set MOVES_THAT_FREEZE = {
     Move::IcePunch,
     Move::IceBeam,
     Move::Blizzard,
@@ -1256,7 +1256,7 @@ static std::unordered_set MOVES_THAT_FREEZE = {
     Move::IceFang
 };
 
-static std::unordered_set MOVES_THAT_PARALYZE = {
+static const std::unordered_set MOVES_THAT_PARALYZE = {
     Move::ThunderPunch,
     Move::BodySlam,
     Move::StunSpore,
@@ -1276,7 +1276,7 @@ static std::unordered_set MOVES_THAT_PARALYZE = {
     Move::Discharge
 };
 
-static std::unordered_set MOVES_THAT_POISON = {
+static const std::unordered_set MOVES_THAT_POISON = {
     Move::PoisonSting,
     Move::Twineedle,
     Move::PoisonPowder,
@@ -1290,12 +1290,12 @@ static std::unordered_set MOVES_THAT_POISON = {
     Move::GunkShot
 };
 
-static std::unordered_set MOVES_THAT_BADLY_POISON = {
+static const std::unordered_set MOVES_THAT_BADLY_POISON = {
     Move::Toxic,
     Move::PoisonFang
 };
 
-static std::unordered_set MOVES_THAT_MAKE_DEFENDER_SLEEP = {
+static const std::unordered_set MOVES_THAT_MAKE_DEFENDER_SLEEP = {
     Move::Sing,
     Move::SleepPowder,
     Move::Hypnosis,
@@ -1305,7 +1305,7 @@ static std::unordered_set MOVES_THAT_MAKE_DEFENDER_SLEEP = {
     Move::DarkVoid
 };
 
-static std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
+static const std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
     Move::Supersonic,
     Move::Psybeam,
     Move::Confusion,
@@ -1321,7 +1321,7 @@ static std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
     Move::RockClimb
 };
 
-static std::unordered_set MOVES_THAT_FLINCH = {
+static const std::unordered_set MOVES_THAT_FLINCH = {
     Move::Stomp,
     Move::RollingKick,
     Move::Headbutt,
@@ -1344,7 +1344,7 @@ static std::unordered_set MOVES_THAT_FLINCH = {
     Move::IronHead
 };
 
-static std::unordered_set MOVES_WITH_RECOIL = {
+static const std::unordered_set MOVES_WITH_RECOIL = {
     Move::JumpKick,
     Move::TakeDown,
     Move::DoubleEdge,
@@ -1359,7 +1359,7 @@ static std::unordered_set MOVES_WITH_RECOIL = {
 };
 
 
-static std::unordered_set MULTI_HIT_MOVES = {
+static const std::unordered_set MULTI_HIT_MOVES = {
     Move::DoubleSlap,
     Move::CometPunch,
     Move::DoubleKick,
@@ -1378,13 +1378,13 @@ static std::unordered_set MULTI_HIT_MOVES = {
     Move::DoubleHit
 };
 
-static std::unordered_set MULTI_TURN_MOVES = {
+static const std::unordered_set MULTI_TURN_MOVES = {
     Move::Thrash,
     Move::PetalDance,
     Move::Outrage
 };
 
-static std::unordered_set MOVES_THAT_HAVE_FIXED_DAMAGE = {
+static const std::unordered_set MOVES_THAT_HAVE_FIXED_DAMAGE = {
     Move::SonicBoom,
     Move::SeismicToss,
     Move::DragonRage,
@@ -1392,42 +1392,42 @@ static std::unordered_set MOVES_THAT_HAVE_FIXED_DAMAGE = {
 
 };
 
-static std::unordered_set MOVES_THAT_GO_INTO_AIR = {
+static const std::unordered_set MOVES_THAT_GO_INTO_AIR = {
     Move::Bounce,
     Move::Fly
 };
 
-static std::unordered_set MOVES_THAT_HIT_DEFENDER_IN_AIR = {
+static const std::unordered_set MOVES_THAT_HIT_DEFENDER_IN_AIR = {
     Move::Gust,
     Move::SkyUppercut,
     Move::Thunder,
     Move::Twister
 };
 
-static std::unordered_set MOVES_THAT_GO_UNDER_GROUND = {
+static const std::unordered_set MOVES_THAT_GO_UNDER_GROUND = {
     Move::Dig,
 };
 
-static std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_GROUND = {
+static const std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_GROUND = {
     Move::Earthquake,
     Move::Magnitude,
     Move::Fissure
 };
 
-static std::unordered_set MOVES_THAT_GO_UNDER_WATER = {
+static const std::unordered_set MOVES_THAT_GO_UNDER_WATER = {
     Move::Dive,
 };
 
-static std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_WATER = {
+static const std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_WATER = {
     Move::Surf,
     Move::Whirlpool
 };
 
-static std::unordered_set MOVES_THAT_VANISH_USER = {
+static const std::unordered_set MOVES_THAT_VANISH_USER = {
     Move::ShadowForce,
 };
 
-static std::unordered_set MOVES_THAT_MAKE_CONTACT = {
+static const std::unordered_set MOVES_THAT_MAKE_CONTACT = {
     Move::Pound,
     Move::KarateChop,
     Move::DoubleSlap,
@@ -1582,7 +1582,7 @@ static std::unordered_set MOVES_THAT_MAKE_CONTACT = {
     Move::ShadowForce,
 };
 
-static std::unordered_set MOVES_THAT_BYPASS_PROTECT = {
+static const std::unordered_set MOVES_THAT_BYPASS_PROTECT = {
     Move::Acupressure,
     Move::Curse,
     Move::DoomDesire,
@@ -1596,12 +1596,12 @@ static std::unordered_set MOVES_THAT_BYPASS_PROTECT = {
     Move::Transform
 };
 
-static std::unordered_set MOVES_THAT_BREAK_PROTECT = {
+static const std::unordered_set MOVES_THAT_BREAK_PROTECT = {
     Move::Feint,
     Move::ShadowForce
 };
 
-static std::unordered_set MOVES_THAT_CAN_BE_REFLECTED_BY_MIRROR_COAT = {
+static const std::unordered_set MOVES_THAT_CAN_BE_REFLECTED_BY_MIRROR_COAT = {
     Move::Attract,
     Move::Block,
     Move::Captivate,
@@ -1649,7 +1649,7 @@ static std::unordered_set MOVES_THAT_CAN_BE_REFLECTED_BY_MIRROR_COAT = {
     Move::Yawn
 };
 
-static std::unordered_set MOVES_THAT_CAN_BE_SNATCHED = {
+static const std::unordered_set MOVES_THAT_CAN_BE_SNATCHED = {
     Move::AcidArmor,
     Move::Acupressure,
     Move::Agility,
@@ -1904,7 +1904,7 @@ static const std::unordered_set MOVES_AFFECTED_BY_KINGS_ROCK = {
     Move::XScissor,
 };
 
-static std::unordered_map<std::string, Move> MOVE_MAP = {
+static const std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Pound", Move::Pound},
     {"Karate Chop", Move::KarateChop},
     {"Doubleslap", Move::DoubleSlap},
@@ -2391,7 +2391,7 @@ static std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Shadow Force", Move::ShadowForce}
 };
 
-inline void verify_map() {
+static void verify_map() {
     std::unordered_set<Move> moves;
     for (int i = 0; i < static_cast<int>(Move::Count); ++i) {
         moves.insert(static_cast<Move>(i));

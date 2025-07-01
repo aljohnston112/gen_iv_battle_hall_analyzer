@@ -28,7 +28,7 @@ enum class PokemonType {
     COUNT
 };
 
-static std::unordered_map<std::string, PokemonType> pokemon_type_map{
+static const std::unordered_map<std::string, PokemonType> pokemon_type_map{
     {"normal", PokemonType::NORMAL},
     {"fighting", PokemonType::FIGHTING},
     {"flying", PokemonType::FLYING},
@@ -74,7 +74,7 @@ enum class Stat {
     NO_STAT
 };
 
-static std::unordered_map<std::string, Stat> stat_map{
+static const std::unordered_map<std::string, Stat> stat_map{
     {"health", Stat::HEALTH},
     {"attack", Stat::ATTACK},
     {"defense", Stat::DEFENSE},
@@ -89,7 +89,7 @@ enum class Category {
     STATUS
 };
 
-static std::unordered_map<std::string, Category> move_category_map{
+static const std::unordered_map<std::string, Category> move_category_map{
     {"physical", Category::PHYSICAL},
     {"special", Category::SPECIAL},
     {"status", Category::STATUS}
@@ -105,7 +105,7 @@ struct MoveInfo {
     int effect_percent;
 
     bool operator==(const MoveInfo& other) const {
-        return name == other.name;
+        return move == other.move;
     }
 };
 

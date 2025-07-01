@@ -132,7 +132,7 @@ enum class Ability {
     WonderGuard
 };
 
-static std::unordered_map<Pokemon, std::vector<Ability>> ABILITY_MAP = {
+static const std::unordered_map<Pokemon, std::vector<Ability>> ABILITY_MAP = {
     {Pokemon::Abomasnow, {Ability::SnowWarning}},
     {Pokemon::Abra, {Ability::InnerFocus, Ability::Synchronize}},
     {Pokemon::Absol, {Ability::Pressure, Ability::SuperLuck}},

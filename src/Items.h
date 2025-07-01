@@ -1,5 +1,6 @@
 #ifndef ITEMS_H
 #define ITEMS_H
+
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -68,7 +69,7 @@ enum class Item {
     None
 };
 
-static std::unordered_set BERRIES = {
+static const std::unordered_set BERRIES = {
     Item::ApicotBerry,
     Item::ChestoBerry,
     Item::GanlonBerry,
@@ -80,7 +81,7 @@ static std::unordered_set BERRIES = {
     Item::SitrusBerry,
 };
 
-static std::unordered_map<std::string, Item> STRING_TO_ITEM = {
+static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Apicot Berry", Item::ApicotBerry},
     {"Big Root", Item::BigRoot},
     {"Black Belt", Item::BlackBelt},

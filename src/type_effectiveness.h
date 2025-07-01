@@ -11,7 +11,7 @@ constexpr double super_effective = 2.0;
 const std::unordered_map<
     PokemonType,
     std::unordered_map<PokemonType, double>
-> defender_type_map = {
+> EFFECTIVENESS_MAP = {
     {
         PokemonType::NORMAL,
         {

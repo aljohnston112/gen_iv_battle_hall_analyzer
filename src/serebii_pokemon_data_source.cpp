@@ -49,10 +49,10 @@ MoveInfo parse_move(
             move_info.move = MOVE_MAP.at(move_info.name);
         } else if (line.find("move_type") != std::string::npos) {
             move_info.type =
-                pokemon_type_map[extract_right_string(line)];
+                pokemon_type_map.at(extract_right_string(line));
         } else if (line.find("category") != std::string::npos) {
             move_info.category =
-                move_category_map[extract_right_string(line)];
+                move_category_map.at(extract_right_string(line));
         } else if (line.find("power") != std::string::npos) {
             move_info.power =
                 extract_right_int(line);
@@ -92,9 +92,9 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                 const auto start_i = line.find('"') + 1;
                 const auto end_i = line.find('"', start_i);
                 serebii_pokemon.types.emplace_back(
-                    pokemon_type_map[
+                    pokemon_type_map.at(
                         line.substr(start_i, end_i - start_i)
-                    ]
+                    )
                 );
             }
         } else if (line.find("\"base_stats\"") != std::string::npos) {
@@ -105,9 +105,9 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
             } else {
                 const auto key_start = line.find('"') + 1;
                 const auto key_end = line.find('"', key_start);
-                Stat key = stat_map[
+                Stat key = stat_map.at(
                     line.substr(key_start, key_end - key_start)
-                ];
+                );
                 const int value = extract_right_int(line);
                 serebii_pokemon.base_stats[key] = value;
             }
@@ -300,7 +300,8 @@ SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {
                         if (line.find('}') != std::string::npos) {
                             break;
                         }
-                        const Stat stat = stat_map[extract_left_string(line)];
+                        const Stat stat =
+                            stat_map.at(extract_left_string(line));
                         const int val = extract_right_int(line);
                         serebii_pokemon.form_to_base_stats[form][stat] = val;
                     }

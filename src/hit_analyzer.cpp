@@ -41,16 +41,16 @@ void battle_all(
                         for (const auto& player_pokemon : player_pokemon_) {
                             const auto won =
                                 battle(player_pokemon, opponent_pokemon);
-                            if (won) {
-                                printf(std::format(
-                                        "Rank: {:02}, Over 2: {:02}, {}\n",
-                                        rank,
-                                        over_2,
-                                        get_pokemon_name(opponent_pokemon.name
-                                        )
-                                    ).c_str()
-                                );
-                            }
+                            // if (won) {
+                            //     printf(std::format(
+                            //             "Rank: {:02}, Over 2: {:02}, {}\n",
+                            //             rank,
+                            //             over_2,
+                            //             get_pokemon_name(opponent_pokemon.name
+                            //             )
+                            //         ).c_str()
+                            //     );
+                            // }
                         }
                     }
                 }
@@ -75,12 +75,12 @@ void analyze() {
             all_moves
         );
 
-    // for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
-    //     const auto& player_pokemon_forms =
-    //         convert_serebii_to_custom(serebii_pokemon);
-    //     battle_all(group_to_rank_to_over_2, player_pokemon_forms);
-    // }
-    const auto& player_pokemon_forms =
-        convert_serebii_to_custom(all_serebii_pokemon.at("Sunkern"));
-    battle_all(group_to_rank_to_over_2, player_pokemon_forms);
+    for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
+        const auto& player_pokemon_forms =
+            convert_serebii_to_custom(serebii_pokemon);
+        battle_all(group_to_rank_to_over_2, player_pokemon_forms);
+    }
+    // const auto& player_pokemon_forms =
+    //     convert_serebii_to_custom(all_serebii_pokemon.at("Sunkern"));
+    // battle_all(group_to_rank_to_over_2, player_pokemon_forms);
 }
