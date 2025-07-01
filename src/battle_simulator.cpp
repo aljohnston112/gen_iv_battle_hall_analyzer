@@ -4,6 +4,7 @@
 #include <cmath>
 #include <set>
 
+#include "config.h"
 #include "custom_pokemon.h"
 #include "Items.h"
 #include "PokemonState.h"
@@ -154,36 +155,11 @@ struct BestMove {
 };
 
 int get_move_priority(const MoveInfo* move_info) {
-    int priority = 0;
     if (move_info == nullptr) {
         return 0;
     }
-    if (const auto move = move_info->move;
-        PRIORITY_MOVES_MINUS_7.contains(move)
-    ) {
-        priority = -7;
-    } else if (PRIORITY_MOVES_MINUS_6.contains(move)) {
-        priority = -6;
-    } else if (PRIORITY_MOVES_MINUS_5.contains(move)) {
-        priority = -5;
-    } else if (PRIORITY_MOVES_MINUS_4.contains(move)) {
-        priority = -4;
-    } else if (PRIORITY_MOVES_MINUS_3.contains(move)) {
-        priority = -3;
-    } else if (PRIORITY_MOVES_MINUS_1.contains(move)) {
-        priority = -1;
-    } else if (PRIORITY_MOVES_PLUS_1.contains(move)) {
-        priority = 1;
-    } else if (PRIORITY_MOVES_PLUS_2.contains(move)) {
-        priority = 2;
-    } else if (PRIORITY_MOVES_PLUS_3.contains(move)) {
-        priority = 3;
-    } else if (PRIORITY_MOVES_PLUS_4.contains(move)) {
-        priority = 4;
-    } else if (PRIORITY_MOVES_PLUS_5.contains(move)) {
-        priority = 5;
-    }
-    return priority;
+    const auto move = static_cast<int>(move_info->move);
+    return MOVE_PRIORITIES[move];
 }
 
 void apply_end_of_turn_effects(
@@ -322,6 +298,12 @@ void try_apply_status(PokemonState& pokemon_state, const Status status) {
     }
 }
 
+bool move_has_flag(const Move move, const MoveFlag move_flag) {
+    return MOVE_FLAGS[static_cast<int>(move)].test(
+        static_cast<size_t>(move_flag)
+    );
+}
+
 void apply_post_attack_effects(
     PokemonState& attacker_state,
     const BestMove& attacker_move,
@@ -333,7 +315,7 @@ void apply_post_attack_effects(
     const auto move = attacker_move.move->move;
 
     // Multiturn
-    if (MULTI_TURN_MOVES.contains(move)) {
+    if (move_has_flag(move, MoveFlag::LASTS_MULTIPLE_TURNS)) {
         uint8_t player_turns = 0;
         uint8_t opponent_turns = 0;
         if (move == Move::Outrage) {
@@ -376,12 +358,12 @@ void apply_post_attack_effects(
         }
     }
 
-    if (MOVES_THAT_REQUIRE_RECHARGE_TURN.contains(move)) {
+    if (move_has_flag(move, MoveFlag::REQUIRES_RECHARGE_TURN)) {
         attacker_state.recharging = true;
     }
 
     // Recoil
-    if (MOVES_WITH_RECOIL.contains(move)) {
+    if (move_has_flag(move, MoveFlag::HAS_RECOIL)) {
         if (move == Move::HeadSmash ||
             (attacker_state.is_player &&
                 (move == Move::JumpKick ||
@@ -412,7 +394,7 @@ void apply_post_attack_effects(
     }
 
     // Contact moves
-    if (MOVES_THAT_MAKE_CONTACT.contains(move)) {
+    if (move_has_flag(move, MoveFlag::MAKES_CONTACT)) {
         const auto defender_ability = defender_state.ability;
         if (attacker_state.is_player) {
             if (defender_state.status == Status::NONE) {
@@ -448,7 +430,7 @@ void apply_post_attack_effects(
     ) {
         const bool flung_flame_orb =
             (is_fling && attacker_state.item == Item::FlameOrb);
-        if (MOVES_THAT_BURN.contains(move) ||
+        if (move_has_flag(move, MoveFlag::BURNS_DEFENDER) ||
             flung_flame_orb
         ) {
             if (attacker_state.is_player) {
@@ -469,7 +451,7 @@ void apply_post_attack_effects(
     ) {
         const bool flung_poison_barb =
             (is_fling && attacker_state.item == Item::PoisonBarb);
-        if (MOVES_THAT_POISON.contains(move) ||
+        if ((move_has_flag(move, MoveFlag::POISONS_DEFENDER)) ||
             flung_poison_barb
         ) {
             if (attacker_state.is_player) {
@@ -491,7 +473,7 @@ void apply_post_attack_effects(
     }
 
     // Attack
-    if (MOVES_THAT_BOOST_ATTACKERS_ATTACK.contains(move)) {
+    if (move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_ATTACK)) {
         if (move == Move::Meditate ||
             move == Move::Sharpen ||
             move == Move::Howl ||
@@ -514,20 +496,19 @@ void apply_post_attack_effects(
         }
     }
 
-    if (MOVES_THAT_BOOST_ATTACKERS_DEFENSE.contains(move)) {
+    if (move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_DEFENSE)) {
         if (move == Move::BulkUp) {
             change_stat_modifier(attacker_state, Stat::DEFENSE, 1);
         }
     }
 
     // Special Attack
-    if (MOVES_THAT_LOWER_ATTACKERS_SPECIAL_ATTACK.contains(move)
-    ) {
+    if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPECIAL_ATTACK)) {
         change_stat_modifier(attacker_state, Stat::SPECIAL_ATTACK, -2);
     }
 
     // Special Defense
-    if (MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE.contains(move)) {
+    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE)) {
         if (move == Move::MetalSound ||
             move == Move::FakeTears
         ) {
@@ -554,7 +535,7 @@ void apply_post_attack_effects(
     }
 
     // Speed
-    if (MOVES_THAT_BOOST_ATTACKERS_SPEED.contains(move)) {
+    if (move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_SPEED)) {
         if (move == Move::DragonDance) {
             change_stat_modifier(attacker_state, Stat::SPEED, 1);
         }
@@ -562,7 +543,7 @@ void apply_post_attack_effects(
 
     // Omni boost
     if (!attacker_state.is_player &&
-        MOVES_THAT_OMNI_BOOST_ATTACKER.contains(move)
+        move_has_flag(move, MoveFlag::OMNI_BOOSTS_ATTACKER)
     ) {
         change_stat_modifier(attacker_state, Stat::ATTACK, 1);
         change_stat_modifier(attacker_state, Stat::DEFENSE, 1);
@@ -613,17 +594,31 @@ int get_damage_of_attacker_move(
     const uint16_t defender_defense,
     const bool is_after_being_attacked
 ) {
-    int damage = 2 * attacker_state.level / 5 + 2;
+    static std::array<double, LEVEL + 1> cache = [] {
+        std::array<double, LEVEL + 1> arr{};
+        arr.fill(-1.0);
+        return arr;
+    }();
+    double damage = cache[attacker_state.level];
+    if (damage < 0) {
+        damage = std::floor(2.0 * attacker_state.level / 5.0) + 2.0;
+        cache[attacker_state.level] = damage;
+    }
 
     // Power calculations
-    int power = attacker_move->power;
-    if (attacker_move->move == Move::Eruption ||
-        attacker_move->move == Move::WaterSpout
+    double power = attacker_move->power;
+    const auto attacker_move_enum = attacker_move->move;
+
+    if (attacker_move_enum == Move::Eruption ||
+        attacker_move_enum == Move::WaterSpout
     ) {
         power = std::max(
-            1,
-            150 * attacker_state.current_stats[HEALTH_INDEX] /
-            attacker_state.max_health
+            1.0,
+            std::floor(
+                150.0 *
+                attacker_state.current_stats[HEALTH_INDEX] /
+                attacker_state.max_health
+            )
         );
     }
 
@@ -641,10 +636,11 @@ int get_damage_of_attacker_move(
             power = attacker_move->power;
         }
         if (defender_field_location == FieldLocation::IN_AIR) {
-            if (MOVES_THAT_HIT_DEFENDER_IN_AIR.contains(attacker_move->move)
+            if (move_has_flag(attacker_move_enum,
+                              MoveFlag::HITS_DEFENDER_IN_AIR)
             ) {
-                if (attacker_move->move == Move::Gust ||
-                    attacker_move->move == Move::Twister
+                if (attacker_move_enum == Move::Gust ||
+                    attacker_move_enum == Move::Twister
                 ) {
                     power *= 2;
                 }
@@ -654,10 +650,11 @@ int get_damage_of_attacker_move(
         } else if (defender_field_location == FieldLocation::IN_THE_VOID) {
             return 0;
         } else if (defender_field_location == FieldLocation::UNDER_GROUND) {
-            if (MOVES_THAT_HIT_DEFENDER_UNDER_GROUND.contains(
-                attacker_move->move)) {
-                if (attacker_move->move == Move::Earthquake ||
-                    attacker_move->move == Move::Magnitude
+            if (move_has_flag(attacker_move_enum,
+                              MoveFlag::HITS_DEFENDER_UNDER_GROUND)
+            ) {
+                if (attacker_move_enum == Move::Earthquake ||
+                    attacker_move_enum == Move::Magnitude
                 ) {
                     power *= 2;
                 }
@@ -665,10 +662,8 @@ int get_damage_of_attacker_move(
                 return 0;
             }
         } else if (defender_field_location == FieldLocation::UNDER_WATER) {
-            if (MOVES_THAT_HIT_DEFENDER_UNDER_WATER.contains(
-                    attacker_move->move
-                )
-            ) {
+            if (move_has_flag(attacker_move_enum,
+                              MoveFlag::HITS_DEFENDER_UNDER_WATER)) {
                 power *= 2;
             } else {
                 return 0;
@@ -676,15 +671,15 @@ int get_damage_of_attacker_move(
         }
     }
 
-    damage = damage * power * attacker_attack / defender_defense;
-    damage = damage / 50 + 2;
+    damage = std::floor(damage * power * attacker_attack / defender_defense);
+    damage = std::floor(damage / 50) + 2;
 
     // STAB
     const auto move_type = attacker_move->type;
     if (attacker_state.types[0] == move_type ||
         attacker_state.types[1] == move_type
     ) {
-        damage = static_cast<int>(damage * 1.5);
+        damage = std::floor(damage * 1.5);
     }
 
     // Type effectiveness
@@ -700,11 +695,11 @@ int get_damage_of_attacker_move(
     // Burn
     if (attacker_state.status == Status::BURN &&
         attacker_move->category == Category::PHYSICAL &&
-        !MOVES_THAT_HAVE_FIXED_DAMAGE.contains(attacker_move->move)
+        !move_has_flag(attacker_move_enum, MoveFlag::HAS_FIXED_DAMAGE)
     ) {
-        damage = damage / 2;
+        damage = std::floor(damage / 2);
     }
-    return damage;
+    return static_cast<int>(damage);
 }
 
 BestMove get_best_move_against_defender(
@@ -751,7 +746,7 @@ BestMove get_best_move_against_defender(
                 defense_used,
                 is_after_being_attacked
             );
-        if (MOVES_THAT_REQUIRE_CHARGING_TURN.contains(move->move) &&
+        if (move_has_flag(move->move, MoveFlag::REQUIRES_CHARGING_TURN) &&
             damage > defender_state.current_stats[HEALTH_INDEX]
         ) {
             // TODO figure out if worth using
@@ -784,16 +779,16 @@ void execute_move(
     if (const FieldLocation on_field = attacker_state.field_location;
         on_field == FieldLocation::ON_FIELD
     ) {
-        if (MOVES_THAT_GO_INTO_AIR.contains(attacker_move)) {
+        if (move_has_flag(attacker_move, MoveFlag::GOES_INTO_AIR)) {
             attacker_state.field_location = FieldLocation::IN_AIR;
             attacker_vanished = true;
-        } else if (MOVES_THAT_GO_UNDER_GROUND.contains(attacker_move)) {
+        } else if (move_has_flag(attacker_move, MoveFlag::GOES_UNDER_GROUND)) {
             attacker_state.field_location = FieldLocation::UNDER_GROUND;
             attacker_vanished = true;
-        } else if (MOVES_THAT_GO_UNDER_WATER.contains(attacker_move)) {
+        } else if (move_has_flag(attacker_move, MoveFlag::GOES_UNDER_WATER)) {
             attacker_state.field_location = FieldLocation::UNDER_WATER;
             attacker_vanished = true;
-        } else if (MOVES_THAT_VANISH_USER.contains(attacker_move)) {
+        } else if (move_has_flag(attacker_move, MoveFlag::GOES_INTO_VOID)) {
             attacker_state.field_location = FieldLocation::IN_THE_VOID;
             attacker_vanished = true;
         }
@@ -902,34 +897,34 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         //         move != Move::BugBite &&
         //         move != Move::TriAttack &&
         //         move != Move::FocusPunch &&
-        //         (ATTACKER_STAT_BOOST_MOVES.contains(move) ||
-        //             MOVES_THAT_BADLY_POISON.contains(move) ||
-        //             MOVES_THAT_BOOST_ATTACKERS_DEFENSE.contains(move) ||
-        //             MOVES_THAT_BOOST_ATTACKERS_SPECIAL_ATTACK.contains(move) ||
-        //             MOVES_THAT_BOOST_ATTACKERS_SPECIAL_DEFENSE.contains(move) ||
-        //             MOVES_THAT_BOOST_ATTACKERS_SPEED.contains(move) ||
-        //             MOVES_THAT_BREAK_PROTECT.contains(move) ||
-        //             MOVES_THAT_BYPASS_PROTECT.contains(move) ||
-        //             MOVES_THAT_CAN_BE_REFLECTED_BY_MIRROR_COAT.contains(move) ||
-        //             MOVES_THAT_CAN_BE_SNATCHED.contains(move) ||
-        //             MOVES_THAT_CHANGE_WEATHER.contains(move) ||
-        //             MOVES_THAT_CONTINUE.contains(move) ||
-        //             MOVES_THAT_HAVE_FIXED_DAMAGE.contains(move) ||
-        //             MOVES_THAT_HEAL_ATTACKER.contains(move) ||
-        //             MOVES_THAT_LOWER_ATTACKERS_ATTACK.contains(move) ||
-        //             MOVES_THAT_LOWER_ATTACKERS_DEFENSE.contains(move) ||
-        //             MOVES_THAT_LOWER_ATTACKERS_SPECIAL_DEFENSE.contains(move) ||
-        //             MOVES_THAT_LOWER_ATTACKERS_SPEED.contains(move) ||
-        //             MOVES_THAT_LOWER_DEFENDER_ATTACK.contains(move) ||
-        //             MOVES_THAT_LOWER_DEFENDER_DEFENSE.contains(move) ||
-        //             MOVES_THAT_LOWER_DEFENDER_SPECIAL_ATTACK.contains(move) ||
-        //             MOVES_THAT_LOWER_DEFENDER_SPEED.contains(move) ||
-        //             MOVES_THAT_MAKE_ATTACKER_FAINT.contains(move) ||
-        //             MOVES_THAT_RAISE_DEFENDER_ATTACK.contains(move) ||
-        //             MOVES_THAT_RAISE_DEFENDER_SPECIAL_ATTACK.contains(move) ||
-        //             MULTI_HIT_MOVES.contains(move) ||
-        //             OTHER_MOVES.contains(move) ||
-        //             PROTECTION_MOVES.contains(move))
+        //         (move_has_flag(move, MoveFlag::BOOSTS_ATTACKER_STAT) ||
+        //             move_has_flag(move, MoveFlag::BADLY_POISONS) ||
+        //             move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_DEFENSE) ||
+        //             move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_SPECIAL_DEFENSE) ||
+        //             move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_SPEED) ||
+        //             move_has_flag(move, MoveFlag::BREAKS_PROTECT) ||
+        //             move_has_flag(move, MoveFlag::BYPASSES_PROTECT) ||
+        //             move_has_flag(move, MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT) ||
+        //             move_has_flag(move, MoveFlag::CAN_BE_SNATCHED) ||
+        //             move_has_flag(move, MoveFlag::CHANGES_WEATHER) ||
+        //             move_has_flag(move, MoveFlag::CONTINUES) ||
+        //             move_has_flag(move, MoveFlag::HAS_FIXED_DAMAGE) ||
+        //             move_has_flag(move, MoveFlag::HEALS_ATTACKER) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_DEFENSE) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPECIAL_DEFENSE) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPEED) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_DEFENDER_DEFENSE) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPECIAL_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPEED) ||
+        //             move_has_flag(move, MoveFlag::MAKES_ATTACKER_FAINT) ||
+        //             move_has_flag(move, MoveFlag::RAISES_DEFENDER_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::RAISES_DEFENDER_SPECIAL_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::HITS_MULTIPLE_TIMES) ||
+        //             move_has_flag(move, MoveFlag::IS_OTHER) ||
+        //             move_has_flag(move, MoveFlag::PROTECTS_USER))
         //     ) {
         //         printf("");
         //     }

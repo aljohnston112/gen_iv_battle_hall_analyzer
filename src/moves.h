@@ -478,1431 +478,1356 @@ enum class Move {
     Count
 };
 
-static const std::unordered_set PRIORITY_MOVES_PLUS_5 = {
-    Move::HelpingHand
-};
-
-static const std::unordered_set PRIORITY_MOVES_PLUS_4 = {
-    Move::MagicCoat,
-    Move::Snatch
-};
-
-static const std::unordered_set PRIORITY_MOVES_PLUS_3 = {
-    Move::Detect,
-    Move::Endure,
-    Move::FollowMe,
-    Move::Protect
-};
-
-static const std::unordered_set PRIORITY_MOVES_PLUS_2 = {
-    Move::Feint
-};
-
-static const std::unordered_set PRIORITY_MOVES_PLUS_1 = {
-    Move::AquaJet,
-    Move::Bide,
-    Move::BulletPunch,
-    Move::ExtremeSpeed,
-    Move::FakeOut,
-    Move::IceShard,
-    Move::MachPunch,
-    Move::QuickAttack,
-    Move::ShadowSneak,
-    Move::SuckerPunch,
-    Move::VacuumWave
-};
-
-static const std::unordered_set PRIORITY_MOVES_MINUS_1 = {
-    Move::VitalThrow
-};
-
-static const std::unordered_set PRIORITY_MOVES_MINUS_3 = {
-    Move::FocusPunch
-};
-
-static const std::unordered_set PRIORITY_MOVES_MINUS_4 = {
-    Move::Avalanche,
-    Move::Revenge
-};
-
-static const std::unordered_set PRIORITY_MOVES_MINUS_5 = {
-    Move::Counter,
-    Move::MirrorCoat
-};
-
-static const std::unordered_set PRIORITY_MOVES_MINUS_6 = {
-    Move::Roar,
-    Move::Whirlwind
-};
-
-
-static const std::unordered_set PRIORITY_MOVES_MINUS_7 = {
-    Move::TrickRoom
-};
-
-static const std::unordered_set POWER_MOVES = {
-    Move::Pound,
-    Move::DoubleSlap,
-    Move::CometPunch,
-    Move::MegaPunch,
-    Move::PayDay,
-    Move::FirePunch,
-    Move::IcePunch,
-    Move::ThunderPunch,
-    Move::Scratch,
-    Move::ViceGrip,
-    Move::RazorWind,
-    Move::Cut,
-    Move::Gust,
-    Move::WingAttack,
-    Move::Fly,
-    Move::Bind,
-    Move::Slam,
-    Move::VineWhip,
-    Move::Stomp,
-    Move::DoubleKick,
-    Move::MegaKick,
-    Move::JumpKick,
-    Move::RollingKick,
-    Move::Headbutt,
-    Move::HornAttack,
-    Move::FuryAttack,
-    Move::Tackle,
-    Move::BodySlam,
-    Move::Wrap,
-    Move::TakeDown,
-    Move::Thrash,
-    Move::DoubleEdge,
-    Move::PoisonSting,
-    Move::Twineedle,
-    Move::PinMissile,
-    Move::Bite,
-    Move::Acid,
-    Move::Ember,
-    Move::Flamethrower,
-    Move::WaterGun,
-    Move::HydroPump,
-    Move::Surf,
-    Move::IceBeam,
-    Move::Blizzard,
-    Move::Psybeam,
-    Move::Bubblebeam,
-    Move::AuroraBeam,
-    Move::HyperBeam,
-    Move::Peck,
-    Move::DrillPeck,
-    Move::Submission,
-    Move::Strength,
-    Move::Absorb,
-    Move::MegaDrain,
-    Move::RazorLeaf,
-    Move::SolarBeam,
-    Move::PetalDance,
-    Move::FireSpin,
-    Move::Thundershock,
-    Move::Thunderbolt,
-    Move::RockThrow,
-    Move::Earthquake,
-    Move::Dig,
-    Move::Confusion,
-    Move::Psychic,
-    Move::QuickAttack,
-    Move::Selfdestruct,
-    Move::EggBomb,
-    Move::Lick,
-    Move::Smog,
-    Move::Sludge,
-    Move::BoneClub,
-    Move::FireBlast,
-    Move::Waterfall,
-    Move::Clamp,
-    Move::Swift,
-    Move::SkullBash,
-    Move::SpikeCannon,
-    Move::Constrict,
-    Move::HighJumpKick,
-    Move::Barrage,
-    Move::LeechLife,
-    Move::SkyAttack,
-    Move::Bubble,
-    Move::DizzyPunch,
-    Move::Crabhammer,
-    Move::Explosion,
-    Move::FuryAttack,
-    Move::Bonemerang,
-    Move::RockSlide,
-    Move::HyperFang,
-    Move::TriAttack,
-    Move::Slash,
-    Move::FlameWheel,
-    Move::Aeroblast,
-    Move::PowderSnow,
-    Move::MachPunch,
-    Move::FaintAttack,
-    Move::SludgeBomb,
-    Move::MudSlap,
-    Move::Octazooka,
-    Move::ZapCannon,
-    Move::IcyWind,
-    Move::BoneRush,
-    Move::Outrage,
-    Move::GigaDrain,
-    Move::Spark,
-    Move::SteelWing,
-    Move::Return,
-    Move::Frustration,
-    Move::SacredFire,
-    Move::Dynamicpunch,
-    Move::Megahorn,
-    Move::DragonBreath,
-    Move::IronTail,
-    Move::MetalClaw,
-    Move::VitalThrow,
-    Move::CrossChop,
-    Move::Twister,
-    Move::Crunch,
-    Move::ExtremeSpeed,
-    Move::Ancientpower,
-    Move::ShadowBall,
-    Move::RockSmash,
-    Move::Whirlpool,
-    Move::HeatWave,
-    Move::Superpower,
-    Move::Dive,
-    Move::ArmThrust,
-    Move::LusterPurge,
-    Move::MistBall,
-    Move::BlazeKick,
-    Move::NeedleArm,
-    Move::HyperVoice,
-    Move::PoisonFang,
-    Move::CrushClaw,
-    Move::BlastBurn,
-    Move::HydroCannon,
-    Move::MeteorMash,
-    Move::Astonish,
-    Move::AirCutter,
-    Move::Overheat,
-    Move::RockTomb,
-    Move::SilverWind,
-    Move::SignalBeam,
-    Move::ShadowPunch,
-    Move::Extrasensory,
-    Move::SkyUppercut,
-    Move::SandTomb,
-    Move::MuddyWater,
-    Move::BulletSeed,
-    Move::AerialAce,
-    Move::IcicleSpear,
-    Move::DragonClaw,
-    Move::FrenzyPlant,
-    Move::Bounce,
-    Move::MudShot,
-    Move::PoisonTail,
-    Move::VoltTackle,
-    Move::MagicalLeaf,
-    Move::LeafBlade,
-    Move::RockBlast,
-    Move::ShockWave,
-    Move::WaterPulse,
-    Move::PsychoBoost,
-    Move::HammerArm,
-    Move::CloseCombat,
-    Move::FlareBlitz,
-    Move::ForcePalm,
-    Move::AuraSphere,
-    Move::PoisonJab,
-    Move::DarkPulse,
-    Move::NightSlash,
-    Move::AquaTail,
-    Move::SeedBomb,
-    Move::AirSlash,
-    Move::XScissor,
-    Move::BugBuzz,
-    Move::DragonPulse,
-    Move::DragonRush,
-    Move::PowerGem,
-    Move::DrainPunch,
-    Move::VacuumWave,
-    Move::FocusBlast,
-    Move::EnergyBall,
-    Move::BraveBird,
-    Move::EarthPower,
-    Move::GigaImpact,
-    Move::BulletPunch,
-    Move::IceShard,
-    Move::ShadowClaw,
-    Move::ThunderFang,
-    Move::IceFang,
-    Move::FireFang,
-    Move::ShadowSneak,
-    Move::MudBomb,
-    Move::PsychoCut,
-    Move::ZenHeadbutt,
-    Move::MirrorShot,
-    Move::FlashCannon,
-    Move::RockClimb,
-    Move::DracoMeteor,
-    Move::Discharge,
-    Move::LavaPlume,
-    Move::LeafStorm,
-    Move::PowerWhip,
-    Move::RockWrecker,
-    Move::CrossPoison,
-    Move::GunkShot,
-    Move::IronHead,
-    Move::MagnetBomb,
-    Move::StoneEdge,
-    Move::ChargeBeam,
-    Move::WoodHammer,
-    Move::AquaJet,
-    Move::AttackOrder,
-    Move::HeadSmash,
-    Move::DoubleHit,
-    Move::RoarOfTime,
-    Move::SpacialRend,
-    Move::SeedFlare,
-    Move::OminousWind,
-    Move::ShadowForce
-};
-
-static const std::unordered_set MOVES_THAT_HEAL_ATTACKER = {
-    Move::Absorb,
-    Move::MegaDrain,
-    Move::Recover,
-    Move::Softboiled,
-    Move::LeechLife,
-    Move::GigaDrain,
-    Move::MilkDrink,
-    Move::MorningSun,
-    Move::Synthesis,
-    Move::Moonlight,
-    Move::SlackOff,
-    Move::DrainPunch,
-    Move::HealOrder
-};
-
-static const std::unordered_set ATTACKER_STAT_BOOST_MOVES = {
-    Move::SwordsDance,
-    Move::Growth,
-    Move::Meditate,
-    Move::Agility,
-    Move::DoubleTeam,
-    Move::Harden,
-    Move::Minimize,
-    Move::Withdraw,
-    Move::Amnesia,
-    Move::AcidArmor,
-    Move::Sharpen,
-    Move::TailGlow,
-    Move::CosmicPower,
-    Move::IronDefense,
-    Move::Howl,
-    Move::BulkUp,
-    Move::CalmMind,
-    Move::DragonDance,
-    Move::RockPolish,
-    Move::NastyPlot,
-    Move::DefendOrder
-};
-
-static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_ATTACK = {
-    Move::SwordsDance,
-    Move::Meditate,
-    Move::Sharpen,
-    Move::BellyDrum,
-    Move::MetalClaw,
-    Move::MeteorMash,
-    Move::Howl,
-    Move::BulkUp,
-    Move::DragonDance
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_ATTACK = {
-    Move::Superpower
-};
-
-static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_DEFENSE = {
-    Move::Harden,
-    Move::Withdraw,
-    Move::SkullBash,
-    Move::AcidArmor,
-    Move::SteelWing,
-    Move::CosmicPower,
-    Move::IronDefense,
-    Move::BulkUp,
-    Move::DefendOrder
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_DEFENSE = {
-    Move::Superpower,
-    Move::CloseCombat
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_ATTACK = {
-    Move::Overheat,
-    Move::PsychoBoost,
-    Move::DracoMeteor,
-    Move::LeafStorm
-};
-
-static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_ATTACK = {
-    Move::Growth,
-    Move::TailGlow,
-    Move::CalmMind,
-    Move::NastyPlot,
-    Move::ChargeBeam
-};
-
-static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPECIAL_DEFENSE = {
-    Move::Amnesia,
-    Move::CosmicPower,
-    Move::CalmMind,
-    Move::DefendOrder
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPECIAL_DEFENSE = {
-    Move::CloseCombat
-};
-
-static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_SPEED = {
-    Move::Agility,
-    Move::DragonDance,
-    Move::RockPolish
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_ATTACKERS_SPEED = {
-    Move::HammerArm
-};
-
-static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_EVASION = {
-    Move::DoubleTeam,
-    Move::Minimize
-};
-
-
-static const std::unordered_set MOVES_THAT_BOOST_ATTACKERS_CRIT_RATE = {
-    Move::FocusEnergy
-};
-
-static const std::unordered_set MOVES_THAT_OMNI_BOOST_ATTACKER = {
-    Move::Ancientpower,
-    Move::SilverWind,
-    Move::OminousWind
-};
-
-static const std::unordered_set MOVES_THAT_RAISE_DEFENDER_ATTACK = {
-    Move::Swagger
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_ATTACK = {
-    Move::Growl,
-    Move::AuroraBeam,
-    Move::Charm,
-    Move::Memento,
-    Move::Featherdance,
-    Move::Tickle
-};
-
-static const std::unordered_set MOVES_THAT_RAISE_DEFENDER_SPECIAL_ATTACK = {
-    Move::Flatter
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_ATTACK = {
-    Move::Memento,
-    Move::MistBall,
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_DEFENSE = {
-    Move::TailWhip,
-    Move::Leer,
-    Move::Screech,
-    Move::IronTail,
-    Move::Crunch,
-    Move::RockSmash,
-    Move::CrushClaw,
-    Move::Tickle
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPECIAL_DEFENSE = {
-    Move::Acid,
-    Move::Psychic,
-    Move::ShadowBall,
-    Move::LusterPurge,
-    Move::FakeTears,
-    Move::MetalSound,
-    Move::BugBuzz,
-    Move::FocusBlast,
-    Move::EnergyBall,
-    Move::EarthPower,
-    Move::FlashCannon,
-    Move::SeedFlare
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_SPEED = {
-    Move::Bubblebeam,
-    Move::StringShot,
-    Move::Constrict,
-    Move::Bubble,
-    Move::CottonSpore,
-    Move::ScaryFace,
-    Move::IcyWind,
-    Move::RockTomb,
-    Move::MudShot
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_ACCURACY = {
-    Move::SandAttack,
-    Move::Smokescreen,
-    Move::Kinesis,
-    Move::Flash,
-    Move::MudSlap,
-    Move::Octazooka,
-    Move::MuddyWater,
-    Move::MudBomb,
-    Move::MirrorShot
-};
-
-static const std::unordered_set MOVES_THAT_LOWER_DEFENDER_EVASION = {
-    Move::SweetScent
-};
-
-static const std::unordered_set MOVES_THAT_MAY_BYPASS_ACCURACY = {
-    Move::Blizzard,
-    Move::Thunder,
-    Move::Swift,
-    Move::FaintAttack,
-    Move::VitalThrow,
-    Move::ShadowPunch,
-    Move::AerialAce,
-    Move::MagicalLeaf,
-    Move::ShockWave,
-    Move::AuraSphere,
-    Move::MagnetBomb
-};
-
-static const std::unordered_set UNUSABLE_MOVES_DURING_GRAVITY = {
-    Move::Bounce,
-    Move::Fly,
-    Move::HighJumpKick,
-    Move::JumpKick,
-    Move::MagnetRise,
-    Move::Splash
-};
-
-static const std::unordered_set PROTECTION_MOVES = {
-    Move::Detect,
-    Move::Protect,
-};
-
-static const std::unordered_set OTHER_MOVES = {
-    Move::Disable,
-    Move::Mist,
-    Move::LowKick,
-    Move::Counter,
-    Move::LeechSeed,
-    Move::Rage,
-    Move::Teleport,
-    Move::Mimic,
-    Move::DefenseCurl,
-    Move::Barrier,
-    Move::LightScreen,
-    Move::Haze,
-    Move::Reflect,
-    Move::Bide,
-    Move::Metronome,
-    Move::MirrorMove,
-    Move::DreamEater,
-    Move::Transform,
-    Move::Psywave,
-    Move::Splash,
-    Move::Rest,
-    Move::Conversion,
-    Move::TriAttack,
-    Move::SuperFang,
-    Move::Substitute,
-    Move::Struggle,
-    Move::Sketch,
-    Move::TripleKick,
-    Move::Thief,
-    Move::SpiderWeb,
-    Move::MindReader,
-    Move::Nightmare,
-    Move::Snore,
-    Move::Curse,
-    Move::Flail,
-    Move::Conversion2,
-    Move::Reversal,
-    Move::Spite,
-    Move::Spikes,
-    Move::Foresight,
-    Move::DestinyBond,
-    Move::PerishSong,
-    Move::LockOn,
-    Move::Rollout,
-    Move::FalseSwipe,
-    Move::FuryCutter,
-    Move::MeanLook,
-    Move::Attract,
-    Move::SleepTalk,
-    Move::HealBell,
-    Move::Present,
-    Move::Safeguard,
-    Move::PainSplit,
-    Move::Magnitude,
-    Move::BatonPass,
-    Move::Encore,
-    Move::Pursuit,
-    Move::RapidSpin,
-    Move::HiddenPower,
-    Move::MirrorCoat,
-    Move::PsychUp,
-    Move::FutureSight,
-    Move::BeatUp,
-    Move::FakeOut,
-    Move::Uproar,
-    Move::Stockpile,
-    Move::SpitUp,
-    Move::Swallow,
-    Move::Torment,
-    Move::Facade,
-    Move::FocusPunch,
-    Move::Smellingsalt,
-    Move::FollowMe,
-    Move::NaturePower,
-    Move::Charge,
-    Move::Taunt,
-    Move::HelpingHand,
-    Move::Trick,
-    Move::RolePlay,
-    Move::Wish,
-    Move::Assist,
-    Move::Ingrain,
-    Move::MagicCoat,
-    Move::Recycle,
-    Move::Revenge,
-    Move::BrickBreak,
-    Move::Yawn,
-    Move::KnockOff,
-    Move::Endeavor,
-    Move::Eruption,
-    Move::SkillSwap,
-    Move::Imprison,
-    Move::Refresh,
-    Move::Grudge,
-    Move::Snatch,
-    Move::SecretPower,
-    Move::Camouflage,
-    Move::MudSport,
-    Move::IceBall,
-    Move::WeatherBall,
-    Move::Aromatherapy,
-    Move::OdorSleuth,
-    Move::WaterSpout,
-    Move::Block,
-    Move::Covet,
-    Move::WaterSport,
-    Move::DoomDesire,
-    Move::Roost,
-    Move::Gravity,
-    Move::MiracleEye,
-    Move::WakeUpSlap,
-    Move::GyroBall,
-    Move::HealingWish,
-    Move::Brine,
-    Move::NaturalGift,
-    Move::Feint,
-    Move::Pluck,
-    Move::Tailwind,
-    Move::Acupressure,
-    Move::MetalBurst,
-    Move::UTurn,
-    Move::Payback,
-    Move::Assurance,
-    Move::Embargo,
-    Move::Fling,
-    Move::PsychoShift,
-    Move::TrumpCard,
-    Move::HealBlock,
-    Move::WringOut,
-    Move::PowerTrick,
-    Move::GastroAcid,
-    Move::LuckyChant,
-    Move::MeFirst,
-    Move::Copycat,
-    Move::PowerSwap,
-    Move::GuardSwap,
-    Move::Punishment,
-    Move::LastResort,
-    Move::WorrySeed,
-    Move::SuckerPunch,
-    Move::ToxicSpikes,
-    Move::HeartSwap,
-    Move::AquaRing,
-    Move::MagnetRise,
-    Move::Switcheroo,
-    Move::Avalanche,
-    Move::Defog,
-    Move::TrickRoom,
-    Move::Captivate,
-    Move::StealthRock,
-    Move::GrassKnot,
-    Move::Chatter,
-    Move::Judgment,
-    Move::BugBite,
-    Move::LunarDance,
-    Move::CrushGrip,
-    Move::MagmaStorm
-};
-
-static const std::unordered_set MOVES_THAT_CHANGE_WEATHER = {
-    Move::Sandstorm,
-    Move::RainDance,
-    Move::SunnyDay,
-    Move::Hail
-};
-
-static const std::unordered_set MOVES_THAT_FORCE_USER_OUT = {
-    Move::Whirlwind,
-    Move::Roar,
-};
-
-static const std::unordered_set ONE_HIT_KO_MOVES = {
-    Move::Guillotine,
-    Move::HornDrill,
-    Move::Fissure,
-    Move::SheerCold
-};
-
-static const std::unordered_set MOVES_THAT_MAKE_ATTACKER_FAINT = {
-    Move::Selfdestruct,
-    Move::Explosion,
-    Move::Memento
-};
-
-static const std::unordered_set MOVES_WITH_INCREASED_CRIT_CHANCE = {
-    Move::KarateChop,
-    Move::RazorWind,
-    Move::RazorLeaf,
-    Move::SkyAttack,
-    Move::Crabhammer,
-    Move::Slash,
-    Move::Aeroblast,
-    Move::CrossChop,
-    Move::BlazeKick,
-    Move::AirCutter,
-    Move::PoisonTail,
-    Move::LeafBlade,
-    Move::NightSlash,
-    Move::ShadowClaw,
-    Move::PsychoCut,
-    Move::CrossPoison,
-    Move::StoneEdge,
-    Move::AttackOrder,
-    Move::SpacialRend
-};
-
-static const std::unordered_set MOVES_THAT_REQUIRE_CHARGING_TURN = {
-    Move::RazorWind,
-    Move::SolarBeam,
-    Move::SkullBash,
-    Move::SkyAttack,
-};
-
-static const std::unordered_set MOVES_THAT_REQUIRE_RECHARGE_TURN = {
-    Move::HyperBeam,
-    Move::BlastBurn,
-    Move::HydroCannon,
-    Move::FrenzyPlant,
-    Move::GigaImpact,
-    Move::RockWrecker,
-    Move::RoarOfTime
-};
-
-static const std::unordered_set MOVES_THAT_DEAL_DOUBLE_AFTER_MINIMIZE = {
-    Move::Stomp
-};
-
-static const std::unordered_set MOVES_THAT_CONTINUE = {
-    Move::Bind,
-    Move::Wrap,
-    Move::FireSpin,
-    Move::Clamp,
-    Move::Whirlpool,
-    Move::SandTomb,
-    Move::MagmaStorm
-};
-
-static const std::unordered_set MOVES_THAT_BURN = {
-    Move::FirePunch,
-    Move::Ember,
-    Move::Flamethrower,
-    Move::FireBlast,
-    Move::FlameWheel,
-    Move::SacredFire,
-    Move::HeatWave,
-    Move::WillOWisp,
-    Move::BlazeKick,
-    Move::FlareBlitz,
-    Move::FireFang,
-    Move::LavaPlume
-};
-
-static const std::unordered_set MOVES_THAT_FREEZE = {
-    Move::IcePunch,
-    Move::IceBeam,
-    Move::Blizzard,
-    Move::PowderSnow,
-    Move::IceFang
-};
-
-static const std::unordered_set MOVES_THAT_PARALYZE = {
-    Move::ThunderPunch,
-    Move::BodySlam,
-    Move::StunSpore,
-    Move::Thundershock,
-    Move::Thunderbolt,
-    Move::ThunderWave,
-    Move::Thunder,
-    Move::Lick,
-    Move::Glare,
-    Move::ZapCannon,
-    Move::Spark,
-    Move::DragonBreath,
-    Move::Bounce,
-    Move::VoltTackle,
-    Move::ForcePalm,
-    Move::ThunderFang,
-    Move::Discharge
-};
-
-static const std::unordered_set MOVES_THAT_POISON = {
-    Move::PoisonSting,
-    Move::Twineedle,
-    Move::PoisonPowder,
-    Move::Smog,
-    Move::Sludge,
-    Move::PoisonGas,
-    Move::SludgeBomb,
-    Move::PoisonTail,
-    Move::PoisonJab,
-    Move::CrossPoison,
-    Move::GunkShot
-};
-
-static const std::unordered_set MOVES_THAT_BADLY_POISON = {
-    Move::Toxic,
-    Move::PoisonFang
-};
-
-static const std::unordered_set MOVES_THAT_MAKE_DEFENDER_SLEEP = {
-    Move::Sing,
-    Move::SleepPowder,
-    Move::Hypnosis,
-    Move::LovelyKiss,
-    Move::Spore,
-    Move::Grasswhistle,
-    Move::DarkVoid
-};
-
-static const std::unordered_set MOVES_THAT_CONFUSE_DEFENDER = {
-    Move::Supersonic,
-    Move::Psybeam,
-    Move::Confusion,
-    Move::ConfuseRay,
-    Move::DizzyPunch,
-    Move::SweetKiss,
-    Move::Swagger,
-    Move::Dynamicpunch,
-    Move::Flatter,
-    Move::TeeterDance,
-    Move::SignalBeam,
-    Move::WaterPulse,
-    Move::RockClimb
-};
-
-static const std::unordered_set MOVES_THAT_FLINCH = {
-    Move::Stomp,
-    Move::RollingKick,
-    Move::Headbutt,
-    Move::Bite,
-    Move::BoneClub,
-    Move::Waterfall,
-    Move::SkyAttack,
-    Move::HyperFang,
-    Move::Twister,
-    Move::NeedleArm,
-    Move::Astonish,
-    Move::Extrasensory,
-    Move::DarkPulse,
-    Move::AirSlash,
-    Move::DragonRush,
-    Move::ThunderFang,
-    Move::IceFang,
-    Move::FireFang,
-    Move::ZenHeadbutt,
-    Move::IronHead
-};
-
-static const std::unordered_set MOVES_WITH_RECOIL = {
-    Move::JumpKick,
-    Move::TakeDown,
-    Move::DoubleEdge,
-    Move::Submission,
-    Move::HighJumpKick,
-    Move::BellyDrum,
-    Move::VoltTackle,
-    Move::FlareBlitz,
-    Move::BraveBird,
-    Move::WoodHammer,
-    Move::HeadSmash
-};
-
-
-static const std::unordered_set MULTI_HIT_MOVES = {
-    Move::DoubleSlap,
-    Move::CometPunch,
-    Move::DoubleKick,
-    Move::FuryAttack,
-    Move::Twineedle,
-    Move::PinMissile,
-    Move::SpikeCannon,
-    Move::Barrage,
-    Move::FuryAttack,
-    Move::Bonemerang,
-    Move::BoneRush,
-    Move::ArmThrust,
-    Move::BulletSeed,
-    Move::IcicleSpear,
-    Move::RockBlast,
-    Move::DoubleHit
-};
-
-static const std::unordered_set MULTI_TURN_MOVES = {
-    Move::Thrash,
-    Move::PetalDance,
-    Move::Outrage
-};
-
-static const std::unordered_set MOVES_THAT_HAVE_FIXED_DAMAGE = {
-    Move::SonicBoom,
-    Move::SeismicToss,
-    Move::DragonRage,
-    Move::NightShade,
-
-};
-
-static const std::unordered_set MOVES_THAT_GO_INTO_AIR = {
-    Move::Bounce,
-    Move::Fly
-};
-
-static const std::unordered_set MOVES_THAT_HIT_DEFENDER_IN_AIR = {
-    Move::Gust,
-    Move::SkyUppercut,
-    Move::Thunder,
-    Move::Twister
-};
-
-static const std::unordered_set MOVES_THAT_GO_UNDER_GROUND = {
-    Move::Dig,
-};
-
-static const std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_GROUND = {
-    Move::Earthquake,
-    Move::Magnitude,
-    Move::Fissure
-};
-
-static const std::unordered_set MOVES_THAT_GO_UNDER_WATER = {
-    Move::Dive,
-};
-
-static const std::unordered_set MOVES_THAT_HIT_DEFENDER_UNDER_WATER = {
-    Move::Surf,
-    Move::Whirlpool
-};
-
-static const std::unordered_set MOVES_THAT_VANISH_USER = {
-    Move::ShadowForce,
-};
-
-static const std::unordered_set MOVES_THAT_MAKE_CONTACT = {
-    Move::Pound,
-    Move::KarateChop,
-    Move::DoubleSlap,
-    Move::CometPunch,
-    Move::MegaPunch,
-    Move::FirePunch,
-    Move::IcePunch,
-    Move::ThunderPunch,
-    Move::Scratch,
-    Move::ViceGrip,
-    Move::Guillotine,
-    Move::Cut,
-    Move::WingAttack,
-    Move::Fly,
-    Move::Bind,
-    Move::Slam,
-    Move::VineWhip,
-    Move::Stomp,
-    Move::DoubleKick,
-    Move::MegaKick,
-    Move::JumpKick,
-    Move::RollingKick,
-    Move::Headbutt,
-    Move::HornAttack,
-    Move::FuryAttack,
-    Move::HornDrill,
-    Move::Tackle,
-    Move::BodySlam,
-    Move::Wrap,
-    Move::TakeDown,
-    Move::Thrash,
-    Move::DoubleEdge,
-    Move::Bite,
-    Move::Peck,
-    Move::DrillPeck,
-    Move::Submission,
-    Move::LowKick,
-    Move::Counter,
-    Move::SeismicToss,
-    Move::Strength,
-    Move::PetalDance,
-    Move::Dig,
-    Move::QuickAttack,
-    Move::Rage,
-    Move::Bide,
-    Move::Lick,
-    Move::Waterfall,
-    Move::Clamp,
-    Move::SkullBash,
-    Move::Constrict,
-    Move::HighJumpKick,
-    Move::LeechLife,
-    Move::DizzyPunch,
-    Move::Crabhammer,
-    Move::FurySwipes,
-    Move::HyperFang,
-    Move::SuperFang,
-    Move::Slash,
-    Move::Struggle,
-    Move::TripleKick,
-    Move::Thief,
-    Move::FlameWheel,
-    Move::Flail,
-    Move::Reversal,
-    Move::MachPunch,
-    Move::FaintAttack,
-    Move::Outrage,
-    Move::Rollout,
-    Move::FalseSwipe,
-    Move::Spark,
-    Move::FuryCutter,
-    Move::SteelWing,
-    Move::Return,
-    Move::Frustration,
-    Move::Dynamicpunch,
-    Move::Megahorn,
-    Move::Pursuit,
-    Move::RapidSpin,
-    Move::IronTail,
-    Move::MetalClaw,
-    Move::VitalThrow,
-    Move::CrossChop,
-    Move::Crunch,
-    Move::ExtremeSpeed,
-    Move::RockSmash,
-    Move::FakeOut,
-    Move::Facade,
-    Move::FocusPunch,
-    Move::Smellingsalt,
-    Move::Superpower,
-    Move::Revenge,
-    Move::BrickBreak,
-    Move::KnockOff,
-    Move::Endeavor,
-    Move::Dive,
-    Move::ArmThrust,
-    Move::BlazeKick,
-    Move::IceBall,
-    Move::NeedleArm,
-    Move::PoisonFang,
-    Move::CrushClaw,
-    Move::MeteorMash,
-    Move::Astonish,
-    Move::ShadowPunch,
-    Move::SkyUppercut,
-    Move::AerialAce,
-    Move::DragonClaw,
-    Move::Bounce,
-    Move::PoisonTail,
-    Move::Covet,
-    Move::VoltTackle,
-    Move::LeafBlade,
-    Move::WakeUpSlap,
-    Move::HammerArm,
-    Move::GyroBall,
-    Move::Pluck,
-    Move::UTurn,
-    Move::CloseCombat,
-    Move::Payback,
-    Move::Assurance,
-    Move::Punishment,
-    Move::LastResort,
-    Move::SuckerPunch,
-    Move::FlareBlitz,
-    Move::ForcePalm,
-    Move::PoisonJab,
-    Move::NightSlash,
-    Move::AquaTail,
-    Move::XScissor,
-    Move::DragonRush,
-    Move::DrainPunch,
-    Move::BraveBird,
-    Move::GigaImpact,
-    Move::BulletPunch,
-    Move::Avalanche,
-    Move::ShadowClaw,
-    Move::ThunderFang,
-    Move::IceFang,
-    Move::FireFang,
-    Move::ShadowSneak,
-    Move::ZenHeadbutt,
-    Move::RockClimb,
-    Move::PowerWhip,
-    Move::CrossPoison,
-    Move::IronHead,
-    Move::BugBite,
-    Move::WoodHammer,
-    Move::AquaJet,
-    Move::HeadSmash,
-    Move::DoubleHit,
-    Move::CrushGrip,
-    Move::ShadowForce,
-};
-
-static const std::unordered_set MOVES_THAT_BYPASS_PROTECT = {
-    Move::Acupressure,
-    Move::Curse,
-    Move::DoomDesire,
-    Move::Feint,
-    Move::FutureSight,
-    Move::PerishSong,
-    Move::PsychUp,
-    Move::RolePlay,
-    Move::ShadowForce,
-    Move::Sketch,
-    Move::Transform
-};
-
-static const std::unordered_set MOVES_THAT_BREAK_PROTECT = {
-    Move::Feint,
-    Move::ShadowForce
-};
-
-static const std::unordered_set MOVES_THAT_CAN_BE_REFLECTED_BY_MIRROR_COAT = {
-    Move::Attract,
-    Move::Block,
-    Move::Captivate,
-    Move::Charm,
-    Move::ConfuseRay,
-    Move::CottonSpore,
-    Move::DarkVoid,
-    Move::FakeTears,
-    Move::Featherdance,
-    Move::Flash,
-    Move::Flatter,
-    Move::GastroAcid,
-    Move::Glare,
-    Move::Grasswhistle,
-    Move::Growl,
-    Move::Hypnosis,
-    Move::Kinesis,
-    Move::LeechSeed,
-    Move::Leer,
-    Move::LovelyKiss,
-    Move::MeanLook,
-    Move::MetalSound,
-    Move::PoisonGas,
-    Move::PoisonPowder,
-    Move::SandAttack,
-    Move::ScaryFace,
-    Move::Screech,
-    Move::Sing,
-    Move::SleepPowder,
-    Move::Smokescreen,
-    Move::SpiderWeb,
-    Move::Spore,
-    Move::StringShot,
-    Move::StunSpore,
-    Move::Supersonic,
-    Move::Swagger,
-    Move::SweetKiss,
-    Move::SweetScent,
-    Move::TailWhip,
-    Move::ThunderWave,
-    Move::Tickle,
-    Move::Toxic,
-    Move::WillOWisp,
-    Move::WorrySeed,
-    Move::Yawn
-};
-
-static const std::unordered_set MOVES_THAT_CAN_BE_SNATCHED = {
-    Move::AcidArmor,
-    Move::Acupressure,
-    Move::Agility,
-    Move::Amnesia,
-    Move::Aromatherapy,
-    Move::Barrier,
-    Move::BellyDrum,
-    Move::BulkUp,
-    Move::CalmMind,
-    Move::Camouflage,
-    Move::Charge,
-    Move::CosmicPower,
-    Move::DefendOrder,
-    Move::DefenseCurl,
-    Move::DoubleTeam,
-    Move::DragonDance,
-    Move::FocusEnergy,
-    Move::Growth,
-    Move::Harden,
-    Move::HealBell,
-    Move::HealOrder,
-    Move::Howl,
-    Move::Ingrain,
-    Move::IronDefense,
-    Move::LightScreen,
-    Move::Meditate,
-    Move::MilkDrink,
-    Move::Minimize,
-    Move::Mist,
-    Move::Moonlight,
-    Move::MorningSun,
-    Move::NastyPlot,
-    Move::PsychUp,
-    Move::Recover,
-    Move::Reflect,
-    Move::Refresh,
-    Move::Rest,
-    Move::RockPolish,
-    Move::Roost,
-    Move::Safeguard,
-    Move::Sharpen,
-    Move::SlackOff,
-    Move::Softboiled,
-    Move::Stockpile,
-    Move::Substitute,
-    Move::Swallow,
-    Move::SwordsDance,
-    Move::Synthesis,
-    Move::TailGlow,
-    Move::Tailwind,
-    Move::Withdraw,
-};
-
-static const std::unordered_set MOVES_AFFECTED_BY_KINGS_ROCK = {
-    Move::AerialAce,
-    Move::Aeroblast,
-    Move::AirCutter,
-    Move::AirSlash,
-    Move::AquaJet,
-    Move::AquaTail,
-    Move::ArmThrust,
-    Move::Assurance,
-    Move::AttackOrder,
-    Move::AuraSphere,
-    Move::Avalanche,
-    Move::Barrage,
-    Move::BeatUp,
-    Move::Bide,
-    Move::Bind,
-    Move::BlastBurn,
-    Move::BoneRush,
-    Move::Bonemerang,
-    Move::Bounce,
-    Move::BraveBird,
-    Move::BrickBreak,
-    Move::Brine,
-    Move::BugBite,
-    Move::BulletPunch,
-    Move::BulletSeed,
-    Move::ChargeBeam,
-    Move::Clamp,
-    Move::CloseCombat,
-    Move::CometPunch,
-    Move::Crabhammer,
-    Move::CrossChop,
-    Move::CrossPoison,
-    Move::CrushGrip,
-    Move::Cut,
-    Move::DarkPulse,
-    Move::Dig,
-    Move::Discharge,
-    Move::Dive,
-    Move::DoubleHit,
-    Move::DoubleKick,
-    Move::DoubleSlap,
-    Move::DoubleEdge,
-    Move::DracoMeteor,
-    Move::DragonBreath,
-    Move::DragonClaw,
-    Move::DragonPulse,
-    Move::DragonRush,
-    Move::DrainPunch,
-    Move::DrillPeck,
-    Move::EarthPower,
-    Move::Earthquake,
-    Move::EggBomb,
-    Move::Endeavor,
-    Move::Eruption,
-    Move::Explosion,
-    Move::ExtremeSpeed,
-    Move::FalseSwipe,
-    Move::FaintAttack,
-    Move::FireFang,
-    Move::FireSpin,
-    Move::Flail,
-    Move::FlashCannon,
-    Move::Fly,
-    Move::ForcePalm,
-    Move::FrenzyPlant,
-    Move::Frustration,
-    Move::FuryAttack,
-    Move::FuryCutter,
-    Move::FurySwipes,
-    Move::GigaImpact,
-    Move::GrassKnot,
-    Move::GunkShot,
-    Move::GyroBall,
-    Move::HammerArm,
-    Move::HeadSmash,
-    Move::HiddenPower,
-    Move::HighJumpKick,
-    Move::HornAttack,
-    Move::HydroCannon,
-    Move::HydroPump,
-    Move::HyperBeam,
-    Move::IceBall,
-    Move::IceFang,
-    Move::IceShard,
-    Move::IcicleSpear,
-    Move::IronHead,
-    Move::Judgment,
-    Move::JumpKick,
-    Move::KarateChop,
-    Move::LastResort,
-    Move::LavaPlume,
-    Move::LeafBlade,
-    Move::LeafStorm,
-    Move::LowKick,
-    Move::MachPunch,
-    Move::MagicalLeaf,
-    Move::MagmaStorm,
-    Move::MagnetBomb,
-    Move::Magnitude,
-    Move::MegaKick,
-    Move::MegaPunch,
-    Move::Megahorn,
-    Move::MeteorMash,
-    Move::MirrorCoat,
-    Move::MirrorShot,
-    Move::MudBomb,
-    Move::MudShot,
-    Move::MuddyWater,
-    Move::NightShade,
-    Move::NightSlash,
-    Move::OminousWind,
-    Move::Outrage,
-    Move::Overheat,
-    Move::PayDay,
-    Move::Payback,
-    Move::Peck,
-    Move::PetalDance,
-    Move::PinMissile,
-    Move::Pluck,
-    Move::PoisonJab,
-    Move::PoisonTail,
-    Move::PowerGem,
-    Move::PowerWhip,
-    Move::PsychoBoost,
-    Move::PsychoCut,
-    Move::Psywave,
-    Move::Punishment,
-    Move::QuickAttack,
-    Move::Rage,
-    Move::RapidSpin,
-    Move::RazorLeaf,
-    Move::RazorWind,
-    Move::Return,
-    Move::Revenge,
-    Move::Reversal,
-    Move::RoarOfTime,
-    Move::RockBlast,
-    Move::RockClimb,
-    Move::RockThrow,
-    Move::RockWrecker,
-    Move::RollingKick,
-    Move::Rollout,
-    Move::SandTomb,
-    Move::Scratch,
-    Move::SeedBomb,
-    Move::SeedFlare,
-    Move::SeismicToss,
-    Move::ShadowClaw,
-    Move::ShadowForce,
-    Move::ShadowPunch,
-    Move::ShadowSneak,
-    Move::ShockWave,
-    Move::SignalBeam,
-    Move::SilverWind,
-    Move::SkullBash,
-    Move::SkyAttack,
-    Move::SkyUppercut,
-    Move::Slam,
-    Move::Slash,
-    Move::Snore,
-    Move::SolarBeam,
-    Move::SonicBoom,
-    Move::SpacialRend,
-    Move::SpikeCannon,
-    Move::SpitUp,
-    Move::SteelWing,
-    Move::StoneEdge,
-    Move::Strength,
-    Move::Struggle,
-    Move::Submission,
-    Move::SuckerPunch,
-    Move::Surf,
-    Move::Swift,
-    Move::Tackle,
-    Move::TakeDown,
-    Move::Thrash,
-    Move::ThunderFang,
-    Move::TripleKick,
-    Move::TrumpCard,
-    Move::Twister,
-    Move::UTurn,
-    Move::Uproar,
-    Move::VacuumWave,
-    Move::ViceGrip,
-    Move::VineWhip,
-    Move::VitalThrow,
-    Move::VoltTackle,
-    Move::WakeUpSlap,
-    Move::WaterGun,
-    Move::WaterPulse,
-    Move::Waterfall,
-    Move::WeatherBall,
-    Move::Whirlpool,
-    Move::WingAttack,
-    Move::WoodHammer,
-    Move::Wrap,
-    Move::WringOut,
-    Move::XScissor,
-};
+enum class MoveFlag {
+    BOOSTS_ATTACKER_STAT,
+    AFFECTED_BY_KINGS_ROCK,
+    BADLY_POISONS,
+    BOOSTS_ATTACKERS_ATTACK,
+    BOOSTS_ATTACKERS_CRIT_RATE,
+    BOOSTS_ATTACKERS_DEFENSE,
+    BOOSTS_ATTACKERS_EVASION,
+    BOOSTS_ATTACKERS_SPECIAL_ATTACK,
+    BOOSTS_ATTACKERS_SPECIAL_DEFENSE,
+    BOOSTS_ATTACKERS_SPEED,
+    BREAKS_PROTECT,
+    BURNS_DEFENDER,
+    BYPASSES_PROTECT,
+    CAN_BE_REFLECTED_BY_MIRROR_COAT,
+    CAN_BE_SNATCHED,
+    CHANGES_WEATHER,
+    CONFUSES_DEFENDER,
+    CONTINUES,
+    DEALS_DOUBLE_AFTER_MINIMIZE,
+    FLINCHES_DEFENDER,
+    FORCES_USER_OUT,
+    FREEZES_DEFENDER,
+    GOES_INTO_AIR,
+    GOES_UNDER_GROUND,
+    GOES_UNDER_WATER,
+    HAS_FIXED_DAMAGE,
+    HEALS_ATTACKER,
+    HITS_DEFENDER_IN_AIR,
+    HITS_DEFENDER_UNDER_GROUND,
+    HITS_DEFENDER_UNDER_WATER,
+    LOWERS_ATTACKERS_ATTACK,
+    LOWERS_ATTACKERS_DEFENSE,
+    LOWERS_ATTACKERS_SPECIAL_ATTACK,
+    LOWERS_ATTACKERS_SPECIAL_DEFENSE,
+    LOWERS_ATTACKERS_SPEED,
+    LOWERS_DEFENDER_ACCURACY,
+    LOWERS_DEFENDER_ATTACK,
+    LOWERS_DEFENDER_DEFENSE,
+    LOWERS_DEFENDER_EVASION,
+    LOWERS_DEFENDER_SPECIAL_ATTACK,
+    LOWERS_DEFENDER_SPECIAL_DEFENSE,
+    LOWERS_DEFENDER_SPEED,
+    MAKES_ATTACKER_FAINT,
+    MAKES_CONTACT,
+    MAKES_DEFENDER_SLEEP,
+    BYPASSES_ACCURACY,
+    OMNI_BOOSTS_ATTACKER,
+    PARALYZES_DEFENDER,
+    POISONS_DEFENDER,
+    RAISES_DEFENDER_ATTACK,
+    RAISES_DEFENDER_SPECIAL_ATTACK,
+    REQUIRES_CHARGING_TURN,
+    REQUIRES_RECHARGE_TURN,
+    GOES_INTO_VOID,
+    HAS_INCREASED_CRIT_CHANCE,
+    HAS_RECOIL,
+    HITS_MULTIPLE_TIMES,
+    LASTS_MULTIPLE_TURNS,
+    KOS_IN_ONE_HIT,
+    IS_OTHER,
+    HAS_POWER,
+    PROTECTS_USER,
+    CANT_BE_USED_DURING_GRAVITY,
+    COUNT
+};
+
+using MoveFlagSet = std::bitset<static_cast<size_t>(MoveFlag::COUNT)>;
+static constexpr std::array<MoveFlagSet, static_cast<int>(Move::Count)> MOVE_FLAGS = [] {
+    std::array<MoveFlagSet, static_cast<int>(Move::Count)> flags{};
+    flags[static_cast<int>(Move::Pound)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DoubleSlap)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::CometPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MegaPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PayDay)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FirePunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IcePunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ThunderPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Scratch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ViceGrip)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RazorWind)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Cut)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Gust)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::WingAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Fly)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Bind)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Slam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::VineWhip)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Stomp)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DoubleKick)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MegaKick)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::JumpKick)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RollingKick)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Headbutt)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HornAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FuryAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Tackle)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BodySlam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Wrap)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::TakeDown)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Thrash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DoubleEdge)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PoisonSting)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Twineedle)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PinMissile)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Bite)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Acid)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Ember)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Flamethrower)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::WaterGun)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HydroPump)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Surf)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IceBeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Blizzard)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Psybeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Bubblebeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AuroraBeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HyperBeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Peck)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DrillPeck)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Submission)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Strength)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Absorb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MegaDrain)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RazorLeaf)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SolarBeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PetalDance)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FireSpin)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Thundershock)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Thunderbolt)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RockThrow)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Earthquake)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Dig)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Confusion)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Psychic)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::QuickAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Selfdestruct)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::EggBomb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Lick)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Smog)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Sludge)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BoneClub)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FireBlast)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Waterfall)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Clamp)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Swift)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SkullBash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SpikeCannon)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Constrict)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HighJumpKick)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Barrage)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::LeechLife)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SkyAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Bubble)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DizzyPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Crabhammer)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Explosion)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FuryAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Bonemerang)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RockSlide)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HyperFang)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::TriAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Slash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FlameWheel)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Aeroblast)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PowderSnow)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MachPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FaintAttack)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SludgeBomb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MudSlap)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Octazooka)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ZapCannon)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IcyWind)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BoneRush)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Outrage)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::GigaDrain)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Spark)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SteelWing)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Return)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Frustration)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SacredFire)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Dynamicpunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Megahorn)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DragonBreath)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IronTail)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MetalClaw)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::VitalThrow)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::CrossChop)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Twister)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Crunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ExtremeSpeed)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Ancientpower)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ShadowBall)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RockSmash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Whirlpool)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HeatWave)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Superpower)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Dive)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ArmThrust)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::LusterPurge)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MistBall)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BlazeKick)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::NeedleArm)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HyperVoice)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PoisonFang)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::CrushClaw)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BlastBurn)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HydroCannon)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MeteorMash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Astonish)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AirCutter)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Overheat)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RockTomb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SilverWind)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SignalBeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ShadowPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Extrasensory)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SkyUppercut)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SandTomb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MuddyWater)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BulletSeed)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AerialAce)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IcicleSpear)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DragonClaw)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FrenzyPlant)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Bounce)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MudShot)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PoisonTail)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::VoltTackle)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MagicalLeaf)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::LeafBlade)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RockBlast)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ShockWave)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::WaterPulse)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PsychoBoost)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HammerArm)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::CloseCombat)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FlareBlitz)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ForcePalm)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AuraSphere)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PoisonJab)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DarkPulse)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::NightSlash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AquaTail)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SeedBomb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AirSlash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::XScissor)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BugBuzz)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DragonPulse)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DragonRush)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PowerGem)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DrainPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::VacuumWave)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FocusBlast)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::EnergyBall)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BraveBird)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::EarthPower)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::GigaImpact)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::BulletPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IceShard)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ShadowClaw)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ThunderFang)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IceFang)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FireFang)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ShadowSneak)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MudBomb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PsychoCut)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ZenHeadbutt)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MirrorShot)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::FlashCannon)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RockClimb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DracoMeteor)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::Discharge)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::LavaPlume)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::LeafStorm)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::PowerWhip)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RockWrecker)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::CrossPoison)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::GunkShot)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::IronHead)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::MagnetBomb)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::StoneEdge)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ChargeBeam)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::WoodHammer)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AquaJet)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::AttackOrder)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::HeadSmash)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::DoubleHit)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::RoarOfTime)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SpacialRend)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::SeedFlare)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::OminousWind)].set(static_cast<int>(MoveFlag::HAS_POWER));
+    flags[static_cast<int>(Move::ShadowForce)].set(static_cast<int>(MoveFlag::HAS_POWER));
+
+    flags[static_cast<int>(Move::Absorb)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::MegaDrain)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::Recover)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::Softboiled)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::LeechLife)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::GigaDrain)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::MilkDrink)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::MorningSun)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::Synthesis)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::Moonlight)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::SlackOff)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::DrainPunch)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+    flags[static_cast<int>(Move::HealOrder)].set(static_cast<int>(MoveFlag::HEALS_ATTACKER));
+
+    flags[static_cast<int>(Move::SwordsDance)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Growth)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Meditate)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Agility)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::DoubleTeam)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Harden)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Minimize)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Withdraw)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Amnesia)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::AcidArmor)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Sharpen)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::TailGlow)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::IronDefense)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::Howl)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::BulkUp)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::DragonDance)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::RockPolish)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::NastyPlot)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+    flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+
+    flags[static_cast<int>(Move::SwordsDance)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::Meditate)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::Sharpen)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::BellyDrum)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::MetalClaw)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::MeteorMash)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::Howl)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::BulkUp)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+    flags[static_cast<int>(Move::DragonDance)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_ATTACK));
+
+    flags[static_cast<int>(Move::Superpower)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_ATTACK));
+
+    flags[static_cast<int>(Move::Harden)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::Withdraw)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::SkullBash)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::AcidArmor)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::SteelWing)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::IronDefense)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::BulkUp)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_DEFENSE));
+
+    flags[static_cast<int>(Move::Superpower)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_DEFENSE));
+    flags[static_cast<int>(Move::CloseCombat)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_DEFENSE));
+
+    flags[static_cast<int>(Move::Overheat)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::PsychoBoost)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::DracoMeteor)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::LeafStorm)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_SPECIAL_ATTACK));
+
+    flags[static_cast<int>(Move::Growth)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::TailGlow)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::NastyPlot)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::ChargeBeam)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK));
+
+    flags[static_cast<int>(Move::Amnesia)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPECIAL_DEFENSE));
+
+    flags[static_cast<int>(Move::CloseCombat)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_SPECIAL_DEFENSE));
+
+    flags[static_cast<int>(Move::Agility)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPEED));
+    flags[static_cast<int>(Move::DragonDance)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPEED));
+    flags[static_cast<int>(Move::RockPolish)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_SPEED));
+
+    flags[static_cast<int>(Move::HammerArm)].set(static_cast<int>(MoveFlag::LOWERS_ATTACKERS_SPEED));
+
+    flags[static_cast<int>(Move::DoubleTeam)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_EVASION));
+    flags[static_cast<int>(Move::Minimize)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_EVASION));
+
+    flags[static_cast<int>(Move::FocusEnergy)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKERS_CRIT_RATE));
+
+    flags[static_cast<int>(Move::Ancientpower)].set(static_cast<int>(MoveFlag::OMNI_BOOSTS_ATTACKER));
+    flags[static_cast<int>(Move::SilverWind)].set(static_cast<int>(MoveFlag::OMNI_BOOSTS_ATTACKER));
+    flags[static_cast<int>(Move::OminousWind)].set(static_cast<int>(MoveFlag::OMNI_BOOSTS_ATTACKER));
+
+    flags[static_cast<int>(Move::Swagger)].set(static_cast<int>(MoveFlag::RAISES_DEFENDER_ATTACK));
+
+    flags[static_cast<int>(Move::Growl)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ATTACK));
+    flags[static_cast<int>(Move::AuroraBeam)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ATTACK));
+    flags[static_cast<int>(Move::Charm)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ATTACK));
+    flags[static_cast<int>(Move::Memento)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ATTACK));
+    flags[static_cast<int>(Move::Featherdance)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ATTACK));
+    flags[static_cast<int>(Move::Tickle)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ATTACK));
+
+    flags[static_cast<int>(Move::Flatter)].set(static_cast<int>(MoveFlag::RAISES_DEFENDER_SPECIAL_ATTACK));
+
+    flags[static_cast<int>(Move::Memento)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_ATTACK));
+    flags[static_cast<int>(Move::MistBall)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_ATTACK));
+
+    flags[static_cast<int>(Move::TailWhip)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+    flags[static_cast<int>(Move::Leer)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+    flags[static_cast<int>(Move::Screech)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+    flags[static_cast<int>(Move::IronTail)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+    flags[static_cast<int>(Move::Crunch)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+    flags[static_cast<int>(Move::RockSmash)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+    flags[static_cast<int>(Move::CrushClaw)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+    flags[static_cast<int>(Move::Tickle)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_DEFENSE));
+
+    flags[static_cast<int>(Move::Acid)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::Psychic)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::ShadowBall)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::LusterPurge)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::FakeTears)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::MetalSound)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::BugBuzz)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::FocusBlast)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::EnergyBall)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::EarthPower)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::FlashCannon)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+    flags[static_cast<int>(Move::SeedFlare)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE));
+
+    flags[static_cast<int>(Move::Bubblebeam)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::StringShot)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::Constrict)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::Bubble)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::CottonSpore)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::ScaryFace)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::IcyWind)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::RockTomb)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+    flags[static_cast<int>(Move::MudShot)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_SPEED));
+
+    flags[static_cast<int>(Move::SandAttack)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::Smokescreen)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::Kinesis)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::Flash)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::MudSlap)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::Octazooka)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::MuddyWater)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::MudBomb)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+    flags[static_cast<int>(Move::MirrorShot)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_ACCURACY));
+
+    flags[static_cast<int>(Move::SweetScent)].set(static_cast<int>(MoveFlag::LOWERS_DEFENDER_EVASION));
+
+    flags[static_cast<int>(Move::Blizzard)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::Thunder)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::Swift)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::FaintAttack)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::VitalThrow)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::ShadowPunch)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::AerialAce)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::MagicalLeaf)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::ShockWave)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::AuraSphere)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+    flags[static_cast<int>(Move::MagnetBomb)].set(static_cast<int>(MoveFlag::BYPASSES_ACCURACY));
+
+    flags[static_cast<int>(Move::Bounce)].set(static_cast<int>(MoveFlag::CANT_BE_USED_DURING_GRAVITY));
+    flags[static_cast<int>(Move::Fly)].set(static_cast<int>(MoveFlag::CANT_BE_USED_DURING_GRAVITY));
+    flags[static_cast<int>(Move::HighJumpKick)].set(static_cast<int>(MoveFlag::CANT_BE_USED_DURING_GRAVITY));
+    flags[static_cast<int>(Move::JumpKick)].set(static_cast<int>(MoveFlag::CANT_BE_USED_DURING_GRAVITY));
+    flags[static_cast<int>(Move::MagnetRise)].set(static_cast<int>(MoveFlag::CANT_BE_USED_DURING_GRAVITY));
+    flags[static_cast<int>(Move::Splash)].set(static_cast<int>(MoveFlag::CANT_BE_USED_DURING_GRAVITY));
+
+    flags[static_cast<int>(Move::Detect)].set(static_cast<int>(MoveFlag::PROTECTS_USER));
+    flags[static_cast<int>(Move::Protect)].set(static_cast<int>(MoveFlag::PROTECTS_USER));
+
+    flags[static_cast<int>(Move::Disable)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Mist)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::LowKick)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Counter)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::LeechSeed)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Rage)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Teleport)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Mimic)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::DefenseCurl)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Barrier)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::LightScreen)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Haze)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Reflect)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Bide)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Metronome)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MirrorMove)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::DreamEater)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Transform)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Psywave)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Splash)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Rest)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Conversion)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::TriAttack)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::SuperFang)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Substitute)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Struggle)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Sketch)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::TripleKick)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Thief)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::SpiderWeb)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MindReader)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Nightmare)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Snore)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Curse)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Flail)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Conversion2)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Reversal)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Spite)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Spikes)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Foresight)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::DestinyBond)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::PerishSong)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::LockOn)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Rollout)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::FalseSwipe)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::FuryCutter)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MeanLook)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Attract)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::SleepTalk)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::HealBell)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Present)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Safeguard)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::PainSplit)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Magnitude)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::BatonPass)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Encore)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Pursuit)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::RapidSpin)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::HiddenPower)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MirrorCoat)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::PsychUp)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::FutureSight)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::BeatUp)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::FakeOut)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Uproar)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Stockpile)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::SpitUp)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Swallow)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Torment)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Facade)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::FocusPunch)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Smellingsalt)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::FollowMe)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::NaturePower)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Charge)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Taunt)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::HelpingHand)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Trick)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::RolePlay)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Wish)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Assist)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Ingrain)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MagicCoat)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Recycle)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Revenge)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::BrickBreak)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Yawn)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::KnockOff)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Endeavor)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Eruption)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::SkillSwap)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Imprison)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Refresh)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Grudge)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Snatch)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::SecretPower)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Camouflage)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MudSport)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::IceBall)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::WeatherBall)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Aromatherapy)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::OdorSleuth)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::WaterSpout)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Block)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Covet)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::WaterSport)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::DoomDesire)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Roost)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Gravity)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MiracleEye)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::WakeUpSlap)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::GyroBall)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::HealingWish)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Brine)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::NaturalGift)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Feint)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Pluck)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Tailwind)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Acupressure)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MetalBurst)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::UTurn)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Payback)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Assurance)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Embargo)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Fling)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::PsychoShift)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::TrumpCard)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::HealBlock)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::WringOut)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::PowerTrick)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::GastroAcid)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::LuckyChant)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MeFirst)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Copycat)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::PowerSwap)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::GuardSwap)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Punishment)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::LastResort)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::WorrySeed)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::SuckerPunch)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::ToxicSpikes)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::HeartSwap)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::AquaRing)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MagnetRise)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Switcheroo)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Avalanche)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Defog)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::TrickRoom)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Captivate)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::StealthRock)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::GrassKnot)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Chatter)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::Judgment)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::BugBite)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::LunarDance)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::CrushGrip)].set(static_cast<int>(MoveFlag::IS_OTHER));
+    flags[static_cast<int>(Move::MagmaStorm)].set(static_cast<int>(MoveFlag::IS_OTHER));
+
+    flags[static_cast<int>(Move::Sandstorm)].set(static_cast<int>(MoveFlag::CHANGES_WEATHER));
+    flags[static_cast<int>(Move::RainDance)].set(static_cast<int>(MoveFlag::CHANGES_WEATHER));
+    flags[static_cast<int>(Move::SunnyDay)].set(static_cast<int>(MoveFlag::CHANGES_WEATHER));
+    flags[static_cast<int>(Move::Hail)].set(static_cast<int>(MoveFlag::CHANGES_WEATHER));
+
+    flags[static_cast<int>(Move::Whirlwind)].set(static_cast<int>(MoveFlag::FORCES_USER_OUT));
+    flags[static_cast<int>(Move::Roar)].set(static_cast<int>(MoveFlag::FORCES_USER_OUT));
+
+    flags[static_cast<int>(Move::Guillotine)].set(static_cast<int>(MoveFlag::KOS_IN_ONE_HIT));
+    flags[static_cast<int>(Move::HornDrill)].set(static_cast<int>(MoveFlag::KOS_IN_ONE_HIT));
+    flags[static_cast<int>(Move::Fissure)].set(static_cast<int>(MoveFlag::KOS_IN_ONE_HIT));
+    flags[static_cast<int>(Move::SheerCold)].set(static_cast<int>(MoveFlag::KOS_IN_ONE_HIT));
+
+    flags[static_cast<int>(Move::Selfdestruct)].set(static_cast<int>(MoveFlag::MAKES_ATTACKER_FAINT));
+    flags[static_cast<int>(Move::Explosion)].set(static_cast<int>(MoveFlag::MAKES_ATTACKER_FAINT));
+    flags[static_cast<int>(Move::Memento)].set(static_cast<int>(MoveFlag::MAKES_ATTACKER_FAINT));
+
+    flags[static_cast<int>(Move::KarateChop)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::RazorWind)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::RazorLeaf)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::SkyAttack)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::Crabhammer)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::Slash)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::Aeroblast)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::CrossChop)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::BlazeKick)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::AirCutter)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::PoisonTail)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::LeafBlade)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::NightSlash)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::ShadowClaw)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::PsychoCut)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::CrossPoison)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::StoneEdge)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::AttackOrder)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+    flags[static_cast<int>(Move::SpacialRend)].set(static_cast<int>(MoveFlag::HAS_INCREASED_CRIT_CHANCE));
+
+    flags[static_cast<int>(Move::RazorWind)].set(static_cast<int>(MoveFlag::REQUIRES_CHARGING_TURN));
+    flags[static_cast<int>(Move::SolarBeam)].set(static_cast<int>(MoveFlag::REQUIRES_CHARGING_TURN));
+    flags[static_cast<int>(Move::SkullBash)].set(static_cast<int>(MoveFlag::REQUIRES_CHARGING_TURN));
+    flags[static_cast<int>(Move::SkyAttack)].set(static_cast<int>(MoveFlag::REQUIRES_CHARGING_TURN));
+
+    flags[static_cast<int>(Move::HyperBeam)].set(static_cast<int>(MoveFlag::REQUIRES_RECHARGE_TURN));
+    flags[static_cast<int>(Move::BlastBurn)].set(static_cast<int>(MoveFlag::REQUIRES_RECHARGE_TURN));
+    flags[static_cast<int>(Move::HydroCannon)].set(static_cast<int>(MoveFlag::REQUIRES_RECHARGE_TURN));
+    flags[static_cast<int>(Move::FrenzyPlant)].set(static_cast<int>(MoveFlag::REQUIRES_RECHARGE_TURN));
+    flags[static_cast<int>(Move::GigaImpact)].set(static_cast<int>(MoveFlag::REQUIRES_RECHARGE_TURN));
+    flags[static_cast<int>(Move::RockWrecker)].set(static_cast<int>(MoveFlag::REQUIRES_RECHARGE_TURN));
+    flags[static_cast<int>(Move::RoarOfTime)].set(static_cast<int>(MoveFlag::REQUIRES_RECHARGE_TURN));
+
+    flags[static_cast<int>(Move::Stomp)].set(static_cast<int>(MoveFlag::DEALS_DOUBLE_AFTER_MINIMIZE));
+
+    flags[static_cast<int>(Move::Bind)].set(static_cast<int>(MoveFlag::CONTINUES));
+    flags[static_cast<int>(Move::Wrap)].set(static_cast<int>(MoveFlag::CONTINUES));
+    flags[static_cast<int>(Move::FireSpin)].set(static_cast<int>(MoveFlag::CONTINUES));
+    flags[static_cast<int>(Move::Clamp)].set(static_cast<int>(MoveFlag::CONTINUES));
+    flags[static_cast<int>(Move::Whirlpool)].set(static_cast<int>(MoveFlag::CONTINUES));
+    flags[static_cast<int>(Move::SandTomb)].set(static_cast<int>(MoveFlag::CONTINUES));
+    flags[static_cast<int>(Move::MagmaStorm)].set(static_cast<int>(MoveFlag::CONTINUES));
+
+    flags[static_cast<int>(Move::FirePunch)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::Ember)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::Flamethrower)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::FireBlast)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::FlameWheel)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::SacredFire)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::HeatWave)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::WillOWisp)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::BlazeKick)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::FlareBlitz)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::FireFang)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+    flags[static_cast<int>(Move::LavaPlume)].set(static_cast<int>(MoveFlag::BURNS_DEFENDER));
+
+    flags[static_cast<int>(Move::IcePunch)].set(static_cast<int>(MoveFlag::FREEZES_DEFENDER));
+    flags[static_cast<int>(Move::IceBeam)].set(static_cast<int>(MoveFlag::FREEZES_DEFENDER));
+    flags[static_cast<int>(Move::Blizzard)].set(static_cast<int>(MoveFlag::FREEZES_DEFENDER));
+    flags[static_cast<int>(Move::PowderSnow)].set(static_cast<int>(MoveFlag::FREEZES_DEFENDER));
+    flags[static_cast<int>(Move::IceFang)].set(static_cast<int>(MoveFlag::FREEZES_DEFENDER));
+
+    flags[static_cast<int>(Move::ThunderPunch)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::BodySlam)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::StunSpore)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Thundershock)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Thunderbolt)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::ThunderWave)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Thunder)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Lick)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Glare)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::ZapCannon)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Spark)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::DragonBreath)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Bounce)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::VoltTackle)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::ForcePalm)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::ThunderFang)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+    flags[static_cast<int>(Move::Discharge)].set(static_cast<int>(MoveFlag::PARALYZES_DEFENDER));
+
+    flags[static_cast<int>(Move::PoisonSting)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::Twineedle)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::PoisonPowder)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::Smog)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::Sludge)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::PoisonGas)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::SludgeBomb)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::PoisonTail)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::PoisonJab)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::CrossPoison)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+    flags[static_cast<int>(Move::GunkShot)].set(static_cast<int>(MoveFlag::POISONS_DEFENDER));
+
+    flags[static_cast<int>(Move::Toxic)].set(static_cast<int>(MoveFlag::BADLY_POISONS));
+    flags[static_cast<int>(Move::PoisonFang)].set(static_cast<int>(MoveFlag::BADLY_POISONS));
+
+    flags[static_cast<int>(Move::Sing)].set(static_cast<int>(MoveFlag::MAKES_DEFENDER_SLEEP));
+    flags[static_cast<int>(Move::SleepPowder)].set(static_cast<int>(MoveFlag::MAKES_DEFENDER_SLEEP));
+    flags[static_cast<int>(Move::Hypnosis)].set(static_cast<int>(MoveFlag::MAKES_DEFENDER_SLEEP));
+    flags[static_cast<int>(Move::LovelyKiss)].set(static_cast<int>(MoveFlag::MAKES_DEFENDER_SLEEP));
+    flags[static_cast<int>(Move::Spore)].set(static_cast<int>(MoveFlag::MAKES_DEFENDER_SLEEP));
+    flags[static_cast<int>(Move::Grasswhistle)].set(static_cast<int>(MoveFlag::MAKES_DEFENDER_SLEEP));
+    flags[static_cast<int>(Move::DarkVoid)].set(static_cast<int>(MoveFlag::MAKES_DEFENDER_SLEEP));
+
+    flags[static_cast<int>(Move::Supersonic)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::Psybeam)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::Confusion)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::ConfuseRay)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::DizzyPunch)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::SweetKiss)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::Swagger)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::Dynamicpunch)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::Flatter)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::TeeterDance)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::SignalBeam)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::WaterPulse)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+    flags[static_cast<int>(Move::RockClimb)].set(static_cast<int>(MoveFlag::CONFUSES_DEFENDER));
+
+    flags[static_cast<int>(Move::Stomp)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::RollingKick)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::Headbutt)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::Bite)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::BoneClub)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::Waterfall)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::SkyAttack)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::HyperFang)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::Twister)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::NeedleArm)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::Astonish)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::Extrasensory)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::DarkPulse)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::AirSlash)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::DragonRush)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::ThunderFang)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::IceFang)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::FireFang)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::ZenHeadbutt)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+    flags[static_cast<int>(Move::IronHead)].set(static_cast<int>(MoveFlag::FLINCHES_DEFENDER));
+
+    flags[static_cast<int>(Move::JumpKick)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::TakeDown)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::DoubleEdge)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::Submission)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::HighJumpKick)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::BellyDrum)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::VoltTackle)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::FlareBlitz)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::BraveBird)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::WoodHammer)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+    flags[static_cast<int>(Move::HeadSmash)].set(static_cast<int>(MoveFlag::HAS_RECOIL));
+
+    flags[static_cast<int>(Move::DoubleSlap)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::CometPunch)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::DoubleKick)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::FuryAttack)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::Twineedle)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::PinMissile)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::SpikeCannon)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::Barrage)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::FuryAttack)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::Bonemerang)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::BoneRush)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::ArmThrust)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::BulletSeed)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::IcicleSpear)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::RockBlast)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+    flags[static_cast<int>(Move::DoubleHit)].set(static_cast<int>(MoveFlag::HITS_MULTIPLE_TIMES));
+
+    flags[static_cast<int>(Move::Thrash)].set(static_cast<int>(MoveFlag::LASTS_MULTIPLE_TURNS));
+    flags[static_cast<int>(Move::PetalDance)].set(static_cast<int>(MoveFlag::LASTS_MULTIPLE_TURNS));
+    flags[static_cast<int>(Move::Outrage)].set(static_cast<int>(MoveFlag::LASTS_MULTIPLE_TURNS));
+
+    flags[static_cast<int>(Move::SonicBoom)].set(static_cast<int>(MoveFlag::HAS_FIXED_DAMAGE));
+    flags[static_cast<int>(Move::SeismicToss)].set(static_cast<int>(MoveFlag::HAS_FIXED_DAMAGE));
+    flags[static_cast<int>(Move::DragonRage)].set(static_cast<int>(MoveFlag::HAS_FIXED_DAMAGE));
+    flags[static_cast<int>(Move::NightShade)].set(static_cast<int>(MoveFlag::HAS_FIXED_DAMAGE));
+
+    flags[static_cast<int>(Move::Bounce)].set(static_cast<int>(MoveFlag::GOES_INTO_AIR));
+    flags[static_cast<int>(Move::Fly)].set(static_cast<int>(MoveFlag::GOES_INTO_AIR));
+
+    flags[static_cast<int>(Move::Gust)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_IN_AIR));
+    flags[static_cast<int>(Move::SkyUppercut)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_IN_AIR));
+    flags[static_cast<int>(Move::Thunder)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_IN_AIR));
+    flags[static_cast<int>(Move::Twister)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_IN_AIR));
+
+    flags[static_cast<int>(Move::Dig)].set(static_cast<int>(MoveFlag::GOES_UNDER_GROUND));
+
+    flags[static_cast<int>(Move::Earthquake)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_UNDER_GROUND));
+    flags[static_cast<int>(Move::Magnitude)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_UNDER_GROUND));
+    flags[static_cast<int>(Move::Fissure)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_UNDER_GROUND));
+
+    flags[static_cast<int>(Move::Dive)].set(static_cast<int>(MoveFlag::GOES_UNDER_WATER));
+
+    flags[static_cast<int>(Move::Surf)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_UNDER_WATER));
+    flags[static_cast<int>(Move::Whirlpool)].set(static_cast<int>(MoveFlag::HITS_DEFENDER_UNDER_WATER));
+
+    flags[static_cast<int>(Move::ShadowForce)].set(static_cast<int>(MoveFlag::GOES_INTO_VOID));
+
+    flags[static_cast<int>(Move::Pound)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::KarateChop)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DoubleSlap)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::CometPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::MegaPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FirePunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::IcePunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ThunderPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Scratch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ViceGrip)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Guillotine)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Cut)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::WingAttack)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Fly)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Bind)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Slam)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::VineWhip)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Stomp)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DoubleKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::MegaKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::JumpKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::RollingKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Headbutt)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::HornAttack)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FuryAttack)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::HornDrill)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Tackle)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::BodySlam)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Wrap)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::TakeDown)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Thrash)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DoubleEdge)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Bite)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Peck)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DrillPeck)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Submission)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::LowKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Counter)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::SeismicToss)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Strength)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::PetalDance)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Dig)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::QuickAttack)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Rage)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Bide)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Lick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Waterfall)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Clamp)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::SkullBash)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Constrict)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::HighJumpKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::LeechLife)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DizzyPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Crabhammer)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FurySwipes)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::HyperFang)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::SuperFang)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Slash)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Struggle)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::TripleKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Thief)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FlameWheel)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Flail)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Reversal)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::MachPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FaintAttack)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Outrage)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Rollout)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FalseSwipe)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Spark)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FuryCutter)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::SteelWing)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Return)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Frustration)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Dynamicpunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Megahorn)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Pursuit)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::RapidSpin)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::IronTail)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::MetalClaw)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::VitalThrow)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::CrossChop)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Crunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ExtremeSpeed)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::RockSmash)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FakeOut)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Facade)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FocusPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Smellingsalt)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Superpower)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Revenge)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::BrickBreak)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::KnockOff)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Endeavor)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Dive)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ArmThrust)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::BlazeKick)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::IceBall)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::NeedleArm)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::PoisonFang)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::CrushClaw)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::MeteorMash)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Astonish)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ShadowPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::SkyUppercut)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::AerialAce)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DragonClaw)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Bounce)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::PoisonTail)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Covet)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::VoltTackle)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::LeafBlade)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::WakeUpSlap)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::HammerArm)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::GyroBall)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Pluck)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::UTurn)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::CloseCombat)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Payback)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Assurance)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Punishment)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::LastResort)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::SuckerPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FlareBlitz)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ForcePalm)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::PoisonJab)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::NightSlash)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::AquaTail)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::XScissor)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DragonRush)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DrainPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::BraveBird)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::GigaImpact)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::BulletPunch)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::Avalanche)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ShadowClaw)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ThunderFang)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::IceFang)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::FireFang)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ShadowSneak)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ZenHeadbutt)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::RockClimb)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::PowerWhip)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::CrossPoison)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::IronHead)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::BugBite)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::WoodHammer)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::AquaJet)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::HeadSmash)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::DoubleHit)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::CrushGrip)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+    flags[static_cast<int>(Move::ShadowForce)].set(static_cast<int>(MoveFlag::MAKES_CONTACT));
+
+    flags[static_cast<int>(Move::Acupressure)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::Curse)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::DoomDesire)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::Feint)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::FutureSight)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::PerishSong)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::PsychUp)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::RolePlay)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::ShadowForce)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::Sketch)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+    flags[static_cast<int>(Move::Transform)].set(static_cast<int>(MoveFlag::BYPASSES_PROTECT));
+
+    flags[static_cast<int>(Move::Feint)].set(static_cast<int>(MoveFlag::BREAKS_PROTECT));
+    flags[static_cast<int>(Move::ShadowForce)].set(static_cast<int>(MoveFlag::BREAKS_PROTECT));
+
+    flags[static_cast<int>(Move::Attract)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Block)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Captivate)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Charm)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::ConfuseRay)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::CottonSpore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::DarkVoid)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::FakeTears)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Featherdance)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Flash)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Flatter)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::GastroAcid)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Glare)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Grasswhistle)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Growl)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Hypnosis)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Kinesis)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::LeechSeed)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Leer)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::LovelyKiss)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::MeanLook)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::MetalSound)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::PoisonGas)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::PoisonPowder)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::SandAttack)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::ScaryFace)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Screech)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Sing)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::SleepPowder)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Smokescreen)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::SpiderWeb)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Spore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::StringShot)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::StunSpore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Supersonic)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Swagger)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::SweetKiss)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::SweetScent)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::TailWhip)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::ThunderWave)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Tickle)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Toxic)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::WillOWisp)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::WorrySeed)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Yawn)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+
+    flags[static_cast<int>(Move::AcidArmor)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Acupressure)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Agility)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Amnesia)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Aromatherapy)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Barrier)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::BellyDrum)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::BulkUp)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Camouflage)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Charge)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::DefenseCurl)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::DoubleTeam)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::DragonDance)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::FocusEnergy)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Growth)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Harden)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::HealBell)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::HealOrder)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Howl)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Ingrain)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::IronDefense)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::LightScreen)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Meditate)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::MilkDrink)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Minimize)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Mist)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Moonlight)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::MorningSun)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::NastyPlot)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::PsychUp)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Recover)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Reflect)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Refresh)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Rest)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::RockPolish)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Roost)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Safeguard)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Sharpen)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::SlackOff)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Softboiled)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Stockpile)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Substitute)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Swallow)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::SwordsDance)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Synthesis)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::TailGlow)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Tailwind)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+    flags[static_cast<int>(Move::Withdraw)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
+
+    flags[static_cast<int>(Move::AerialAce)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Aeroblast)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::AirCutter)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::AirSlash)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::AquaJet)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::AquaTail)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ArmThrust)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Assurance)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::AttackOrder)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::AuraSphere)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Avalanche)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Barrage)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BeatUp)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Bide)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Bind)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BlastBurn)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BoneRush)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Bonemerang)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Bounce)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BraveBird)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BrickBreak)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Brine)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BugBite)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BulletPunch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::BulletSeed)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ChargeBeam)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Clamp)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::CloseCombat)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::CometPunch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Crabhammer)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::CrossChop)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::CrossPoison)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::CrushGrip)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Cut)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DarkPulse)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Dig)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Discharge)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Dive)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DoubleHit)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DoubleKick)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DoubleSlap)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DoubleEdge)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DracoMeteor)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DragonBreath)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DragonClaw)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DragonPulse)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DragonRush)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DrainPunch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::DrillPeck)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::EarthPower)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Earthquake)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::EggBomb)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Endeavor)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Eruption)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Explosion)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ExtremeSpeed)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FalseSwipe)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FaintAttack)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FireFang)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FireSpin)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Flail)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FlashCannon)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Fly)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ForcePalm)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FrenzyPlant)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Frustration)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FuryAttack)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FuryCutter)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::FurySwipes)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::GigaImpact)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::GrassKnot)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::GunkShot)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::GyroBall)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HammerArm)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HeadSmash)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HiddenPower)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HighJumpKick)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HornAttack)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HydroCannon)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HydroPump)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::HyperBeam)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::IceBall)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::IceFang)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::IceShard)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::IcicleSpear)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::IronHead)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Judgment)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::JumpKick)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::KarateChop)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::LastResort)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::LavaPlume)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::LeafBlade)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::LeafStorm)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::LowKick)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MachPunch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MagicalLeaf)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MagmaStorm)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MagnetBomb)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Magnitude)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MegaKick)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MegaPunch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Megahorn)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MeteorMash)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MirrorCoat)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MirrorShot)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MudBomb)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MudShot)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::MuddyWater)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::NightShade)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::NightSlash)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::OminousWind)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Outrage)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Overheat)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PayDay)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Payback)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Peck)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PetalDance)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PinMissile)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Pluck)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PoisonJab)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PoisonTail)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PowerGem)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PowerWhip)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PsychoBoost)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::PsychoCut)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Psywave)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Punishment)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::QuickAttack)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Rage)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RapidSpin)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RazorLeaf)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RazorWind)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Return)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Revenge)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Reversal)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RoarOfTime)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RockBlast)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RockClimb)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RockThrow)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RockWrecker)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::RollingKick)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Rollout)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SandTomb)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Scratch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SeedBomb)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SeedFlare)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SeismicToss)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ShadowClaw)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ShadowForce)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ShadowPunch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ShadowSneak)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ShockWave)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SignalBeam)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SilverWind)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SkullBash)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SkyAttack)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SkyUppercut)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Slam)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Slash)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Snore)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SolarBeam)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SonicBoom)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SpacialRend)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SpikeCannon)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SpitUp)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SteelWing)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::StoneEdge)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Strength)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Struggle)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Submission)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::SuckerPunch)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Surf)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Swift)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Tackle)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::TakeDown)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Thrash)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ThunderFang)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::TripleKick)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::TrumpCard)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Twister)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::UTurn)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Uproar)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::VacuumWave)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::ViceGrip)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::VineWhip)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::VitalThrow)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::VoltTackle)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::WakeUpSlap)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::WaterGun)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::WaterPulse)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Waterfall)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::WeatherBall)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Whirlpool)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::WingAttack)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::WoodHammer)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::Wrap)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::WringOut)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    flags[static_cast<int>(Move::XScissor)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+    return flags;
+}();
+
+static constexpr std::array<int, static_cast<int>(Move::Count)> MOVE_PRIORITIES = [] {
+    std::array<int, static_cast<int>(Move::Count)> array{};
+    array[static_cast<int>(Move::HelpingHand)] = 5;
+
+    array[static_cast<int>(Move::MagicCoat)] = 4;
+    array[static_cast<int>(Move::Snatch)] = 4;
+
+    array[static_cast<int>(Move::Detect)] = 3;
+    array[static_cast<int>(Move::Endure)] = 3;
+    array[static_cast<int>(Move::FollowMe)] = 3;
+    array[static_cast<int>(Move::Protect)] = 3;
+
+    array[static_cast<int>(Move::Feint)] = 2;
+
+    array[static_cast<int>(Move::AquaJet)] = 1;
+    array[static_cast<int>(Move::Bide)] = 1;
+    array[static_cast<int>(Move::BulletPunch)] = 1;
+    array[static_cast<int>(Move::ExtremeSpeed)] = 1;
+    array[static_cast<int>(Move::FakeOut)] = 1;
+    array[static_cast<int>(Move::IceShard)] = 1;
+    array[static_cast<int>(Move::MachPunch)] = 1;
+    array[static_cast<int>(Move::QuickAttack)] = 1;
+    array[static_cast<int>(Move::ShadowSneak)] = 1;
+    array[static_cast<int>(Move::SuckerPunch)] = 1;
+    array[static_cast<int>(Move::VacuumWave)] = 1;
+
+    array[static_cast<int>(Move::VitalThrow)] = -1;
+
+    array[static_cast<int>(Move::FocusPunch)] = -3;
+
+    array[static_cast<int>(Move::Avalanche)] = -4;
+    array[static_cast<int>(Move::Revenge)] = -4;
+
+    array[static_cast<int>(Move::Counter)] = -5;
+    array[static_cast<int>(Move::MirrorCoat)] = -5;
+
+    array[static_cast<int>(Move::Roar)] = -6;
+    array[static_cast<int>(Move::Whirlwind)] = -6;
+
+    array[static_cast<int>(Move::TrickRoom)] = -7;
+
+    return array;
+}();
 
 static const std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Pound", Move::Pound},
@@ -2399,7 +2324,7 @@ static void verify_map() {
     for (Move value : MOVE_MAP | std::ranges::views::values) {
         moves.erase(value);
     }
-    if (moves.size() != 0) {
+    if (!moves.empty()) {
         throw std::logic_error("Invalid move map");
     }
 }
