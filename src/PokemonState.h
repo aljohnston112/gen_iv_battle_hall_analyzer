@@ -7,6 +7,8 @@
 enum class Status {
     BURN,
     POISON,
+    BADLY_POISONED,
+    PARALYZED,
     SLEEP,
     NONE
 };
@@ -48,11 +50,28 @@ struct PokemonState {
     std::array<int, 6> stat_stages = {0, 0, 0, 0, 0, 0};
 
     Status status = Status::NONE;
+    int turns_badly_poisoned = 0;
     bool confused = false;
     bool recharging = false;
     int multi_turn_move_counter = 0;
     bool was_hit = false;
     bool charging = false;
+    int trapped_counter = 0;
+    bool reflect = false;
+    bool light_screen = false;
+};
+
+enum class Weather {
+    CLEAR,
+    SUN,
+    RAIN,
+    HAIL,
+    SANDSTORM,
+    FOG
+};
+
+struct BattleState {
+    Weather weather = Weather::CLEAR;
 };
 
 

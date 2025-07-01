@@ -75,12 +75,12 @@ void analyze() {
             all_moves
         );
 
-    for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
-        const auto& player_pokemon_forms =
-            convert_serebii_to_custom(serebii_pokemon);
-        battle_all(group_to_rank_to_over_2, player_pokemon_forms);
-    }
-    // const auto& player_pokemon_forms =
-    //     convert_serebii_to_custom(all_serebii_pokemon.at("Sunkern"));
-    // battle_all(group_to_rank_to_over_2, player_pokemon_forms);
+    // for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
+    //     const auto& player_pokemon_forms =
+    //         convert_serebii_to_custom(serebii_pokemon);
+    //     battle_all(group_to_rank_to_over_2, player_pokemon_forms);
+    // }
+    const auto& player_pokemon_forms =
+        convert_serebii_to_custom(all_serebii_pokemon.at("Sunkern"));
+    battle_all(group_to_rank_to_over_2, player_pokemon_forms);
 }

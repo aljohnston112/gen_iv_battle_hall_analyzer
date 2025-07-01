@@ -1102,7 +1102,6 @@ static constexpr std::array<MoveFlagSet, static_cast<int>(Move::Count)> MOVE_FLA
     flags[static_cast<int>(Move::BugBite)].set(static_cast<int>(MoveFlag::IS_OTHER));
     flags[static_cast<int>(Move::LunarDance)].set(static_cast<int>(MoveFlag::IS_OTHER));
     flags[static_cast<int>(Move::CrushGrip)].set(static_cast<int>(MoveFlag::IS_OTHER));
-    flags[static_cast<int>(Move::MagmaStorm)].set(static_cast<int>(MoveFlag::IS_OTHER));
 
     flags[static_cast<int>(Move::Sandstorm)].set(static_cast<int>(MoveFlag::CHANGES_WEATHER));
     flags[static_cast<int>(Move::RainDance)].set(static_cast<int>(MoveFlag::CHANGES_WEATHER));
