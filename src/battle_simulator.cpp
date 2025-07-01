@@ -1020,6 +1020,60 @@ BestMove get_best_move_against_defender(
             best_move.move = move;
         }
     }
+
+    // Check if it is better to use a status move
+    const auto hits =
+        defender_state.current_stats[HEALTH_INDEX] / best_move.damage;
+    for (const auto& move : attacker_moves) {
+        if (move_has_flag(move->move, MoveFlag::BOOSTS_ATTACKER_STAT)) {
+            // TODO is_first check
+            if (best_move.move->category == Category::PHYSICAL) {
+                if (move->move == Move::SwordsDance) {
+                    if (hits > 3) {
+                        best_move.move = move;
+                        best_move.damage = 0;
+                    }
+                } else if (move->move == Move::Meditate ||
+                    move->move == Move::Sharpen ||
+                    move->move == Move::Howl ||
+                    move->move == Move::BulkUp ||
+                    move->move == Move::DragonDance
+                ) {
+                    if (hits > 6) {
+                        best_move.move = move;
+                        best_move.damage = 0;
+                    }
+                }
+            }
+            if (best_move.move->category == Category::SPECIAL) {
+                if (move->move == Move::NastyPlot) {
+                    if (hits > 3) {
+                        best_move.move = move;
+                        best_move.damage = 0;
+                    }
+                }
+                if (move->move == Move::Growth) {
+                    if (hits > 6) {
+                        best_move.move = move;
+                        best_move.damage = 0;
+                    }
+                }
+            }
+            // Agility, double team, minimize, bulk up are ignored
+            // TODO Also let opponent see if defending is worth it
+            // flags[static_cast<int>(Move::Harden)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::Withdraw)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::Amnesia)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::AcidArmor)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::TailGlow)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::IronDefense)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::RockPolish)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::NastyPlot)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+            // flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+        }
+    }
     return best_move;
 }
 
