@@ -59,6 +59,7 @@ struct PokemonState {
     int trapped_counter = 0;
     bool reflect = false;
     bool light_screen = false;
+    bool is_protected = false;
 };
 
 enum class Weather {
@@ -72,6 +73,7 @@ enum class Weather {
 
 struct BattleState {
     Weather weather = Weather::CLEAR;
+    bool mid_turn = false;
 };
 
 

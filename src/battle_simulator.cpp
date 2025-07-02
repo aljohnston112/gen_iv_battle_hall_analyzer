@@ -317,14 +317,14 @@ bool move_has_flag(const Move move, const MoveFlag move_flag) {
     );
 }
 
-void heal(PokemonState& pokemon_state, int health_gained) {
+void heal(PokemonState& pokemon_state, const int health_gained) {
     pokemon_state.current_stats[HEALTH_INDEX] += health_gained;
     if (pokemon_state.current_stats[HEALTH_INDEX] > pokemon_state.max_health) {
         pokemon_state.current_stats[HEALTH_INDEX] = pokemon_state.max_health;
     }
 }
 
-void apply_post_attack_effects(
+void apply_post_move_effects(
     BattleState& battle_state,
     PokemonState& attacker_state,
     const BestMove& attacker_move,
@@ -334,6 +334,11 @@ void apply_post_attack_effects(
         return;
     }
     const auto move = attacker_move.move->move;
+
+    // Protect
+    if (move_has_flag(move, MoveFlag::BREAKS_PROTECT)) {
+        defender_state.is_protected = false;
+    }
 
     // Healing
     if (move_has_flag(move, MoveFlag::HEALS_ATTACKER)) {
@@ -602,6 +607,10 @@ void apply_post_attack_effects(
         }
     }
 
+    if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_ATTACK)) {
+        change_stat_modifier(attacker_state, Stat::ATTACK, -1);
+    }
+
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK)) {
         if (move == Move::Tickle ||
             move == Move::Growl
@@ -703,6 +712,10 @@ void apply_post_attack_effects(
         if (move == Move::DragonDance) {
             change_stat_modifier(attacker_state, Stat::SPEED, 1);
         }
+    }
+
+    if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPEED)) {
+        change_stat_modifier(attacker_state, Stat::SPEED, -1);
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPEED)) {
@@ -816,8 +829,9 @@ int get_damage_of_attacker_move(
             status == Status::BURN)
     ) {
         power = power * 2;
-    } else if (attacker_move->move == Move::Avalanche &&
-        attacker_state.was_hit
+    } else if ((attacker_move->move == Move::Avalanche ||
+            attacker_move->move == Move::Revenge
+        ) && attacker_state.was_hit
     ) {
         power = power * 2;
     } else if (attacker_move->move == Move::WeatherBall) {
@@ -970,14 +984,15 @@ BestMove get_best_move_against_defender(
     const bool is_after_being_attacked,
     const BestMove& last_picked_move
 ) {
-    if (attacker_state.field_location != FieldLocation::ON_FIELD ||
-        attacker_state.multi_turn_move_counter > 0
+    if (!is_after_being_attacked &&
+        (attacker_state.field_location != FieldLocation::ON_FIELD ||
+            attacker_state.multi_turn_move_counter > 0)
     ) {
         return last_picked_move;
     }
 
     BestMove best_move{};
-    if (attacker_state.recharging) {
+    if (!is_after_being_attacked && attacker_state.recharging) {
         attacker_state.recharging = false;
         return best_move;
     }
@@ -990,6 +1005,9 @@ BestMove get_best_move_against_defender(
         attacker_state.current_stats[SPECIAL_ATTACK_INDEX];
     const auto special_defense =
         defender_state.current_stats[SPECIAL_DEFENSE_INDEX];
+
+    // TODO add priority effects
+    //      should not be using lower priority moves if it means getting KO'd
     for (const auto& move : attacker_moves) {
         const auto category = move->category;
         if (category == Category::STATUS &&
@@ -1022,56 +1040,64 @@ BestMove get_best_move_against_defender(
     }
 
     // Check if it is better to use a status move
-    const auto hits =
-        defender_state.current_stats[HEALTH_INDEX] / best_move.damage;
-    for (const auto& move : attacker_moves) {
-        if (move_has_flag(move->move, MoveFlag::BOOSTS_ATTACKER_STAT)) {
-            // TODO is_first check
-            if (best_move.move->category == Category::PHYSICAL) {
-                if (move->move == Move::SwordsDance) {
-                    if (hits > 3) {
-                        best_move.move = move;
-                        best_move.damage = 0;
-                    }
-                } else if (move->move == Move::Meditate ||
-                    move->move == Move::Sharpen ||
-                    move->move == Move::Howl ||
-                    move->move == Move::BulkUp ||
-                    move->move == Move::DragonDance
-                ) {
-                    if (hits > 6) {
-                        best_move.move = move;
-                        best_move.damage = 0;
+    if (best_move.damage != 0) {
+        const auto hits =
+            defender_state.current_stats[HEALTH_INDEX] / best_move.damage;
+        for (const auto& move : attacker_moves) {
+            if (move_has_flag(move->move, MoveFlag::BOOSTS_ATTACKER_STAT)) {
+                // TODO is_first check
+                if (best_move.move->category == Category::PHYSICAL) {
+                    if (attacker_state.current_stats[ATTACK_INDEX] < 6) {
+                        if (move->move == Move::SwordsDance) {
+                            if (hits > 3) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                            }
+                        } else if (move->move == Move::Meditate ||
+                            move->move == Move::Sharpen ||
+                            move->move == Move::Howl ||
+                            move->move == Move::BulkUp ||
+                            move->move == Move::DragonDance
+                        ) {
+                            if (hits > 6) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                            }
+                        }
                     }
                 }
+                if (best_move.move->category == Category::SPECIAL) {
+                    if (attacker_state.current_stats[SPECIAL_ATTACK_INDEX] <
+                        6
+                    ) {
+                        if (move->move == Move::NastyPlot) {
+                            if (hits > 3) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                            }
+                        }
+                        if (move->move == Move::Growth) {
+                            if (hits > 6) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                            }
+                        }
+                    }
+                }
+                // Agility, double team, minimize, bulk up are ignored
+                // TODO Also let opponent see if defending is worth it
+                // flags[static_cast<int>(Move::Harden)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::Withdraw)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::Amnesia)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::AcidArmor)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::TailGlow)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::IronDefense)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::RockPolish)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::NastyPlot)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
+                // flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
             }
-            if (best_move.move->category == Category::SPECIAL) {
-                if (move->move == Move::NastyPlot) {
-                    if (hits > 3) {
-                        best_move.move = move;
-                        best_move.damage = 0;
-                    }
-                }
-                if (move->move == Move::Growth) {
-                    if (hits > 6) {
-                        best_move.move = move;
-                        best_move.damage = 0;
-                    }
-                }
-            }
-            // Agility, double team, minimize, bulk up are ignored
-            // TODO Also let opponent see if defending is worth it
-            // flags[static_cast<int>(Move::Harden)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::Withdraw)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::Amnesia)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::AcidArmor)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::TailGlow)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::IronDefense)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::RockPolish)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::NastyPlot)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-            // flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
         }
     }
     return best_move;
@@ -1089,6 +1115,25 @@ void execute_move(
     }
 
     const auto attacker_move = attacker_move_info.move->move;
+
+    if (!battle_state.mid_turn &&
+        attacker_move == Move::Snatch &&
+        move_has_flag(defender_move.move->move, MoveFlag::CAN_BE_SNATCHED)
+    ) {
+        attacker_move_info.move = defender_move.move;
+        auto [move, damage] =
+            get_best_move_against_defender(
+                battle_state,
+                {attacker_move_info.move},
+                attacker_state,
+                defender_state,
+                false,
+                BestMove{}
+            );
+        attacker_move_info.damage = damage;
+        defender_move.move = nullptr;
+        defender_move.damage = 0;
+    }
 
     if (attacker_move == Move::BrickBreak) {
         defender_state.reflect = false;
@@ -1190,43 +1235,61 @@ void execute_move(
                 true,
                 attacker_move_info
             );
-        defender_move.damage = damage;
+        attacker_move_info.damage = damage;
     }
 
     // Do the damage
     if (attacker_state.field_location == FieldLocation::ON_FIELD) {
-        defender_state.current_stats[HEALTH_INDEX] -= attacker_move_info.damage;
-        if (attacker_move_info.damage > 0) {
-            defender_state.was_hit = true;
-            if (move_has_flag(attacker_move, MoveFlag::CONTINUES)) {
-                if (attacker_state.is_player) {
-                    defender_state.trapped_counter = 2;
-                } else {
-                    defender_state.trapped_counter = 5;
+        if (move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
+            !defender_state.is_protected
+        ) {
+            defender_state.current_stats[HEALTH_INDEX] -= attacker_move_info.
+                damage;
+            if (attacker_move_info.damage > 0) {
+                defender_state.was_hit = true;
+                if (move_has_flag(attacker_move, MoveFlag::CONTINUES)) {
+                    if (attacker_state.is_player) {
+                        defender_state.trapped_counter = 2;
+                    } else {
+                        defender_state.trapped_counter = 5;
+                    }
                 }
-            }
 
-            if (defender_move.move != nullptr) {
-                const auto attacker_movecategory =
-                    attacker_move_info.move->category;
-                if (defender_move.move->move == Move::Counter) {
-                    if (attacker_movecategory == Category::PHYSICAL) {
-                        defender_move.damage = attacker_move_info.damage * 2;
-                    }
-                }
-                if (defender_move.move->move == Move::MirrorCoat) {
-                    if (attacker_movecategory == Category::SPECIAL) {
-                        defender_move.damage = attacker_move_info.damage * 2;
+                if (defender_move.move != nullptr) {
+                    const auto attacker_movecategory =
+                        attacker_move_info.move->category;
+                    if (defender_move.move->move == Move::Counter) {
+                        if (attacker_movecategory == Category::PHYSICAL) {
+                            defender_move.damage =
+                                attacker_move_info.damage * 2;
+                        }
+                    } else if (defender_move.move->move == Move::MirrorCoat) {
+                        if (attacker_movecategory == Category::SPECIAL) {
+                            defender_move.damage =
+                                attacker_move_info.damage * 2;
+                        }
+                    } else {
+                        // Several moves do more damage after getting hit
+                        auto [move, damage] =
+                            get_best_move_against_defender(
+                                battle_state,
+                                {defender_move.move},
+                                defender_state,
+                                attacker_state,
+                                true,
+                                defender_move
+                            );
+                        defender_move.damage = damage;
                     }
                 }
             }
+            apply_post_move_effects(
+                battle_state,
+                attacker_state,
+                attacker_move_info,
+                defender_state
+            );
         }
-        apply_post_attack_effects(
-            battle_state,
-            attacker_state,
-            attacker_move_info,
-            defender_state
-        );
     }
 }
 
@@ -1279,65 +1342,62 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
 
         // For debugging unimplemented attacks
         std::array<Move, 2> moves = {};
-        if (player_move.move) {
-            moves[0] = player_move.move->move;
-        } else {
-            moves[0] = Move::Count;
-        }
-        if (opponent_move.move) {
-            moves[1] = opponent_move.move->move;
-        } else {
-            moves[1] = Move::Count;
-        }
-        for (const auto move : moves) {
-            if (move != Move::Count &&
-                move != Move::Eruption &&
-                move != Move::WaterSpout &&
-                move != Move::SuckerPunch &&
-                move != Move::BugBite &&
-                move != Move::TriAttack &&
-                move != Move::FocusPunch &&
-                move != Move::DreamEater &&
-                move != Move::Facade &&
-                move != Move::UTurn &&
-                move != Move::Avalanche &&
-                move != Move::Counter &&
-                move != Move::MirrorCoat &&
-                move != Move::WeatherBall &&
-                move != Move::Brine &&
-                move != Move::Chatter &&
-                move != Move::Uproar &&
-                move != Move::HiddenPower &&
-                move != Move::BrickBreak &&
-                (move_has_flag(move, MoveFlag::BOOSTS_ATTACKER_STAT) ||
-                    move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_DEFENSE) ||
-                    move_has_flag(
-                        move, MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK) ||
-                    move_has_flag(
-                        move, MoveFlag::BOOSTS_ATTACKERS_SPECIAL_DEFENSE) ||
-                    move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_SPEED) ||
-                    move_has_flag(move, MoveFlag::BREAKS_PROTECT) ||
-                    move_has_flag(move, MoveFlag::BYPASSES_PROTECT) ||
-                    move_has_flag(
-                        move, MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT) ||
-                    move_has_flag(move, MoveFlag::CAN_BE_SNATCHED) ||
-                    move_has_flag(move, MoveFlag::CHANGES_WEATHER) ||
-                    move_has_flag(move, MoveFlag::HAS_FIXED_DAMAGE) ||
-                    move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_ATTACK) ||
-                    move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPEED) ||
-                    move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) ||
-                    move_has_flag(move, MoveFlag::MAKES_ATTACKER_FAINT) ||
-                    move_has_flag(move, MoveFlag::RAISES_DEFENDER_ATTACK) ||
-                    move_has_flag(
-                        move, MoveFlag::RAISES_DEFENDER_SPECIAL_ATTACK) ||
-                    move_has_flag(move, MoveFlag::HITS_MULTIPLE_TIMES) ||
-                    move_has_flag(move, MoveFlag::IS_OTHER) ||
-                    move_has_flag(move, MoveFlag::PROTECTS_USER))
-            ) {
-                printf("");
-            }
-        }
+        // if (player_move.move) {
+        //     moves[0] = player_move.move->move;
+        // } else {
+        //     moves[0] = Move::Count;
+        // }
+        // if (opponent_move.move) {
+        //     moves[1] = opponent_move.move->move;
+        // } else {
+        //     moves[1] = Move::Count;
+        // }
+        // for (const auto move : moves) {
+        //     if (move != Move::Count &&
+        //         move != Move::Eruption &&
+        //         move != Move::WaterSpout &&
+        //         move != Move::SuckerPunch &&
+        //         move != Move::BugBite &&
+        //         move != Move::TriAttack &&
+        //         move != Move::FocusPunch &&
+        //         move != Move::DreamEater &&
+        //         move != Move::Facade &&
+        //         move != Move::UTurn &&
+        //         move != Move::Avalanche &&
+        //         move != Move::Counter &&
+        //         move != Move::MirrorCoat &&
+        //         move != Move::WeatherBall &&
+        //         move != Move::Brine &&
+        //         move != Move::Chatter &&
+        //         move != Move::Uproar &&
+        //         move != Move::HiddenPower &&
+        //         move != Move::BrickBreak &&
+        //         move != Move::Revenge &&
+        //         move != Move::LastResort &&
+        //         (move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_DEFENSE) ||
+        //             move_has_flag(
+        //                 move, MoveFlag::BOOSTS_ATTACKERS_SPECIAL_ATTACK) ||
+        //             move_has_flag(
+        //                 move, MoveFlag::BOOSTS_ATTACKERS_SPECIAL_DEFENSE) ||
+        //             move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_SPEED) ||
+        //             move_has_flag(
+        //                 move, MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT) ||
+        //             move_has_flag(move, MoveFlag::CHANGES_WEATHER) ||
+        //             move_has_flag(move, MoveFlag::HAS_FIXED_DAMAGE) ||
+        //             move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::MAKES_ATTACKER_FAINT) ||
+        //             move_has_flag(move, MoveFlag::RAISES_DEFENDER_ATTACK) ||
+        //             move_has_flag(
+        //                 move, MoveFlag::RAISES_DEFENDER_SPECIAL_ATTACK) ||
+        //             move_has_flag(move, MoveFlag::HITS_MULTIPLE_TIMES) ||
+        //             move_has_flag(move, MoveFlag::IS_OTHER) ||
+        //             move_has_flag(move, MoveFlag::PROTECTS_USER))
+        //     ) {
+        //         printf("");
+        //     }
+        // }
 
+        battle_state.mid_turn = false;
         player_state.was_hit = false;
         opponent_state.was_hit = false;
         if (player_goes_first) {
@@ -1351,6 +1411,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             if (is_battle_over(player_state, opponent_state)) {
                 break;
             }
+            battle_state.mid_turn = true;
             execute_move(
                 battle_state,
                 opponent_state,
@@ -1372,6 +1433,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             if (is_battle_over(player_state, opponent_state)) {
                 break;
             }
+            battle_state.mid_turn = true;
             execute_move(
                 battle_state,
                 player_state,
