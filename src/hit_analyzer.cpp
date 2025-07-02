@@ -24,11 +24,9 @@ void battle_all(
     for (uint8_t group_number = 4; group_number > 0; group_number--) {
         const auto& rank_to_over_2 =
             group_to_rank_to_over_2.at(group_number);
-        for (auto it = GROUP_TO_RANKS.at(group_number).rbegin();
-             it != GROUP_TO_RANKS.at(group_number).rend();
-             ++it
+        for (unsigned char rank :
+             std::ranges::reverse_view(GROUP_TO_RANKS.at(group_number))
         ) {
-            uint8_t rank = *it;
             const auto& over_2_to_hall_pokemon =
                 rank_to_over_2.at(rank);
             for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
@@ -75,12 +73,16 @@ void analyze() {
             all_moves
         );
 
-    for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
+    bool all = true;
+    if (all) {
+        for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
+            const auto& player_pokemon_forms =
+                convert_serebii_to_custom(serebii_pokemon);
+            battle_all(group_to_rank_to_over_2, player_pokemon_forms);
+        }
+    } else {
         const auto& player_pokemon_forms =
-            convert_serebii_to_custom(serebii_pokemon);
+            convert_serebii_to_custom(all_serebii_pokemon.at("Sunkern"));
         battle_all(group_to_rank_to_over_2, player_pokemon_forms);
     }
-    // const auto& player_pokemon_forms =
-    //     convert_serebii_to_custom(all_serebii_pokemon.at("Sunkern"));
-    // battle_all(group_to_rank_to_over_2, player_pokemon_forms);
 }

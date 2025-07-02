@@ -60,6 +60,11 @@ struct PokemonState {
     bool reflect = false;
     bool light_screen = false;
     bool is_protected = false;
+    bool is_choiced = false;
+    bool grounded = item == Item::IronBall;
+    int metronome = 0;
+    bool flinched = false;
+    bool infatuated = false;
 };
 
 enum class Weather {
@@ -74,6 +79,7 @@ enum class Weather {
 struct BattleState {
     Weather weather = Weather::CLEAR;
     bool mid_turn = false;
+    uint weather_turns = 0;
 };
 
 

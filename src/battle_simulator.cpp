@@ -150,6 +150,63 @@
     PROTECTION_MOVES,
  */
 
+/*
+Ignored:
+BrightPowder,
+FocusBand,
+KingsRock,
+LaxIncense,
+LightClay,
+RazorClaw,
+RazorFang,
+ScopeLens,
+Stick,
+ZoomLens,
+ */
+
+// 20% boost in power
+static const std::unordered_map<Item, PokemonType> ITEM_TO_TYPE = {
+    {Item::BlackBelt, PokemonType::FIGHTING},
+    {Item::BlackGlasses, PokemonType::DARK},
+    {Item::Charcoal, PokemonType::FIRE},
+    {Item::DragonFang, PokemonType::DRAGON},
+    {Item::HardStone, PokemonType::ROCK},
+    {Item::Magnet, PokemonType::ELECTRIC},
+    {Item::MetalCoat, PokemonType::STEEL},
+    {Item::MiracleSeed, PokemonType::GRASS},
+    {Item::MysticWater, PokemonType::WATER},
+    {Item::NeverMeltIce, PokemonType::ICE},
+    {Item::PoisonBarb, PokemonType::POISON},
+    {Item::SharpBeak, PokemonType::FLYING},
+    {Item::SilkScarf, PokemonType::NORMAL},
+    {Item::SilverPowder, PokemonType::BUG},
+    {Item::SoftSand, PokemonType::GROUND},
+    {Item::SpellTag, PokemonType::GHOST},
+    {Item::TwistedSpoon, PokemonType::PSYCHIC},
+};
+
+/*
+    BigRoot, TODO 30% more HP from Leech Seed, Ingrain and Aqua Ring
+    HeatRock, TODO sun is eight turns instead of five turns
+    IcyRock, TODO hail is eight turns instead of five turns
+    IronBall, TODO Even if the holder has Klutz or is affected by Embargo,
+                   its Speed is still halved by the Iron Ball.
+                   Due to being grounded, the holder becomes susceptible
+                   to Arena Trap; the Spikes, and Toxic Spikes,
+                   even if it is Flying-type, has the Ability Levitate,
+                   or is under the effect of Telekinesis or Magnet Rise.
+                   An Iron Ball does not prevent Magnet Rise or Telekinesis
+                   from being used successfully.
+    QuickPowder, TODO doubles ditto's speed till it transforms.
+    RockyHelmet, TODO multi-hit moves cause damage for each hit
+    ShellBell, TODO If the holder uses a multistrike move,
+                    it recovers HP after the last strike,
+                    considering the damage from all of the strikes at once.
+                    The Shell Bell will not activate if the move only hits
+                    a Pokémon's substitute. Ignores heal block
+    SmoothRock, TODO sandstorm is eight turns instead of five turns
+ */
+
 struct BestMove {
     const MoveInfo* move = nullptr;
     int damage = 0;
@@ -163,41 +220,35 @@ int get_move_priority(const MoveInfo* move_info) {
     return MOVE_PRIORITIES[move];
 }
 
-void apply_end_of_turn_effects(
-    PokemonState& state
-) {
-    if (state.ability != Ability::MagicGuard) {
-        if (state.status == Status::BADLY_POISONED) {
-            state.turns_badly_poisoned =
-                std::min(15, state.turns_badly_poisoned + 1);
-            state.current_stats[HEALTH_INDEX] -=
-                state.turns_badly_poisoned * (state.max_health / 16);
-        }
-        if (state.status == Status::BURN ||
-            state.status == Status::POISON
-        ) {
-            state.current_stats[HEALTH_INDEX] -= state.max_health / 8;
-        }
-        if (state.item == Item::StickyBarb) {
-            state.current_stats[HEALTH_INDEX] -= state.max_health / 8;
-        }
-        if (state.trapped_counter > 0) {
-            state.current_stats[HEALTH_INDEX] -= state.max_health / 8;
-        }
+int apply_speed_items(const PokemonState& player_state, int& player_speed) {
+    if (player_state.item == Item::ChoiceScarf) {
+        player_speed = std::floor(player_speed * 1.5);
+    } else if (player_state.item == Item::IronBall) {
+        player_speed = player_speed / 2;
     }
-    if (state.trapped_counter > 0) {
-        state.trapped_counter--;
-    }
+    return player_speed;
 }
 
-void apply_end_of_turn_effects(
-    PokemonState& player_state,
-    PokemonState& opponent_state
+bool is_player_first(
+    const PokemonState& player_state,
+    const MoveInfo* player_move,
+    const PokemonState& opponent_state,
+    const MoveInfo* opponent_move
 ) {
-    apply_end_of_turn_effects(player_state);
-    apply_end_of_turn_effects(opponent_state);
+    if (opponent_state.item == Item::QuickClaw) {
+        return false;
+    }
+    const int player_priority = get_move_priority(player_move);
+    const int opponent_priority = get_move_priority(opponent_move);
+    if (player_priority != opponent_priority) {
+        return player_priority > opponent_priority;
+    }
+    int player_speed = player_state.current_stats[SPEED_INDEX];
+    player_speed = apply_speed_items(player_state, player_speed);
+    int opponent_speed = opponent_state.current_stats[SPEED_INDEX];
+    opponent_speed = apply_speed_items(opponent_state, opponent_speed);
+    return player_speed > opponent_speed;
 }
-
 
 int calculate_stat_based_on_stage(const uint16_t stat, const int stage) {
     switch (stage) {
@@ -247,8 +298,14 @@ void change_stat_modifier(
         pokemon_state.stat_stages[index] =
             std::min(new_stage, MAX_STAT_STAGE);
     } else {
-        pokemon_state.stat_stages[index] =
-            std::max(new_stage, MIN_STAT_STAGE);
+        if (pokemon_state.item == Item::WhiteHerb &&
+            new_stage < 0
+        ) {
+            pokemon_state.item = Item::None;
+        } else {
+            pokemon_state.stat_stages[index] =
+                std::max(new_stage, MIN_STAT_STAGE);
+        }
     }
     pokemon_state.current_stats[index] =
         calculate_stat_based_on_stage(
@@ -295,26 +352,39 @@ void apply_berry(PokemonState& pokemon_state) {
     pokemon_state.item = Item::None;
 }
 
-void try_apply_berry(PokemonState pokemon_state, const bool eaten) {
+void try_apply_berry(PokemonState& pokemon_state, const bool eaten) {
     if (const auto item = pokemon_state.item;
         BERRIES.contains(item)
     ) {
-        if (eaten) {
+        const int current_health = pokemon_state.current_stats[HEALTH_INDEX];
+        const bool less_than_half_health =
+            current_health <= pokemon_state.max_health / 2;
+        const bool eats_stat_berry = STAT_BERRIES.contains(item) &&
+        ((current_health <= pokemon_state.max_health / 4) ||
+            (pokemon_state.ability == Ability::Gluttony &&
+                less_than_half_health));
+        const bool eats_status_berry =
+            (item == Item::ChestoBerry &&
+                pokemon_state.status == Status::SLEEP) ||
+            (item == Item::PersimBerry &&
+                pokemon_state.confused) ||
+            (item == Item::LumBerry &&
+                (pokemon_state.status != Status::NONE ||
+                    pokemon_state.confused));
+        const bool eats_sitrus = less_than_half_health;
+        if (eaten ||
+            eats_stat_berry ||
+            eats_sitrus ||
+            eats_status_berry
+        ) {
             apply_berry(pokemon_state);
         }
     }
 }
 
-void try_apply_status(PokemonState& pokemon_state, const Status status) {
-    if (pokemon_state.status == Status::NONE) {
-        pokemon_state.status = status;
-    }
-}
-
-bool move_has_flag(const Move move, const MoveFlag move_flag) {
-    return MOVE_FLAGS[static_cast<int>(move)].test(
-        static_cast<size_t>(move_flag)
-    );
+void apply_damage(PokemonState& pokemon_state, const int damage) {
+    pokemon_state.current_stats[HEALTH_INDEX] -= damage;
+    try_apply_berry(pokemon_state, false);
 }
 
 void heal(PokemonState& pokemon_state, const int health_gained) {
@@ -324,11 +394,107 @@ void heal(PokemonState& pokemon_state, const int health_gained) {
     }
 }
 
+void try_apply_status(PokemonState& pokemon_state, const Status status) {
+    if (pokemon_state.status == Status::NONE) {
+        pokemon_state.status = status;
+    }
+    try_apply_berry(pokemon_state, false);
+}
+
+void apply_end_of_turn_effects(
+    PokemonState& state
+) {
+    /* Order of effects
+    Trapping moves
+    Leech Seed
+    Poison/burn damage
+    Abilities
+    Weather damage/healing
+    Status healing from abilities
+    Aqua Ring/ingrain recovery
+    Leftovers/Black Sludge recovery
+    */
+    if (state.item == Item::BlackSludge &&
+        (state.types[0] == PokemonType::POISON ||
+            state.types[1] == PokemonType::POISON)
+    ) {
+        heal(state, std::max(1, state.max_health / 16));
+    }
+    if (state.ability != Ability::MagicGuard) {
+        if (state.trapped_counter > 0) {
+            apply_damage(state, state.max_health / 8);
+        }
+        if (state.status == Status::BADLY_POISONED) {
+            state.turns_badly_poisoned =
+                std::min(15, state.turns_badly_poisoned + 1);
+            apply_damage(
+                state,
+                state.turns_badly_poisoned * (state.max_health / 16)
+            );
+        }
+        if (state.status == Status::BURN ||
+            state.status == Status::POISON
+        ) {
+            apply_damage(state, state.max_health / 8);
+        }
+        if (state.item == Item::StickyBarb) {
+            apply_damage(state, state.max_health / 8);
+        }
+        if (state.item == Item::BlackSludge &&
+            (state.types[0] != PokemonType::POISON &&
+                state.types[1] != PokemonType::POISON)
+        ) {
+            apply_damage(state, std::max(1, state.max_health / 8));
+        }
+    }
+    if (state.item == Item::FlameOrb &&
+        (state.types[0] != PokemonType::FIRE &&
+            state.types[1] != PokemonType::FIRE)
+    ) {
+        try_apply_status(state, Status::BURN);
+    }
+    if (state.trapped_counter > 0) {
+        state.trapped_counter--;
+    }
+    if (state.item == Item::Leftovers) {
+        heal(state, std::max(1, state.max_health / 16));
+    }
+}
+
+void apply_end_of_turn_effects(
+    PokemonState& player_state,
+    PokemonState& opponent_state
+) {
+    apply_end_of_turn_effects(player_state);
+    apply_end_of_turn_effects(opponent_state);
+}
+
+bool move_has_flag(const Move move, const MoveFlag move_flag) {
+    return MOVE_FLAGS[static_cast<int>(move)].test(
+        static_cast<size_t>(move_flag)
+    );
+}
+
+void clear_negative_stat_changes(PokemonState& pokemon_state) {
+    int i = 0;
+    for (const auto stat_stage : pokemon_state.stat_stages) {
+        if (stat_stage < 0) {
+            change_stat_modifier(
+                pokemon_state,
+                static_cast<Stat>(i),
+                -stat_stage
+            );
+        }
+        i++;
+    }
+}
+
 void apply_post_move_effects(
     BattleState& battle_state,
     PokemonState& attacker_state,
     const BestMove& attacker_move,
-    PokemonState& defender_state
+    PokemonState& defender_state,
+    const BestMove& defender_move
 ) {
     if (attacker_move.move == nullptr) {
         return;
@@ -389,6 +555,12 @@ void apply_post_move_effects(
                     attacker_state.max_health / 4
                 );
             }
+        }
+        if (attacker_state.item == Item::ShellBell) {
+            heal(
+                attacker_state,
+                attacker_move.damage / 8
+            );
         }
     }
 
@@ -470,8 +642,7 @@ void apply_post_move_effects(
                 (move == Move::JumpKick ||
                     move == Move::HighJumpKick))
         ) {
-            attacker_state.current_stats[HEALTH_INDEX] -=
-                attacker_move.damage / 2;
+            apply_damage(attacker_state, attacker_move.damage / 2);
         } else if (
             move == Move::BraveBird ||
             move == Move::DoubleEdge ||
@@ -479,17 +650,17 @@ void apply_post_move_effects(
             move == Move::VoltTackle ||
             move == Move::WoodHammer
         ) {
-            attacker_state.current_stats[HEALTH_INDEX] -=
-                attacker_move.damage / 3;
+            apply_damage(attacker_state, attacker_move.damage / 3);
         } else if (
             move == Move::Submission ||
             move == Move::TakeDown
         ) {
-            attacker_state.current_stats[HEALTH_INDEX] -=
-                attacker_move.damage / 4;
+            apply_damage(attacker_state, attacker_move.damage / 4);
         } else if (move == Move::BellyDrum) {
-            attacker_state.current_stats[HEALTH_INDEX] -=
-                attacker_state.max_health / 2;
+            apply_damage(
+                attacker_state,
+                attacker_state.max_health / 2
+            );
             change_stat_modifier(attacker_state, Stat::ATTACK, 6);
         }
     }
@@ -509,12 +680,16 @@ void apply_post_move_effects(
             }
         }
         if (defender_ability == Ability::RoughSkin) {
-            attacker_state.current_stats[HEALTH_INDEX] -=
-                attacker_state.max_health / 8;
+            apply_damage(
+                attacker_state,
+                attacker_state.max_health / 8
+            );
         }
-        if (attacker_state.item == Item::RockyHelmet) {
-            defender_state.current_stats[HEALTH_INDEX] -=
-                defender_state.max_health / 6;
+        if (defender_state.item == Item::RockyHelmet) {
+            apply_damage(
+                attacker_state,
+                attacker_state.max_health / 6
+            );
         }
         if (attacker_state.item == Item::None &&
             defender_state.item == Item::StickyBarb
@@ -524,7 +699,22 @@ void apply_post_move_effects(
         }
     }
 
-    // Burn
+    // Life orb
+    if (attacker_state.ability != Ability::MagicGuard &&
+        attacker_state.item == Item::LifeOrb &&
+        attacker_move.damage > 0 &&
+        move_has_flag(attacker_move.move->move, MoveFlag::HAS_POWER)
+    ) {
+        apply_damage(
+            attacker_state,
+            std::max(
+                1,
+                attacker_state.current_stats[HEALTH_INDEX] / 10
+            )
+        );
+    }
+
+    // Burn application
     const bool is_fling = move == Move::Fling;
     if (defender_state.types[0] != PokemonType::FIRE &&
         defender_state.types[1] != PokemonType::FIRE
@@ -544,7 +734,7 @@ void apply_post_move_effects(
         }
     }
 
-    // Poison
+    // Poison application
     if (defender_state.types[0] != PokemonType::POISON &&
         defender_state.types[1] != PokemonType::POISON &&
         defender_state.types[0] != PokemonType::STEEL &&
@@ -568,7 +758,7 @@ void apply_post_move_effects(
         }
     }
 
-    // Bad poison
+    // Bad poison application
     if (move_has_flag(move, MoveFlag::BADLY_POISONS)) {
         if (defender_state.is_player) {
             try_apply_status(defender_state, Status::BADLY_POISONED);
@@ -755,23 +945,19 @@ void apply_post_move_effects(
 
     if (is_fling) {
         // TODO other items
+        if (attacker_state.item == Item::KingsRock ||
+            attacker_state.item == Item::RazorFang
+        ) {
+            defender_state.flinched = true;
+        } else if (attacker_state.item == Item::LightBall) {
+            try_apply_status(defender_state, Status::PARALYZED);
+        } else if (attacker_state.item == Item::MentalHerb) {
+            defender_state.infatuated = true;
+        } else if (attacker_state.item == Item::WhiteHerb) {
+            clear_negative_stat_changes(defender_state);
+        }
         attacker_state.item = Item::None;
     }
-}
-
-bool is_player_first(
-    const PokemonState& player_state,
-    const MoveInfo* player_move,
-    const PokemonState& opponent_state,
-    const MoveInfo* opponent_move
-) {
-    const int player_priority = get_move_priority(player_move);
-    const int opponent_priority = get_move_priority(opponent_move);
-    if (player_priority != opponent_priority) {
-        return player_priority > opponent_priority;
-    }
-    return player_state.current_stats[SPEED_INDEX] >
-        opponent_state.current_stats[SPEED_INDEX];
 }
 
 /**
@@ -850,6 +1036,25 @@ int get_damage_of_attacker_move(
             power = 70;
         }
     }
+    if (attacker_state.item == Item::Metronome) {
+        const double multiplier = 1.0 + std::max(
+            0.0,
+            0.1 * attacker_state.metronome
+        );
+        power = std::floor(power * multiplier);
+    } else if (attacker_state.item == Item::MuscleBand &&
+        attacker_move->category == Category::PHYSICAL
+    ) {
+        power = std::floor(power * 1.1);
+    } else if (attacker_state.item == Item::WiseGlasses &&
+        attacker_move->category == Category::SPECIAL
+    ) {
+        power = std::floor(power * 1.1);
+    } else if (attacker_state.pokemon.name == Pokemon::Pikachu &&
+        attacker_state.item == Item::LightBall
+    ) {
+        power = power * 2;
+    }
 
     // Field location
     const bool attacker_faster = is_player_first(
@@ -859,7 +1064,7 @@ int get_damage_of_attacker_move(
         nullptr
     );
     if (const auto defender_field_location = defender_state.field_location;
-        defender_field_location != FieldLocation::ON_FIELD
+        defender_field_location != FieldLocation::ON_FIELD && attacker_faster
     ) {
         if (!attacker_faster && !is_after_being_attacked) {
             power = attacker_move->power;
@@ -930,8 +1135,18 @@ int get_damage_of_attacker_move(
     }
 
     // Type effectiveness
+    auto defender_types = defender_state.types;
+    if (defender_state.item == Item::IronBall &&
+        attacker_move->type == PokemonType::GROUND
+    ) {
+        if (defender_types[0] == PokemonType::FLYING) {
+            defender_types = {defender_types[1]};
+        } else if (defender_types[1] == PokemonType::FLYING) {
+            defender_types = {defender_types[0]};
+        }
+    }
     auto effectiveness =
-        get_effectiveness(defender_state.types, move_type);
+        get_effectiveness(defender_types, move_type);
     if (attacker_move->move == Move::HiddenPower) {
         if (attacker_state.is_player) {
             if (defender_state.types[1] == PokemonType::COUNT) {
@@ -948,6 +1163,9 @@ int get_damage_of_attacker_move(
         }
     }
     damage = static_cast<int>(damage * effectiveness);
+    if (attacker_state.item == Item::ExpertBelt && effectiveness >= 2) {
+        damage = std::floor(damage * 1.2);
+    }
 
     // Random
     if (attacker_state.is_player) {
@@ -982,7 +1200,7 @@ BestMove get_best_move_against_defender(
     PokemonState& attacker_state,
     const PokemonState& defender_state,
     const bool is_after_being_attacked,
-    const BestMove& last_picked_move
+    BestMove& last_picked_move
 ) {
     if (!is_after_being_attacked &&
         (attacker_state.field_location != FieldLocation::ON_FIELD ||
@@ -991,24 +1209,42 @@ BestMove get_best_move_against_defender(
         return last_picked_move;
     }
 
+    const bool attacker_faster = is_player_first(
+        attacker_state,
+        nullptr,
+        defender_state,
+        nullptr
+    );
+
     BestMove best_move{};
     if (!is_after_being_attacked && attacker_state.recharging) {
         attacker_state.recharging = false;
         return best_move;
     }
 
-    const auto attack =
+    auto attack =
         attacker_state.current_stats[ATTACK_INDEX];
+    if (attacker_state.item == Item::ChoiceBand) {
+        attack = std::floor(attack * 1.5);
+    }
     const auto defense =
         defender_state.current_stats[DEFENSE_INDEX];
-    const auto special_attack =
+    auto special_attack =
         attacker_state.current_stats[SPECIAL_ATTACK_INDEX];
+    if (attacker_state.item == Item::ChoiceSpecs) {
+        special_attack = std::floor(special_attack * 1.5);
+    }
     const auto special_defense =
         defender_state.current_stats[SPECIAL_DEFENSE_INDEX];
 
     // TODO add priority effects
     //      should not be using lower priority moves if it means getting KO'd
     for (const auto& move : attacker_moves) {
+        if (attacker_state.is_choiced &&
+            move->move != last_picked_move.move->move
+        ) {
+            continue;
+        }
         const auto category = move->category;
         if (category == Category::STATUS &&
             move->move != Move::DreamEater
@@ -1018,7 +1254,7 @@ BestMove get_best_move_against_defender(
         const bool is_special = category == Category::SPECIAL;
         const auto attack_used = is_special ? special_attack : attack;
         const auto defense_used = is_special ? special_defense : defense;
-        const auto damage =
+        auto damage =
             get_damage_of_attacker_move(
                 battle_state,
                 attacker_state,
@@ -1028,6 +1264,9 @@ BestMove get_best_move_against_defender(
                 defense_used,
                 is_after_being_attacked
             );
+        if (attacker_state.item == Item::LifeOrb) {
+            damage = std::floor(damage * 1.3);
+        }
         if (move_has_flag(move->move, MoveFlag::REQUIRES_CHARGING_TURN) &&
             damage > defender_state.current_stats[HEALTH_INDEX]
         ) {
@@ -1040,7 +1279,7 @@ BestMove get_best_move_against_defender(
     }
 
     // Check if it is better to use a status move
-    if (best_move.damage != 0) {
+    if (best_move.damage != 0 && !attacker_state.is_choiced) {
         const auto hits =
             defender_state.current_stats[HEALTH_INDEX] / best_move.damage;
         for (const auto& move : attacker_moves) {
@@ -1084,8 +1323,9 @@ BestMove get_best_move_against_defender(
                         }
                     }
                 }
-                // Agility, double team, minimize, bulk up are ignored
-                // TODO Also let opponent see if defending is worth it
+                // Agility, double team, minimize, bulk up, rock polish
+                // are ignored
+                // TODO check if defending is worth it
                 // flags[static_cast<int>(Move::Harden)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
                 // flags[static_cast<int>(Move::Withdraw)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
                 // flags[static_cast<int>(Move::Amnesia)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
@@ -1094,12 +1334,31 @@ BestMove get_best_move_against_defender(
                 // flags[static_cast<int>(Move::CosmicPower)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
                 // flags[static_cast<int>(Move::IronDefense)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
                 // flags[static_cast<int>(Move::CalmMind)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-                // flags[static_cast<int>(Move::RockPolish)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
-                // flags[static_cast<int>(Move::NastyPlot)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
                 // flags[static_cast<int>(Move::DefendOrder)].set(static_cast<int>(MoveFlag::BOOSTS_ATTACKER_STAT));
             }
         }
     }
+    if (CHOICE_ITEMS.contains(attacker_state.item) &&
+        !attacker_state.is_choiced &&
+        best_move.move != nullptr
+    ) {
+        attacker_state.is_choiced = true;
+        return best_move;
+    }
+    if (attacker_state.is_choiced) {
+        assert(last_picked_move.move->move == best_move.move->move);
+        last_picked_move.damage = best_move.damage;
+        return last_picked_move;
+    }
+
+    if (defender_state.field_location != FieldLocation::ON_FIELD &&
+        attacker_faster &&
+        best_move.move == nullptr
+    ) {
+        // For metronome since no move was picked
+        return last_picked_move;
+    }
+
     return best_move;
 }
 
@@ -1121,6 +1380,8 @@ void execute_move(
         move_has_flag(defender_move.move->move, MoveFlag::CAN_BE_SNATCHED)
     ) {
         attacker_move_info.move = defender_move.move;
+        defender_move.move = nullptr;
+        defender_move.damage = 0;
         auto [move, damage] =
             get_best_move_against_defender(
                 battle_state,
@@ -1128,11 +1389,9 @@ void execute_move(
                 attacker_state,
                 defender_state,
                 false,
-                BestMove{}
+                defender_move
             );
         attacker_move_info.damage = damage;
-        defender_move.move = nullptr;
-        defender_move.damage = 0;
     }
 
     if (attacker_move == Move::BrickBreak) {
@@ -1186,18 +1445,36 @@ void execute_move(
     if (const FieldLocation on_field = attacker_state.field_location;
         on_field == FieldLocation::ON_FIELD
     ) {
-        if (move_has_flag(attacker_move, MoveFlag::GOES_INTO_AIR)) {
-            attacker_state.field_location = FieldLocation::IN_AIR;
-            attacker_vanished = true;
-        } else if (move_has_flag(attacker_move, MoveFlag::GOES_UNDER_GROUND)) {
-            attacker_state.field_location = FieldLocation::UNDER_GROUND;
-            attacker_vanished = true;
-        } else if (move_has_flag(attacker_move, MoveFlag::GOES_UNDER_WATER)) {
-            attacker_state.field_location = FieldLocation::UNDER_WATER;
-            attacker_vanished = true;
-        } else if (move_has_flag(attacker_move, MoveFlag::GOES_INTO_VOID)) {
-            attacker_state.field_location = FieldLocation::IN_THE_VOID;
-            attacker_vanished = true;
+        const bool goes_into_air =
+            move_has_flag(attacker_move, MoveFlag::GOES_INTO_AIR);
+        const bool goes_under_ground =
+            move_has_flag(attacker_move, MoveFlag::GOES_UNDER_GROUND);
+        const bool goes_under_water =
+            move_has_flag(attacker_move, MoveFlag::GOES_UNDER_WATER);
+        const bool goes_into_void =
+            move_has_flag(attacker_move, MoveFlag::GOES_INTO_VOID);
+        if (goes_into_air ||
+            goes_under_ground ||
+            goes_under_water ||
+            goes_into_void
+        ) {
+            if (attacker_state.item == Item::PowerHerb) {
+                attacker_state.item = Item::None;
+            } else {
+                if (goes_into_air) {
+                    attacker_state.field_location = FieldLocation::IN_AIR;
+                    attacker_vanished = true;
+                } else if (goes_under_ground) {
+                    attacker_state.field_location = FieldLocation::UNDER_GROUND;
+                    attacker_vanished = true;
+                } else if (goes_under_water) {
+                    attacker_state.field_location = FieldLocation::UNDER_WATER;
+                    attacker_vanished = true;
+                } else if (goes_into_void) {
+                    attacker_state.field_location = FieldLocation::IN_THE_VOID;
+                    attacker_vanished = true;
+                }
+            }
         }
     }
     if (!attacker_vanished &&
@@ -1243,8 +1520,17 @@ void execute_move(
         if (move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
             !defender_state.is_protected
         ) {
-            defender_state.current_stats[HEALTH_INDEX] -= attacker_move_info.
-                damage;
+            const bool defender_had_max_hp =
+                defender_state.max_health ==
+                defender_state.current_stats[HEALTH_INDEX];
+            apply_damage(defender_state, attacker_move_info.damage);
+            if (defender_had_max_hp &&
+                defender_state.current_stats[HEALTH_INDEX] <= 0 &&
+                defender_state.item == Item::FocusSash
+            ) {
+                defender_state.current_stats[HEALTH_INDEX] = 1;
+                attacker_state.item = Item::None;
+            }
             if (attacker_move_info.damage > 0) {
                 defender_state.was_hit = true;
                 if (move_has_flag(attacker_move, MoveFlag::CONTINUES)) {
@@ -1256,15 +1542,15 @@ void execute_move(
                 }
 
                 if (defender_move.move != nullptr) {
-                    const auto attacker_movecategory =
+                    const auto attacker_move_category =
                         attacker_move_info.move->category;
                     if (defender_move.move->move == Move::Counter) {
-                        if (attacker_movecategory == Category::PHYSICAL) {
+                        if (attacker_move_category == Category::PHYSICAL) {
                             defender_move.damage =
                                 attacker_move_info.damage * 2;
                         }
                     } else if (defender_move.move->move == Move::MirrorCoat) {
-                        if (attacker_movecategory == Category::SPECIAL) {
+                        if (attacker_move_category == Category::SPECIAL) {
                             defender_move.damage =
                                 attacker_move_info.damage * 2;
                         }
@@ -1287,7 +1573,8 @@ void execute_move(
                 battle_state,
                 attacker_state,
                 attacker_move_info,
-                defender_state
+                defender_state,
+                defender_move
             );
         }
     }
@@ -1317,6 +1604,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
     while (player_state.current_stats[HEALTH_INDEX] > 0 &&
         opponent_state.current_stats[HEALTH_INDEX] > 0
     ) {
+        BestMove last_move = player_move;
         player_move = get_best_move_against_defender(
             battle_state,
             player.moves,
@@ -1325,6 +1613,15 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             false,
             player_move
         );
+        if (last_move.move != nullptr &&
+
+            last_move.move->move == player_move.move->move
+        ) {
+            player_state.metronome++;
+        } else {
+            player_state.metronome = 0;
+        }
+        last_move = opponent_move;
         opponent_move = get_best_move_against_defender(
             battle_state,
             opponent.moves,
@@ -1333,6 +1630,13 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             false,
             opponent_move
         );
+        if (last_move.move != nullptr &&
+            last_move.move->move == opponent_move.move->move
+        ) {
+            opponent_state.metronome++;
+        } else {
+            opponent_state.metronome = 0;
+        }
         const bool player_goes_first = is_player_first(
             player_state,
             player_move.move,
@@ -1412,13 +1716,17 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                 break;
             }
             battle_state.mid_turn = true;
-            execute_move(
-                battle_state,
-                opponent_state,
-                opponent_move,
-                player_state,
-                player_move
-            );
+            if (!opponent_state.flinched) {
+                execute_move(
+                    battle_state,
+                    opponent_state,
+                    opponent_move,
+                    player_state,
+                    player_move
+                );
+            } else {
+                opponent_state.flinched = false;
+            }
             if (is_battle_over(player_state, opponent_state)) {
                 break;
             }
@@ -1434,13 +1742,17 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                 break;
             }
             battle_state.mid_turn = true;
-            execute_move(
-                battle_state,
-                player_state,
-                player_move,
-                opponent_state,
-                opponent_move
-            );
+            if (!player_state.flinched) {
+                execute_move(
+                    battle_state,
+                    player_state,
+                    player_move,
+                    opponent_state,
+                    opponent_move
+                );
+            } else {
+                player_state.flinched = false;
+            }
             if (is_battle_over(player_state, opponent_state)) {
                 break;
             }
@@ -1466,7 +1778,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         opponent_state.ability == Ability::Aftermath &&
         player_state.ability != Ability::Damp
     ) {
-        player_state.current_stats[HEALTH_INDEX] -= player_state.max_health / 4;
+        apply_damage(player_state, player_state.max_health / 4);
     }
 
     if (player_state.current_stats[HEALTH_INDEX] > 0) {

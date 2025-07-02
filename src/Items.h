@@ -32,9 +32,11 @@ enum class Item {
     Leftovers,
     LiechiBerry,
     LifeOrb,
+    LightBall,
     LightClay,
     LumBerry,
     Magnet,
+    MentalHerb, // TODO
     MetalCoat,
     Metronome,
     MiracleSeed,
@@ -69,6 +71,12 @@ enum class Item {
     None
 };
 
+static const std::unordered_set CHOICE_ITEMS = {
+    Item::ChoiceBand,
+    Item::ChoiceScarf,
+    Item::ChoiceSpecs,
+};
+
 static const std::unordered_set BERRIES = {
     Item::ApicotBerry,
     Item::ChestoBerry,
@@ -79,6 +87,14 @@ static const std::unordered_set BERRIES = {
     Item::PetayaBerry,
     Item::SalacBerry,
     Item::SitrusBerry,
+};
+
+static const std::unordered_set STAT_BERRIES = {
+    Item::ApicotBerry,
+    Item::GanlonBerry,
+    Item::LiechiBerry,
+    Item::PetayaBerry,
+    Item::SalacBerry,
 };
 
 static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
