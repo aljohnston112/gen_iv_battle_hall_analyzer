@@ -73,7 +73,7 @@ void analyze() {
             all_moves
         );
 
-    bool all = true;
+    constexpr bool all = false;
     if (all) {
         for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
             const auto& player_pokemon_forms =

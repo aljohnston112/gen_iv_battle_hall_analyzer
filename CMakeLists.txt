@@ -7,7 +7,7 @@ option(ENABLE_LIBSTDCXX_DEBUG "Enable _GLIBCXX_DEBUG for debug builds" OFF)
 if (ENABLE_LIBSTDCXX_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 endif()
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -march=native -flto -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto -DNDEBUG")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/battle_hall_data_source.cpp
@@ -27,7 +27,7 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/type_effectiveness.cpp
         src/Items.h
         src/Pokemon.h
-        src/PokemonState.h
+        src/SimulationState.h
 )
 
 add_custom_command(

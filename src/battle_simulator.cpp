@@ -8,7 +8,7 @@
 #include "config.h"
 #include "custom_pokemon.h"
 #include "Items.h"
-#include "PokemonState.h"
+#include "SimulationState.h"
 #include  "serebii_pokemon_data_source.h"
 #include "type_effectiveness.h"
 
@@ -220,13 +220,15 @@ int get_move_priority(const MoveInfo* move_info) {
     return MOVE_PRIORITIES[move];
 }
 
-int apply_speed_items(const PokemonState& player_state, int& player_speed) {
-    if (player_state.item == Item::ChoiceScarf) {
-        player_speed = std::floor(player_speed * 1.5);
-    } else if (player_state.item == Item::IronBall) {
-        player_speed = player_speed / 2;
+int apply_speed_items(const PokemonState& state, int speed) {
+    if (const auto item = state.get_item();
+        item == Item::ChoiceScarf
+    ) {
+        speed = std::floor(speed * 1.5);
+    } else if (item == Item::IronBall) {
+        speed = speed / 2;
     }
-    return player_speed;
+    return speed;
 }
 
 bool is_player_first(
@@ -235,7 +237,7 @@ bool is_player_first(
     const PokemonState& opponent_state,
     const MoveInfo* opponent_move
 ) {
-    if (opponent_state.item == Item::QuickClaw) {
+    if (opponent_state.get_item() == Item::QuickClaw) {
         return false;
     }
     const int player_priority = get_move_priority(player_move);
@@ -243,162 +245,11 @@ bool is_player_first(
     if (player_priority != opponent_priority) {
         return player_priority > opponent_priority;
     }
-    int player_speed = player_state.current_stats[SPEED_INDEX];
+    int player_speed = player_state.get_speed();
     player_speed = apply_speed_items(player_state, player_speed);
-    int opponent_speed = opponent_state.current_stats[SPEED_INDEX];
+    int opponent_speed = opponent_state.get_speed();
     opponent_speed = apply_speed_items(opponent_state, opponent_speed);
     return player_speed > opponent_speed;
-}
-
-int calculate_stat_based_on_stage(const uint16_t stat, const int stage) {
-    switch (stage) {
-    case -6:
-        return 2 * stat / 8;
-    case -5:
-        return 2 * stat / 7;
-    case -4:
-        return 2 * stat / 6;
-    case -3:
-        return 2 * stat / 5;
-    case -2:
-        return 2 * stat / 4;
-    case -1:
-        return 2 * stat / 3;
-    case 0:
-        return stat;
-    case 1:
-        return 3 * stat / 2;
-    case 2:
-        return 4 * stat / 2;
-    case 3:
-        return 5 * stat / 2;
-    case 4:
-        return 6 * stat / 2;
-    case 5:
-        return 7 * stat / 2;
-    case 6:
-        return 8 * stat / 2;
-    default:
-        throw std::runtime_error("Bad stage");
-    }
-}
-
-constexpr int MAX_STAT_STAGE = 6;
-constexpr int MIN_STAT_STAGE = -6;
-
-void change_stat_modifier(
-    PokemonState& pokemon_state,
-    const Stat stat,
-    const int change
-) {
-    const int index = static_cast<int>(stat);
-    const auto stage = pokemon_state.stat_stages[index];
-    const int new_stage = stage + change;
-    if (change > 0) {
-        pokemon_state.stat_stages[index] =
-            std::min(new_stage, MAX_STAT_STAGE);
-    } else {
-        if (pokemon_state.item == Item::WhiteHerb &&
-            new_stage < 0
-        ) {
-            pokemon_state.item = Item::None;
-        } else {
-            pokemon_state.stat_stages[index] =
-                std::max(new_stage, MIN_STAT_STAGE);
-        }
-    }
-    pokemon_state.current_stats[index] =
-        calculate_stat_based_on_stage(
-            pokemon_state.pokemon.stats[index],
-            pokemon_state.stat_stages[index]
-        );
-}
-
-void apply_berry(PokemonState& pokemon_state) {
-    if (const auto berry = pokemon_state.item;
-        berry == Item::ApicotBerry
-    ) {
-        change_stat_modifier(pokemon_state, Stat::SPECIAL_DEFENSE, 1);
-    } else if (berry == Item::ChestoBerry) {
-        if (pokemon_state.status == Status::SLEEP) {
-            pokemon_state.status = Status::NONE;
-        }
-    } else if (berry == Item::GanlonBerry) {
-        change_stat_modifier(pokemon_state, Stat::DEFENSE, 1);
-    } else if (berry == Item::LiechiBerry) {
-        change_stat_modifier(pokemon_state, Stat::ATTACK, 1);
-    } else if (berry == Item::LumBerry) {
-        if (pokemon_state.status != Status::NONE) {
-            pokemon_state.status = Status::NONE;
-        }
-        if (pokemon_state.confused) {
-            pokemon_state.confused = false;
-        }
-    } else if (berry == Item::PersimBerry) {
-        if (pokemon_state.confused) {
-            pokemon_state.confused = false;
-        }
-    } else if (berry == Item::PetayaBerry) {
-        change_stat_modifier(pokemon_state, Stat::SPECIAL_ATTACK, 1);
-    } else if (berry == Item::SalacBerry) {
-        change_stat_modifier(pokemon_state, Stat::SPEED, 1);
-    } else if (berry == Item::SitrusBerry) {
-        const auto current_health =
-            pokemon_state.current_stats[HEALTH_INDEX];
-        const int max_health = pokemon_state.max_health;
-        pokemon_state.current_stats[HEALTH_INDEX] =
-            std::min(max_health, current_health + max_health / 4);
-    }
-    pokemon_state.item = Item::None;
-}
-
-void try_apply_berry(PokemonState& pokemon_state, const bool eaten) {
-    if (const auto item = pokemon_state.item;
-        BERRIES.contains(item)
-    ) {
-        const int current_health = pokemon_state.current_stats[HEALTH_INDEX];
-        const bool less_than_half_health =
-            current_health <= pokemon_state.max_health / 2;
-        const bool eats_stat_berry = STAT_BERRIES.contains(item) &&
-        ((current_health <= pokemon_state.max_health / 4) ||
-            (pokemon_state.ability == Ability::Gluttony &&
-                less_than_half_health));
-        const bool eats_status_berry =
-            (item == Item::ChestoBerry &&
-                pokemon_state.status == Status::SLEEP) ||
-            (item == Item::PersimBerry &&
-                pokemon_state.confused) ||
-            (item == Item::LumBerry &&
-                (pokemon_state.status != Status::NONE ||
-                    pokemon_state.confused));
-        const bool eats_sitrus = less_than_half_health;
-        if (eaten ||
-            eats_stat_berry ||
-            eats_sitrus ||
-            eats_status_berry
-        ) {
-            apply_berry(pokemon_state);
-        }
-    }
-}
-
-void apply_damage(PokemonState& pokemon_state, const int damage) {
-    pokemon_state.current_stats[HEALTH_INDEX] -= damage;
-    try_apply_berry(pokemon_state, false);
-}
-
-void heal(PokemonState& pokemon_state, const int health_gained) {
-    pokemon_state.current_stats[HEALTH_INDEX] += health_gained;
-    if (pokemon_state.current_stats[HEALTH_INDEX] > pokemon_state.max_health) {
-        pokemon_state.current_stats[HEALTH_INDEX] = pokemon_state.max_health;
-    }
-}
-
-void try_apply_status(PokemonState& pokemon_state, const Status status) {
-    if (pokemon_state.status == Status::NONE) {
-        pokemon_state.status = status;
-    }
-    try_apply_berry(pokemon_state, false);
 }
 
 void apply_end_of_turn_effects(
@@ -414,17 +265,17 @@ void apply_end_of_turn_effects(
     Aqua Ring/ingrain recovery
     Leftovers/Black Sludge recovery
     */
-    if (state.item == Item::BlackSludge &&
+    if (state.get_item() == Item::BlackSludge &&
         (state.types[0] == PokemonType::POISON ||
             state.types[1] == PokemonType::POISON)
     ) {
-        heal(state, std::max(1, state.max_health / 16));
+        state.heal(std::max(1, state.max_health / 16));
     }
-    if (state.ability != Ability::MagicGuard) {
+    if (state.get_ability() != Ability::MagicGuard) {
         if (state.trapped_counter > 0) {
             apply_damage(state, state.max_health / 8);
         }
-        if (state.status == Status::BADLY_POISONED) {
+        if (state.get_status() == Status::BADLY_POISONED) {
             state.turns_badly_poisoned =
                 std::min(15, state.turns_badly_poisoned + 1);
             apply_damage(
@@ -432,22 +283,22 @@ void apply_end_of_turn_effects(
                 state.turns_badly_poisoned * (state.max_health / 16)
             );
         }
-        if (state.status == Status::BURN ||
-            state.status == Status::POISON
+        if (state.get_status() == Status::BURN ||
+            state.get_status() == Status::POISON
         ) {
             apply_damage(state, state.max_health / 8);
         }
-        if (state.item == Item::StickyBarb) {
+        if (state.get_item() == Item::StickyBarb) {
             apply_damage(state, state.max_health / 8);
         }
-        if (state.item == Item::BlackSludge &&
+        if (state.get_item() == Item::BlackSludge &&
             (state.types[0] != PokemonType::POISON &&
                 state.types[1] != PokemonType::POISON)
         ) {
             apply_damage(state, std::max(1, state.max_health / 8));
         }
     }
-    if (state.item == Item::FlameOrb &&
+    if (state.get_item() == Item::FlameOrb &&
         (state.types[0] != PokemonType::FIRE &&
             state.types[1] != PokemonType::FIRE)
     ) {
@@ -456,7 +307,7 @@ void apply_end_of_turn_effects(
     if (state.trapped_counter > 0) {
         state.trapped_counter--;
     }
-    if (state.item == Item::Leftovers) {
+    if (state.get_item() == Item::Leftovers) {
         heal(state, std::max(1, state.max_health / 16));
     }
 }
@@ -517,12 +368,12 @@ void apply_post_move_effects(
         ) {
             int health_gained = attacker_move.damage / 2;
 
-            if (attacker_state.item == Item::BigRoot) {
+            if (attacker_state.get_item() == Item::BigRoot) {
                 health_gained = std::floor(attacker_move.damage * 0.65);
             }
 
             health_gained = std::max(1, health_gained);
-            if (defender_state.ability == Ability::LiquidOoze) {
+            if (defender_state.get_ability() == Ability::LiquidOoze) {
                 health_gained = -health_gained;
             }
             heal(attacker_state, health_gained);
@@ -556,7 +407,7 @@ void apply_post_move_effects(
                 );
             }
         }
-        if (attacker_state.item == Item::ShellBell) {
+        if (attacker_state.get_item() == Item::ShellBell) {
             heal(
                 attacker_state,
                 attacker_move.damage / 8
@@ -597,8 +448,8 @@ void apply_post_move_effects(
     }
 
     if (move == Move::Uproar) {
-        if (defender_state.status == Status::SLEEP) {
-            defender_state.status = Status::NONE;
+        if (defender_state.get_status() == Status::SLEEP) {
+            defender_state.get_status() = Status::NONE;
         }
         if (constexpr uint8_t player_turns = 5;
             attacker_state.is_player &&
@@ -620,14 +471,14 @@ void apply_post_move_effects(
     }
 
     if (move == Move::BugBite) {
-        if (BERRIES.contains(defender_state.item) &&
-            defender_state.ability != Ability::StickyHold
+        if (BERRIES.contains(defender_state.get_item()) &&
+            defender_state.get_ability() != Ability::StickyHold
         ) {
-            const Item backup = attacker_state.item;
-            attacker_state.item = defender_state.item;
-            defender_state.item = Item::None;
+            const Item backup = attacker_state.get_item();
+            attacker_state.get_item() = defender_state.get_item();
+            defender_state.get_item() = Item::None;
             try_apply_berry(attacker_state, true);
-            attacker_state.item = backup;
+            attacker_state.get_item() = backup;
         }
     }
 
@@ -667,15 +518,15 @@ void apply_post_move_effects(
 
     // Contact moves
     if (move_has_flag(move, MoveFlag::MAKES_CONTACT)) {
-        const auto defender_ability = defender_state.ability;
+        const auto defender_ability = defender_state.get_ability();
         if (attacker_state.is_player) {
-            if (defender_state.status == Status::NONE) {
+            if (defender_state.get_status() == Status::NONE) {
                 if (defender_ability == Ability::EffectSpore ||
                     defender_ability == Ability::PoisonPoint
                 ) {
-                    defender_state.status = Status::POISON;
+                    defender_state.get_status() = Status::POISON;
                 } else if (defender_ability == Ability::FlameBody) {
-                    defender_state.status = Status::BURN;
+                    defender_state.get_status() = Status::BURN;
                 }
             }
         }
@@ -685,23 +536,23 @@ void apply_post_move_effects(
                 attacker_state.max_health / 8
             );
         }
-        if (defender_state.item == Item::RockyHelmet) {
+        if (defender_state.get_item() == Item::RockyHelmet) {
             apply_damage(
                 attacker_state,
                 attacker_state.max_health / 6
             );
         }
-        if (attacker_state.item == Item::None &&
-            defender_state.item == Item::StickyBarb
+        if (attacker_state.get_item() == Item::None &&
+            defender_state.get_item() == Item::StickyBarb
         ) {
-            attacker_state.item = Item::StickyBarb;
-            defender_state.item = Item::None;
+            attacker_state.get_item() = Item::StickyBarb;
+            defender_state.get_item() = Item::None;
         }
     }
 
     // Life orb
-    if (attacker_state.ability != Ability::MagicGuard &&
-        attacker_state.item == Item::LifeOrb &&
+    if (attacker_state.get_ability() != Ability::MagicGuard &&
+        attacker_state.get_item() == Item::LifeOrb &&
         attacker_move.damage > 0 &&
         move_has_flag(attacker_move.move->move, MoveFlag::HAS_POWER)
     ) {
@@ -720,7 +571,7 @@ void apply_post_move_effects(
         defender_state.types[1] != PokemonType::FIRE
     ) {
         const bool flung_flame_orb =
-            (is_fling && attacker_state.item == Item::FlameOrb);
+            (is_fling && attacker_state.get_item() == Item::FlameOrb);
         if (move_has_flag(move, MoveFlag::BURNS_DEFENDER) ||
             flung_flame_orb
         ) {
@@ -741,7 +592,7 @@ void apply_post_move_effects(
         defender_state.types[1] != PokemonType::STEEL
     ) {
         const bool flung_poison_barb =
-            (is_fling && attacker_state.item == Item::PoisonBarb);
+            (is_fling && attacker_state.get_item() == Item::PoisonBarb);
         if ((move_has_flag(move, MoveFlag::POISONS_DEFENDER)) ||
             flung_poison_barb
         ) {
@@ -945,18 +796,18 @@ void apply_post_move_effects(
 
     if (is_fling) {
         // TODO other items
-        if (attacker_state.item == Item::KingsRock ||
-            attacker_state.item == Item::RazorFang
+        if (attacker_state.get_item() == Item::KingsRock ||
+            attacker_state.get_item() == Item::RazorFang
         ) {
             defender_state.flinched = true;
-        } else if (attacker_state.item == Item::LightBall) {
+        } else if (attacker_state.get_item() == Item::LightBall) {
             try_apply_status(defender_state, Status::PARALYZED);
-        } else if (attacker_state.item == Item::MentalHerb) {
+        } else if (attacker_state.get_item() == Item::MentalHerb) {
             defender_state.infatuated = true;
-        } else if (attacker_state.item == Item::WhiteHerb) {
+        } else if (attacker_state.get_item() == Item::WhiteHerb) {
             clear_negative_stat_changes(defender_state);
         }
-        attacker_state.item = Item::None;
+        attacker_state.get_item() = Item::None;
     }
 }
 
@@ -997,7 +848,7 @@ int get_damage_of_attacker_move(
     double power = attacker_move->power;
     const auto attacker_move_enum = attacker_move->move;
 
-    const auto status = attacker_state.status;
+    const auto status = attacker_state.get_status();
     if (attacker_move_enum == Move::Eruption ||
         attacker_move_enum == Move::WaterSpout
     ) {
@@ -1036,22 +887,22 @@ int get_damage_of_attacker_move(
             power = 70;
         }
     }
-    if (attacker_state.item == Item::Metronome) {
+    if (attacker_state.get_item() == Item::Metronome) {
         const double multiplier = 1.0 + std::max(
             0.0,
             0.1 * attacker_state.metronome
         );
         power = std::floor(power * multiplier);
-    } else if (attacker_state.item == Item::MuscleBand &&
+    } else if (attacker_state.get_item() == Item::MuscleBand &&
         attacker_move->category == Category::PHYSICAL
     ) {
         power = std::floor(power * 1.1);
-    } else if (attacker_state.item == Item::WiseGlasses &&
+    } else if (attacker_state.get_item() == Item::WiseGlasses &&
         attacker_move->category == Category::SPECIAL
     ) {
         power = std::floor(power * 1.1);
     } else if (attacker_state.pokemon.name == Pokemon::Pikachu &&
-        attacker_state.item == Item::LightBall
+        attacker_state.get_item() == Item::LightBall
     ) {
         power = power * 2;
     }
@@ -1136,7 +987,7 @@ int get_damage_of_attacker_move(
 
     // Type effectiveness
     auto defender_types = defender_state.types;
-    if (defender_state.item == Item::IronBall &&
+    if (defender_state.get_item() == Item::IronBall &&
         attacker_move->type == PokemonType::GROUND
     ) {
         if (defender_types[0] == PokemonType::FLYING) {
@@ -1163,7 +1014,7 @@ int get_damage_of_attacker_move(
         }
     }
     damage = static_cast<int>(damage * effectiveness);
-    if (attacker_state.item == Item::ExpertBelt && effectiveness >= 2) {
+    if (attacker_state.get_item() == Item::ExpertBelt && effectiveness >= 2) {
         damage = std::floor(damage * 1.2);
     }
 
@@ -1224,14 +1075,14 @@ BestMove get_best_move_against_defender(
 
     auto attack =
         attacker_state.current_stats[ATTACK_INDEX];
-    if (attacker_state.item == Item::ChoiceBand) {
+    if (attacker_state.get_item() == Item::ChoiceBand) {
         attack = std::floor(attack * 1.5);
     }
     const auto defense =
         defender_state.current_stats[DEFENSE_INDEX];
     auto special_attack =
         attacker_state.current_stats[SPECIAL_ATTACK_INDEX];
-    if (attacker_state.item == Item::ChoiceSpecs) {
+    if (attacker_state.get_item() == Item::ChoiceSpecs) {
         special_attack = std::floor(special_attack * 1.5);
     }
     const auto special_defense =
@@ -1264,7 +1115,7 @@ BestMove get_best_move_against_defender(
                 defense_used,
                 is_after_being_attacked
             );
-        if (attacker_state.item == Item::LifeOrb) {
+        if (attacker_state.get_item() == Item::LifeOrb) {
             damage = std::floor(damage * 1.3);
         }
         if (move_has_flag(move->move, MoveFlag::REQUIRES_CHARGING_TURN) &&
@@ -1338,7 +1189,7 @@ BestMove get_best_move_against_defender(
             }
         }
     }
-    if (CHOICE_ITEMS.contains(attacker_state.item) &&
+    if (CHOICE_ITEMS.contains(attacker_state.get_item()) &&
         !attacker_state.is_choiced &&
         best_move.move != nullptr
     ) {
@@ -1423,8 +1274,8 @@ void execute_move(
     if (requires_charging &&
         !attacker_state.charging
     ) {
-        if (attacker_state.item == Item::PowerHerb) {
-            attacker_state.item = Item::None;
+        if (attacker_state.get_item() == Item::PowerHerb) {
+            attacker_state.get_item() = Item::None;
         } else {
             attacker_state.charging = true;
             return;
@@ -1458,8 +1309,8 @@ void execute_move(
             goes_under_water ||
             goes_into_void
         ) {
-            if (attacker_state.item == Item::PowerHerb) {
-                attacker_state.item = Item::None;
+            if (attacker_state.get_item() == Item::PowerHerb) {
+                attacker_state.get_item() = Item::None;
             } else {
                 if (goes_into_air) {
                     attacker_state.field_location = FieldLocation::IN_AIR;
@@ -1526,10 +1377,10 @@ void execute_move(
             apply_damage(defender_state, attacker_move_info.damage);
             if (defender_had_max_hp &&
                 defender_state.current_stats[HEALTH_INDEX] <= 0 &&
-                defender_state.item == Item::FocusSash
+                defender_state.get_item() == Item::FocusSash
             ) {
                 defender_state.current_stats[HEALTH_INDEX] = 1;
-                attacker_state.item = Item::None;
+                attacker_state.get_item() = Item::None;
             }
             if (attacker_move_info.damage > 0) {
                 defender_state.was_hit = true;
@@ -1775,8 +1626,8 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
     }
     if (player_state.current_stats[HEALTH_INDEX] > 0 &&
         opponent_state.current_stats[HEALTH_INDEX] < 0 &&
-        opponent_state.ability == Ability::Aftermath &&
-        player_state.ability != Ability::Damp
+        opponent_state.get_ability() == Ability::Aftermath &&
+        player_state.get_ability() != Ability::Damp
     ) {
         apply_damage(player_state, player_state.max_health / 4);
     }
