@@ -7,27 +7,6 @@
 
 #include "moves.h"
 
-enum class PokemonType {
-    NORMAL,
-    FIGHTING,
-    FLYING,
-    POISON,
-    GROUND,
-    ROCK,
-    BUG,
-    GHOST,
-    STEEL,
-    FIRE,
-    WATER,
-    GRASS,
-    ELECTRIC,
-    PSYCHIC,
-    ICE,
-    DRAGON,
-    DARK,
-    COUNT
-};
-
 static const std::unordered_map<std::string, PokemonType> pokemon_type_map{
     {"normal", PokemonType::NORMAL},
     {"fighting", PokemonType::FIGHTING},
@@ -83,37 +62,10 @@ static const std::unordered_map<std::string, Stat> stat_map{
     {"speed", Stat::SPEED}
 };
 
-enum class Category {
-    PHYSICAL,
-    SPECIAL,
-    STATUS
-};
-
 static const std::unordered_map<std::string, Category> move_category_map{
     {"physical", Category::PHYSICAL},
     {"special", Category::SPECIAL},
     {"status", Category::STATUS}
-};
-
-struct MoveInfo {
-    std::string name;
-    Move move;
-    PokemonType type;
-    Category category;
-    int power;
-    int accuracy;
-    int effect_percent;
-
-    bool operator==(const MoveInfo& other) const {
-        return move == other.move;
-    }
-};
-
-template <>
-struct std::hash<MoveInfo> {
-    size_t operator()(const MoveInfo& a) const noexcept {
-        return static_cast<size_t>(a.move);
-    }
 };
 
 enum class NatureEnum {

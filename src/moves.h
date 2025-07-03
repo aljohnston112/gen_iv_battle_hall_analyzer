@@ -1784,6 +1784,12 @@ static constexpr std::array<MoveFlagSet, static_cast<int>(Move::Count)> MOVE_FLA
     return flags;
 }();
 
+static bool move_has_flag(const Move move, const MoveFlag move_flag) {
+    return MOVE_FLAGS[static_cast<int>(move)].test(
+        static_cast<size_t>(move_flag)
+    );
+}
+
 static constexpr std::array<int, static_cast<int>(Move::Count)> MOVE_PRIORITIES = [] {
     std::array<int, static_cast<int>(Move::Count)> array{};
     array[static_cast<int>(Move::HelpingHand)] = 5;
@@ -1827,6 +1833,62 @@ static constexpr std::array<int, static_cast<int>(Move::Count)> MOVE_PRIORITIES 
 
     return array;
 }();
+
+enum class PokemonType {
+    NORMAL,
+    FIGHTING,
+    FLYING,
+    POISON,
+    GROUND,
+    ROCK,
+    BUG,
+    GHOST,
+    STEEL,
+    FIRE,
+    WATER,
+    GRASS,
+    ELECTRIC,
+    PSYCHIC,
+    ICE,
+    DRAGON,
+    DARK,
+    COUNT
+};
+
+enum class Category {
+    PHYSICAL,
+    SPECIAL,
+    STATUS
+};
+
+struct MoveInfo {
+    std::string name;
+    Move move;
+    PokemonType type;
+    Category category;
+    int power;
+    int accuracy;
+    int effect_percent;
+
+    bool operator==(const MoveInfo& other) const {
+        return move == other.move;
+    }
+};
+
+template <>
+struct std::hash<MoveInfo> {
+    size_t operator()(const MoveInfo& a) const noexcept {
+        return static_cast<size_t>(a.move);
+    }
+};
+
+static int get_move_priority(const MoveInfo* move_info) {
+    if (move_info == nullptr) {
+        return 0;
+    }
+    const auto move = static_cast<int>(move_info->move);
+    return MOVE_PRIORITIES[move];
+}
 
 static const std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Pound", Move::Pound},
