@@ -36,18 +36,20 @@ void battle_all(
                     for (const auto& player_pokemon_ :
                          player_pokemon_forms | std::views::values
                     ) {
-                        for (const auto& player_pokemon : player_pokemon_) {
-                            const auto won =
-                                battle(player_pokemon, opponent_pokemon);
-                            if (won && rank > 9) {
-                                printf(std::format(
-                                        "Rank: {:02}, Over 2: {:02}, {}\n",
-                                        rank,
-                                        over_2,
-                                        get_pokemon_name(opponent_pokemon.name
-                                        )
-                                    ).c_str()
-                                );
+                        if (rank == 5) {
+                            for (const auto& player_pokemon : player_pokemon_) {
+                                const auto won =
+                                    battle(player_pokemon, opponent_pokemon);
+                                if (won) {
+                                    printf(std::format(
+                                            "Rank: {:02}, Over 2: {:02}, {}\n",
+                                            rank,
+                                            over_2,
+                                            get_pokemon_name(opponent_pokemon.name
+                                            )
+                                        ).c_str()
+                                    );
+                                }
                             }
                         }
                     }

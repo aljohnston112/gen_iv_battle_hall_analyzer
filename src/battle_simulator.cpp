@@ -150,69 +150,13 @@
     PROTECTION_MOVES,
  */
 
-/*
-Ignored:
-BrightPowder,
-FocusBand,
-KingsRock,
-LaxIncense,
-LightClay,
-RazorClaw,
-RazorFang,
-ScopeLens,
-Stick,
-ZoomLens,
- */
-
-// 20% boost in power
-static const std::unordered_map<Item, PokemonType> ITEM_TO_TYPE = {
-    {Item::BlackBelt, PokemonType::FIGHTING},
-    {Item::BlackGlasses, PokemonType::DARK},
-    {Item::Charcoal, PokemonType::FIRE},
-    {Item::DragonFang, PokemonType::DRAGON},
-    {Item::HardStone, PokemonType::ROCK},
-    {Item::Magnet, PokemonType::ELECTRIC},
-    {Item::MetalCoat, PokemonType::STEEL},
-    {Item::MiracleSeed, PokemonType::GRASS},
-    {Item::MysticWater, PokemonType::WATER},
-    {Item::NeverMeltIce, PokemonType::ICE},
-    {Item::PoisonBarb, PokemonType::POISON},
-    {Item::SharpBeak, PokemonType::FLYING},
-    {Item::SilkScarf, PokemonType::NORMAL},
-    {Item::SilverPowder, PokemonType::BUG},
-    {Item::SoftSand, PokemonType::GROUND},
-    {Item::SpellTag, PokemonType::GHOST},
-    {Item::TwistedSpoon, PokemonType::PSYCHIC},
-};
-
-/*
-    BigRoot, TODO 30% more HP from Leech Seed, Ingrain and Aqua Ring
-    HeatRock, TODO sun is eight turns instead of five turns
-    IcyRock, TODO hail is eight turns instead of five turns
-    IronBall, TODO Even if the holder has Klutz or is affected by Embargo,
-                   its Speed is still halved by the Iron Ball.
-                   Due to being grounded, the holder becomes susceptible
-                   to Arena Trap; the Spikes, and Toxic Spikes,
-                   even if it is Flying-type, has the Ability Levitate,
-                   or is under the effect of Telekinesis or Magnet Rise.
-                   An Iron Ball does not prevent Magnet Rise or Telekinesis
-                   from being used successfully.
-    QuickPowder, TODO doubles ditto's speed till it transforms.
-    RockyHelmet, TODO multi-hit moves cause damage for each hit
-    ShellBell, TODO If the holder uses a multistrike move,
-                    it recovers HP after the last strike,
-                    considering the damage from all of the strikes at once.
-                    The Shell Bell will not activate if the move only hits
-                    a Pokémon's substitute. Ignores heal block
-    SmoothRock, TODO sandstorm is eight turns instead of five turns
- */
-
 void apply_end_of_turn_effects(
+    BattleState& battle_state,
     PokemonState& player_state,
     PokemonState& opponent_state
 ) {
-    player_state.apply_end_of_turn_effects();
-    opponent_state.apply_end_of_turn_effects();
+    player_state.apply_end_of_turn_effects(battle_state, opponent_state);
+    opponent_state.apply_end_of_turn_effects(battle_state, player_state);
 }
 
 void apply_post_move_effects(
@@ -265,11 +209,15 @@ void apply_post_move_effects(
             move == Move::Synthesis ||
             move == Move::Moonlight
         ) {
-            if (battle_state.weather == Weather::SUN) {
+            const auto weather = battle_state.get_weather(
+                attacker_state.get_ability(),
+                defender_state.get_ability()
+                );
+            if (weather == Weather::SUN) {
                 attacker_state.heal(
                     2 * attacker_state.max_health / 3
                 );
-            } else if (battle_state.weather == Weather::CLEAR) {
+            } else if (weather == Weather::CLEAR) {
                 attacker_state.heal(attacker_state.max_health / 2);
             } else {
                 attacker_state.heal(attacker_state.max_health / 4);
@@ -735,12 +683,10 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         //     }
         // }
 
-        battle_state.mid_turn = false;
         if (player_goes_first) {
             player_state.execute_move(
                 battle_state,
-                opponent_state,
-                opponent_move
+                opponent_state
             );
             apply_post_move_effects(
                 battle_state,
@@ -752,12 +698,11 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             if (is_battle_over(player_state, opponent_state)) {
                 break;
             }
-            battle_state.mid_turn = true;
+            battle_state.set_mid_turn();
             if (!opponent_state.is_flinched()) {
                 opponent_state.execute_move(
                     battle_state,
-                    player_state,
-                    player_move
+                    player_state
                 );
                 apply_post_move_effects(
                     battle_state,
@@ -773,8 +718,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         } else {
             opponent_state.execute_move(
                 battle_state,
-                player_state,
-                player_move
+                player_state
             );
             apply_post_move_effects(
                 battle_state,
@@ -786,12 +730,11 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             if (is_battle_over(player_state, opponent_state)) {
                 break;
             }
-            battle_state.mid_turn = true;
+            battle_state.set_mid_turn();
             if (!player_state.is_flinched()) {
                 player_state.execute_move(
                     battle_state,
-                    opponent_state,
-                    opponent_move
+                    opponent_state
                 );
                 apply_post_move_effects(
                     battle_state,
@@ -806,9 +749,12 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             }
         }
         apply_end_of_turn_effects(
+            battle_state,
             player_state,
             opponent_state
         );
+        battle_state.end_turn();
+
         if (player_move.damage == 0 &&
             opponent_move.damage == 0 &&
             !player_state.is_recharging() &&
