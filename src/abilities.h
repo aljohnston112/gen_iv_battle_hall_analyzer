@@ -6,6 +6,24 @@
 
 #include "Pokemon.h"
 
+/*
+ * Ignored:
+ *    AngerPoint
+ *    Anticipation
+ *    ArenaTrap
+ *    BadDreams
+ *    BattleArmor
+ *    Compoundeyes
+ *    CuteCharm
+ *    EarlyBird
+ *    Forewarn
+ *    Frisk
+ *    HoneyGather
+ *    Illuminate
+ *    InnerFocus
+ *    KeenEye
+ */
+
 enum class Ability {
     Adaptability,
     Aftermath,
@@ -28,9 +46,9 @@ enum class Ability {
     Drought,
     DrySkin,
     EarlyBird,
-    EffectSpore,
+    EffectSpore, // Only poisons player currently
     Filter,
-    FlameBody,
+    FlameBody, // Only burns player currently
     FlashFire,
     FlowerGift,
     Forecast,

@@ -542,12 +542,28 @@ enum class MoveFlag {
     HAS_POWER,
     PROTECTS_USER,
     CANT_BE_USED_DURING_GRAVITY,
+    POWERS_IRON_FIST,
     COUNT
 };
 
 using MoveFlagSet = std::bitset<static_cast<size_t>(MoveFlag::COUNT)>;
 static constexpr std::array<MoveFlagSet, static_cast<int>(Move::Count)> MOVE_FLAGS = [] {
     std::array<MoveFlagSet, static_cast<int>(Move::Count)> flags{};
+
+    flags[static_cast<int>(Move::BulletPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::CometPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::DizzyPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::DrainPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::Dynamicpunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::FirePunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::FocusPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::HammerArm)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::IcePunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::MachPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::ShadowPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::SkyUppercut)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+    flags[static_cast<int>(Move::ThunderPunch)].set(static_cast<int>(MoveFlag::POWERS_IRON_FIST));
+
     flags[static_cast<int>(Move::Pound)].set(static_cast<int>(MoveFlag::HAS_POWER));
     flags[static_cast<int>(Move::DoubleSlap)].set(static_cast<int>(MoveFlag::HAS_POWER));
     flags[static_cast<int>(Move::CometPunch)].set(static_cast<int>(MoveFlag::HAS_POWER));

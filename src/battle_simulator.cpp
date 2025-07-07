@@ -171,6 +171,13 @@ void apply_post_move_effects(
     }
     const auto move = attacker_move.move->move;
 
+    //Flash fire
+    if (defender_state.get_ability() == Ability::FlashFire &&
+        attacker_move.move->type == PokemonType::FIRE
+    ) {
+        defender_state.set_flash_fire();
+    }
+
     // Protect
     if (move_has_flag(move, MoveFlag::BREAKS_PROTECT)) {
         defender_state.break_protect();
@@ -212,7 +219,7 @@ void apply_post_move_effects(
             const auto weather = battle_state.get_weather(
                 attacker_state.get_ability(),
                 defender_state.get_ability()
-                );
+            );
             if (weather == Weather::SUN) {
                 attacker_state.heal(
                     2 * attacker_state.max_health / 3
@@ -226,6 +233,11 @@ void apply_post_move_effects(
         if (attacker_state.get_item() == Item::ShellBell) {
             attacker_state.heal(attacker_move.damage / 8);
         }
+    }
+    if (defender_state.get_ability() == Ability::DrySkin &&
+        move_has_flag(move, MoveFlag::HAS_POWER)
+    ) {
+        attacker_state.heal(attacker_state.max_health / 4);
     }
 
     // Multiturn
@@ -302,6 +314,10 @@ void apply_post_move_effects(
     }
 
     // Contact moves
+    const auto weather = battle_state.get_weather(
+        attacker_state.get_ability(),
+        defender_state.get_ability()
+    );
     if (move_has_flag(move, MoveFlag::MAKES_CONTACT)) {
         const auto defender_ability = defender_state.get_ability();
         if (attacker_state.is_player) {
@@ -309,9 +325,9 @@ void apply_post_move_effects(
                 if (defender_ability == Ability::EffectSpore ||
                     defender_ability == Ability::PoisonPoint
                 ) {
-                    defender_state.try_apply_status(Status::POISON);
+                    defender_state.try_apply_status(Status::POISON, weather);
                 } else if (defender_ability == Ability::FlameBody) {
-                    defender_state.try_apply_status(Status::BURN);
+                    defender_state.try_apply_status(Status::BURN, weather);
                 }
             }
         }
@@ -320,8 +336,7 @@ void apply_post_move_effects(
         }
         if (defender_state.get_item() == Item::RockyHelmet) {
             attacker_state.apply_damage(attacker_state.max_health / 6);
-        }
-        if (defender_state.get_item() == Item::StickyBarb &&
+        } else if (defender_state.get_item() == Item::StickyBarb &&
             attacker_state.try_set_item(Item::StickyBarb)
         ) {
             defender_state.clear_item();
@@ -344,9 +359,7 @@ void apply_post_move_effects(
 
     // Burn application
     const bool is_fling = move == Move::Fling;
-    if (defender_state.types[0] != PokemonType::FIRE &&
-        defender_state.types[1] != PokemonType::FIRE
-    ) {
+    if (!defender_state.has_type(PokemonType::FIRE)) {
         const bool flung_flame_orb =
             (is_fling && attacker_state.get_item() == Item::FlameOrb);
         if (move_has_flag(move, MoveFlag::BURNS_DEFENDER) ||
@@ -354,10 +367,10 @@ void apply_post_move_effects(
         ) {
             if (attacker_state.is_player) {
                 if (flung_flame_orb || move == Move::WillOWisp) {
-                    defender_state.try_apply_status(Status::BURN);
+                    defender_state.try_apply_status(Status::BURN, weather);
                 }
             } else {
-                defender_state.try_apply_status(Status::BURN);
+                defender_state.try_apply_status(Status::BURN, weather);
             }
         }
     }
@@ -376,10 +389,10 @@ void apply_post_move_effects(
                     move == Move::PoisonGas ||
                     move == Move::PoisonPowder
                 ) {
-                    defender_state.try_apply_status(Status::POISON);
+                    defender_state.try_apply_status(Status::POISON, weather);
                 }
             } else {
-                defender_state.try_apply_status(Status::POISON);
+                defender_state.try_apply_status(Status::POISON, weather);
             }
         }
     }
@@ -387,16 +400,16 @@ void apply_post_move_effects(
     // Bad poison application
     if (move_has_flag(move, MoveFlag::BADLY_POISONS)) {
         if (defender_state.is_player) {
-            defender_state.try_apply_status(Status::BADLY_POISONED);
+            defender_state.try_apply_status(Status::BADLY_POISONED, weather);
         }
         if (move == Move::Toxic) {
-            defender_state.try_apply_status(Status::BADLY_POISONED);
+            defender_state.try_apply_status(Status::BADLY_POISONED, weather);
         }
     }
 
     // Other status
     if (move == Move::TriAttack && defender_state.is_player) {
-        defender_state.try_apply_status(Status::POISON);
+        defender_state.try_apply_status(Status::POISON, weather);
     }
 
     // Attack
@@ -407,53 +420,53 @@ void apply_post_move_effects(
             move == Move::BulkUp ||
             move == Move::DragonDance
         ) {
-            attacker_state.change_stat_modifier(Stat::ATTACK, 1);
+            attacker_state.change_stat_modifier(Stat::ATTACK, 1, false);
         }
         if (move == Move::SwordsDance) {
-            attacker_state.change_stat_modifier(Stat::ATTACK, 2);
+            attacker_state.change_stat_modifier(Stat::ATTACK, 2, false);
         }
         if (move == Move::BellyDrum) {
-            attacker_state.change_stat_modifier(Stat::ATTACK, 6);
+            attacker_state.change_stat_modifier(Stat::ATTACK, 6, false);
         }
         if (!attacker_state.is_player &&
             (move == Move::MeteorMash ||
                 move == Move::MetalClaw)
         ) {
-            attacker_state.change_stat_modifier(Stat::ATTACK, 1);
+            attacker_state.change_stat_modifier(Stat::ATTACK, 1, false);
         }
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_ATTACK)) {
-        attacker_state.change_stat_modifier(Stat::ATTACK, -1);
+        attacker_state.change_stat_modifier(Stat::ATTACK, -1, false);
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK)) {
         if (move == Move::Tickle ||
             move == Move::Growl
         ) {
-            defender_state.change_stat_modifier(Stat::ATTACK, -1);
+            defender_state.change_stat_modifier(Stat::ATTACK, -1, true);
         }
         if (move == Move::Charm ||
             move == Move::Memento ||
             move == Move::Featherdance
         ) {
-            defender_state.change_stat_modifier(Stat::ATTACK, -2);
+            defender_state.change_stat_modifier(Stat::ATTACK, -2, true);
         }
         if (defender_state.is_player &&
             move == Move::AuroraBeam
         ) {
-            defender_state.change_stat_modifier(Stat::ATTACK, -1);
+            defender_state.change_stat_modifier(Stat::ATTACK, -1, true);
         }
     }
 
     // Defense
     if (move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_DEFENSE)) {
         if (move == Move::BulkUp) {
-            attacker_state.change_stat_modifier(Stat::DEFENSE, 1);
+            attacker_state.change_stat_modifier(Stat::DEFENSE, 1, false);
         }
     }
     if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_DEFENSE)) {
-        attacker_state.change_stat_modifier(Stat::DEFENSE, -1);
+        attacker_state.change_stat_modifier(Stat::DEFENSE, -1, false);
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_DEFENSE)) {
@@ -463,50 +476,52 @@ void apply_post_move_effects(
                 move == Move::RockSmash ||
                 move == Move::CrushClaw)
         ) {
-            defender_state.change_stat_modifier(Stat::DEFENSE, -1);
+            defender_state.change_stat_modifier(Stat::DEFENSE, -1, true);
         }
         if (move == Move::TailWhip ||
             move == Move::Leer ||
             move == Move::Tickle
         ) {
-            defender_state.change_stat_modifier(Stat::DEFENSE, -1);
+            defender_state.change_stat_modifier(Stat::DEFENSE, -1, true);
         }
         if (move == Move::Screech) {
-            defender_state.change_stat_modifier(Stat::DEFENSE, -2);
+            defender_state.change_stat_modifier(Stat::DEFENSE, -2, true);
         }
     }
 
     // Special Attack
     if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPECIAL_ATTACK)) {
-        attacker_state.change_stat_modifier(Stat::SPECIAL_ATTACK, -2);
+        attacker_state.change_stat_modifier(Stat::SPECIAL_ATTACK, -2, false);
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPECIAL_ATTACK)) {
         if (defender_state.is_player &&
             move == Move::MistBall
         ) {
-            defender_state.change_stat_modifier(Stat::SPECIAL_ATTACK, -1);
+            defender_state.change_stat_modifier(Stat::SPECIAL_ATTACK, -1, true);
         }
         if (move == Move::Memento) {
-            defender_state.change_stat_modifier(Stat::SPECIAL_ATTACK, -2);
+            defender_state.change_stat_modifier(Stat::SPECIAL_ATTACK, -2, true);
         }
     }
 
     // Special Defense
     if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPECIAL_DEFENSE)) {
-        attacker_state.change_stat_modifier(Stat::SPECIAL_DEFENSE, -1);
+        attacker_state.change_stat_modifier(Stat::SPECIAL_DEFENSE, -1, false);
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE)) {
         if (move == Move::MetalSound ||
             move == Move::FakeTears
         ) {
-            defender_state.change_stat_modifier(Stat::SPECIAL_DEFENSE, -2);
+            defender_state.
+                change_stat_modifier(Stat::SPECIAL_DEFENSE, -2, true);
         }
         if (defender_state.is_player &&
             move == Move::SeedFlare
         ) {
-            defender_state.change_stat_modifier(Stat::SPECIAL_DEFENSE, -2);
+            defender_state.
+                change_stat_modifier(Stat::SPECIAL_DEFENSE, -2, true);
         }
         if (defender_state.is_player &&
             (move == Move::ShadowBall ||
@@ -519,19 +534,20 @@ void apply_post_move_effects(
                 move == Move::EarthPower ||
                 move == Move::FlashCannon)
         ) {
-            defender_state.change_stat_modifier(Stat::SPECIAL_DEFENSE, -1);
+            defender_state.
+                change_stat_modifier(Stat::SPECIAL_DEFENSE, -1, true);
         }
     }
 
     // Speed
     if (move_has_flag(move, MoveFlag::BOOSTS_ATTACKERS_SPEED)) {
         if (move == Move::DragonDance) {
-            attacker_state.change_stat_modifier(Stat::SPEED, 1);
+            attacker_state.change_stat_modifier(Stat::SPEED, 1, false);
         }
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_ATTACKERS_SPEED)) {
-        attacker_state.change_stat_modifier(Stat::SPEED, -1);
+        attacker_state.change_stat_modifier(Stat::SPEED, -1, false);
     }
 
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPEED)) {
@@ -539,7 +555,7 @@ void apply_post_move_effects(
             move == Move::RockTomb ||
             move == Move::MudShot
         ) {
-            defender_state.change_stat_modifier(Stat::SPEED, -1);
+            defender_state.change_stat_modifier(Stat::SPEED, -1, true);
         }
         if (defender_state.is_player &&
             (move == Move::Bubblebeam ||
@@ -547,13 +563,13 @@ void apply_post_move_effects(
                 move == Move::Bubble ||
                 move == Move::StringShot)
         ) {
-            defender_state.change_stat_modifier(Stat::SPEED, -1);
+            defender_state.change_stat_modifier(Stat::SPEED, -1, true);
         }
         if (defender_state.is_player &&
             (move == Move::CottonSpore ||
                 move == Move::ScaryFace)
         ) {
-            defender_state.change_stat_modifier(Stat::SPEED, -2);
+            defender_state.change_stat_modifier(Stat::SPEED, -2, true);
         }
     }
 
@@ -562,11 +578,11 @@ void apply_post_move_effects(
     if (!attacker_state.is_player &&
         move_has_flag(move, MoveFlag::OMNI_BOOSTS_ATTACKER)
     ) {
-        attacker_state.change_stat_modifier(Stat::ATTACK, 1);
-        attacker_state.change_stat_modifier(Stat::DEFENSE, 1);
-        attacker_state.change_stat_modifier(Stat::SPECIAL_ATTACK, 1);
-        attacker_state.change_stat_modifier(Stat::SPECIAL_DEFENSE, 1);
-        attacker_state.change_stat_modifier(Stat::SPEED, 1);
+        attacker_state.change_stat_modifier(Stat::ATTACK, 1, false);
+        attacker_state.change_stat_modifier(Stat::DEFENSE, 1, false);
+        attacker_state.change_stat_modifier(Stat::SPECIAL_ATTACK, 1, false);
+        attacker_state.change_stat_modifier(Stat::SPECIAL_DEFENSE, 1, false);
+        attacker_state.change_stat_modifier(Stat::SPEED, 1, false);
     }
 
     if (is_fling) {
@@ -576,13 +592,22 @@ void apply_post_move_effects(
         ) {
             defender_state.got_flinched();
         } else if (attacker_state.get_item() == Item::LightBall) {
-            defender_state.try_apply_status(Status::PARALYZED);
+            defender_state.try_apply_status(Status::PARALYZED, weather);
         } else if (attacker_state.get_item() == Item::MentalHerb) {
             defender_state.got_infatuated();
         } else if (attacker_state.get_item() == Item::WhiteHerb) {
             defender_state.clear_negative_stat_changes();
         }
         attacker_state.clear_item();
+    }
+
+    // Color Change
+    if (defender_state.get_ability() == Ability::ColorChange &&
+        defender_state.has_type(attacker_move.move->type) &&
+        attacker_move.move->move != Move::Struggle &&
+        attacker_move.move->move != Move::PainSplit
+    ) {
+        defender_state.change_type(attacker_move.move->type);
     }
 }
 
@@ -592,6 +617,34 @@ bool is_battle_over(
 ) {
     return player_state.get_health() <= 0 ||
         opponent_state.get_health() <= 0;
+}
+
+void check_download(PokemonState state0, PokemonState state1) {
+    if (state0.get_ability() == Ability::Download) {
+        if (state1.get_special_defense(Weather::CLEAR) > state1.get_defense()) {
+            state0.change_stat_modifier(Stat::ATTACK, 1, false);
+        } else {
+            state0.change_stat_modifier(Stat::SPECIAL_ATTACK, 1, false);
+        }
+    }
+}
+
+void check_drizzle(
+    BattleState& battle_state,
+    const PokemonState& pokemon_state
+) {
+    if (pokemon_state.get_ability() == Ability::Drizzle) {
+        battle_state.set_weather(Weather::RAIN, -1);
+    }
+}
+
+void check_drought(
+    BattleState battle_state,
+    const PokemonState& pokemon_state
+) {
+    if (pokemon_state.get_ability() == Ability::Drought) {
+        battle_state.set_weather(Weather::SUN, -1);
+    }
 }
 
 bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
@@ -604,6 +657,12 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         opponent,
         false
     };
+    check_download(player_state, opponent_state);
+    check_download(opponent_state, player_state);
+    check_drizzle(battle_state, player_state);
+    check_drizzle(battle_state, opponent_state);
+    check_drought(battle_state, player_state);
+    check_drought(battle_state, opponent_state);
 
     BestMove player_move;
     BestMove opponent_move;
@@ -620,10 +679,14 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             player_state,
             false
         );
-    const bool player_goes_first = player_state.outspeeds(
+        const bool player_goes_first = player_state.outspeeds(
             opponent_state,
             opponent_move.move,
-            player_move.move
+            player_move.move,
+            battle_state.get_weather(
+                player_state.get_ability(),
+                opponent_state.get_ability()
+            )
         );
 
         // For debugging unimplemented attacks
