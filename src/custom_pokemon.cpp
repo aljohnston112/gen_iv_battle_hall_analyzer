@@ -15,7 +15,8 @@ void save_custom_pokemon(
              item,
              types,
              moves,
-             stats
+             stats,
+             pounds
          ] : pokemon_list
     ) {
         output_stream << static_cast<int>(pokemon_name) << '|'
@@ -53,6 +54,7 @@ void save_custom_pokemon(
             output_stream << static_cast<int>(i++) << ','
                 << stat << '\n';
         }
+        output_stream << pounds << '\n';
     }
 }
 
@@ -144,7 +146,9 @@ std::vector<CustomPokemon> load_custom_pokemon(
             custom_pokemon.stats[stat_int] = value;
         }
 
+        input_stream >> custom_pokemon.pounds;
         all_custom_pokemon.push_back(std::move(custom_pokemon));
+        input_stream.ignore();
     }
 
     return all_custom_pokemon;

@@ -78,14 +78,14 @@ BattleHallPokemon parse_pokemon_line(
     return pokemon;
 }
 
-AllBattleHallPokemon parse_file(
+std::unordered_map<uint8_t, std::vector<BattleHallPokemon>> parse_file(
     const std::string& filename,
     const std::vector<const MoveInfo*>& all_moves
 ) {
     std::ifstream file(filename);
     std::string line;
     uint8_t current_group_number;
-    AllBattleHallPokemon grouped_pokemon;
+    std::unordered_map<uint8_t, std::vector<BattleHallPokemon>> grouped_pokemon;
 
     while (std::getline(file, line)) {
         if (line.rfind("Group", 0) == 0) {
@@ -102,7 +102,10 @@ AllBattleHallPokemon parse_file(
 
 void write_battle_hall_data(
     const std::string& file_name,
-    const AllBattleHallPokemon& grouped_pokemon
+    const std::unordered_map<
+        uint8_t,
+        std::vector<BattleHallPokemon>
+    >& grouped_pokemon
 ) {
     std::ofstream out(file_name);
     out <<
@@ -142,7 +145,10 @@ void write_battle_hall_data(
     }
 }
 
-AllBattleHallPokemon get_all_battle_hall_pokemon(
+std::unordered_map<
+    uint8_t,
+    std::vector<BattleHallPokemon>
+> get_all_battle_hall_pokemon(
     const std::vector<const MoveInfo*>& all_moves
 ) {
     const auto file = "./data/fresh/battle_hall_pokemon";
@@ -157,7 +163,7 @@ AllBattleHallPokemon get_all_battle_hall_pokemon(
     }
     std::ifstream input_stream(file);
     std::string line;
-    AllBattleHallPokemon grouped_pokemon;
+    std::unordered_map<uint8_t, std::vector<BattleHallPokemon>> grouped_pokemon;
     // Skip header
     std::getline(input_stream, line);
     // Read the data
@@ -195,7 +201,9 @@ AllBattleHallPokemon get_all_battle_hall_pokemon(
     return grouped_pokemon;
 }
 
-void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data) {
+void print_all_battle_hall_pokemon(
+    const std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>& data
+) {
     for (const auto& [
              group_number,
              pokemon_group
@@ -228,7 +236,7 @@ void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data) {
             std::cout << std::left
                 << std::setw(15) << name
                 << std::setw(15) << item;
-            for (int i = 0; i < 4; ++i) {
+            for (int i = 0; i < moves.size(); ++i) {
                 std::cout << std::setw(15) << moves[i]->name;
             }
             std::cout << std::setw(15) << NATURE_TO_STRING.at(nature.nature);
@@ -284,6 +292,18 @@ get_stats_for_battle_hall_pokemon(
     return stats;
 }
 
+double get_weight_for_hall_pokemon(
+const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
+const BattleHallPokemon& hall_pokemon
+    ) {
+    std::string name = hall_pokemon.name;
+    if (name.contains("Wormadam")) {
+        name = "Wormadam";
+    }
+    const auto& serebii_pokemon = all_serebii_pokemon.at(name);
+    return serebii_pokemon.pounds;
+}
+
 std::vector<CustomPokemon> convert_hall_to_custom(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const BattleHallPokemon& hall_pokemon,
@@ -326,7 +346,11 @@ std::vector<CustomPokemon> convert_hall_to_custom(
                     all_serebii_pokemon,
                     level,
                     hall_pokemon
-                )
+                ),
+                .pounds = get_weight_for_hall_pokemon(
+                    all_serebii_pokemon,
+                    hall_pokemon
+                    )
             }
         );
     }
@@ -352,7 +376,10 @@ uint8_t get_hall_pokemon_level(
 
 void write_all_hall_pokemon_as_custom(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
-    const AllBattleHallPokemon& all_battle_hall_pokemon
+    const std::unordered_map<
+        uint8_t,
+        std::vector<BattleHallPokemon>
+    >& all_battle_hall_pokemon
 ) {
     for (const auto& [
              group_number,
@@ -413,7 +440,10 @@ std::unordered_map<
     >
 > get_all_custom_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
-    const AllBattleHallPokemon& all_battle_hall_pokemon,
+    const std::unordered_map<
+        uint8_t,
+        std::vector<BattleHallPokemon>
+    >& all_battle_hall_pokemon,
     const std::vector<const MoveInfo*>& all_moves
 ) {
     namespace fs = std::filesystem;
@@ -459,4 +489,89 @@ std::unordered_map<
     }
 
     return result;
+}
+
+void export_battle_hall_pokemon(
+    const std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>& data,
+    const std::unordered_map<
+        uint8_t,
+        std::unordered_map<
+            uint8_t,
+            std::unordered_map<uint8_t, std::vector<CustomPokemon>>
+        >
+    >& group_to_rank_to_over_2
+) {
+    std::ofstream output_stream("./data/fresh/showdown_sets");
+    for (uint8_t group_number = 4; group_number > 0; group_number--) {
+        const auto& rank_to_over_2_ =
+            group_to_rank_to_over_2.at(group_number);
+        for (const uint8_t rank :
+             std::ranges::reverse_view(GROUP_TO_RANKS.at(group_number))
+        ) {
+            const auto& over_2_to_hall_pokemon =
+                rank_to_over_2_.at(rank);
+            for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
+                const auto& hall_pokemon =
+                    over_2_to_hall_pokemon.at(over_2);
+                for (const auto& opponent_pokemon : hall_pokemon) {
+                    auto it = std::ranges::find_if(
+                        data.at(group_number),
+                        [opponent_pokemon](const BattleHallPokemon& p) {
+                            return p.name == get_pokemon_name(
+                                opponent_pokemon.name);
+                        }
+                    );
+                    auto& result = *it;
+
+
+                    output_stream <<
+                        get_pokemon_name(opponent_pokemon.name) <<
+                        " @ " << ITEM_TO_STRING.at(opponent_pokemon.item) <<
+                        "\n";
+                    output_stream <<
+                        "Level: " <<
+                        static_cast<int>(opponent_pokemon.level) <<
+                        "\n";
+                    output_stream <<
+                        NATURE_TO_STRING.at(result.nature.nature) <<
+                        " Nature" <<
+                        "\n";
+                    output_stream <<
+                        "Ability: " <<
+                        ABILITY_TO_STRING.at(opponent_pokemon.ability) <<
+                        "\n";
+                    output_stream <<
+                        "EVs: ";
+                    output_stream <<
+                        static_cast<int>(result.evs.at(Stat::HEALTH)) <<
+                        " HP / ";
+                    output_stream <<
+                        static_cast<int>(result.evs.at(Stat::ATTACK)) <<
+                        " Atk / ";
+                    output_stream <<
+                        static_cast<int>(result.evs.at(Stat::DEFENSE)) <<
+                        " Def / ";
+                    output_stream <<
+                        static_cast<int>(result.evs.at(Stat::SPECIAL_ATTACK)) <<
+                        " SpA / ";
+                    output_stream <<
+                        static_cast<int>(result.evs.at(Stat::SPECIAL_DEFENSE)) <<
+                        " SpD / ";
+                    output_stream <<
+                        static_cast<int>(result.evs.at(Stat::SPEED)) <<
+                        " Spe\n";
+                    for (const auto& move :
+                         opponent_pokemon.moves
+                    ) {
+                        output_stream <<
+                            "- " <<
+                            move->name <<
+                            "\n";
+                    }
+                    output_stream <<
+                        "\n";
+                }
+            }
+        }
+    }
 }

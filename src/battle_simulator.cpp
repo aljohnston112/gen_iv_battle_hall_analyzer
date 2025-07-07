@@ -620,7 +620,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
             player_state,
             false
         );
-        const bool player_goes_first = player_state.outspeeds(
+    const bool player_goes_first = player_state.outspeeds(
             opponent_state,
             opponent_move.move,
             player_move.move

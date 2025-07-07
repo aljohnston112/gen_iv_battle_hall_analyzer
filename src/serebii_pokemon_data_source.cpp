@@ -579,9 +579,9 @@ std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> get_stats_for_serebii(
 
 const std::unordered_set IGNORED_MOVES = {
     Move::Snore,
-    Move::SolarBeam,
     Move::LastResort,
-    Move::DreamEater
+    Move::DreamEater,
+    Move::Frustration
 };
 
 std::unordered_map<
@@ -604,9 +604,9 @@ std::unordered_map<
             std::array<const MoveInfo*, static_cast<int>(PokemonType::COUNT)>
         > moves;
         const uint8_t min_accuracy = is_player ? 100 : 0;
+        auto others = std::vector<const MoveInfo*>{};
         for (const auto& move : move_map | std::views::values) {
-            if (move->power == 0 ||
-                move->accuracy < min_accuracy ||
+            if (move->accuracy < min_accuracy ||
                 IGNORED_MOVES.contains(move->move)
             ) {
                 continue;
@@ -619,9 +619,18 @@ std::unordered_map<
             //     continue;
             // }
             auto& type_map = moves[move->category];
-            if (const auto current_move =
-                    type_map[static_cast<int>(move->type)];
-                current_move == nullptr ||
+            const auto current_move = type_map[static_cast<int>(move->type)];
+            if (move_has_flag(
+                    move->move,
+                    MoveFlag::REQUIRES_CHARGING_TURN
+                ) ||
+                move_has_flag(move->move,
+                              MoveFlag::REQUIRES_RECHARGE_TURN
+                ) ||
+                !move_has_flag(move->move, MoveFlag::HAS_POWER)
+            ) {
+                others.push_back(move);
+            } else if (current_move == nullptr ||
                 current_move != nullptr && move->power > current_move->power
             ) {
                 type_map[static_cast<int>(move->type)] = move;
@@ -633,6 +642,9 @@ std::unordered_map<
                     forms_moves[form].emplace(move);
                 }
             }
+        }
+        for (const auto& other : others) {
+            forms_moves[form].emplace(other);
         }
     }
     return forms_moves;
@@ -715,7 +727,8 @@ std::unordered_map<
                     .item = STRING_TO_ITEM.at(""),
                     .types = {types[0], types[1]},
                     .moves = move_vector,
-                    .stats = get_stats_for_serebii(form, serebii_pokemon)
+                    .stats = get_stats_for_serebii(form, serebii_pokemon),
+                    .pounds = serebii_pokemon.pounds
                 }
             );
         }

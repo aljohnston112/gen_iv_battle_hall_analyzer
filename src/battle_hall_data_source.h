@@ -31,14 +31,16 @@ struct BattleHallPokemon {
     std::unordered_map<Stat, uint8_t> evs;
 };
 
-using AllBattleHallPokemon =
-std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>;
-
-AllBattleHallPokemon get_all_battle_hall_pokemon(
+std::unordered_map<
+    uint8_t,
+    std::vector<BattleHallPokemon>
+> get_all_battle_hall_pokemon(
     const std::vector<const MoveInfo*>& all_moves
 );
 
-void print_all_battle_hall_pokemon(const AllBattleHallPokemon& data);
+void print_all_battle_hall_pokemon(
+    const std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>& data
+);
 
 std::unordered_map<
     uint8_t,
@@ -47,8 +49,22 @@ std::unordered_map<
     >
 > get_all_custom_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
-    const AllBattleHallPokemon& all_battle_hall_pokemon,
+    const std::unordered_map<
+        uint8_t,
+        std::vector<BattleHallPokemon>
+    >& all_battle_hall_pokemon,
     const std::vector<const MoveInfo*>& all_moves
+);
+
+void export_battle_hall_pokemon(
+    const std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>& data,
+    const std::unordered_map<
+        uint8_t,
+        std::unordered_map<
+            uint8_t,
+            std::unordered_map<uint8_t, std::vector<CustomPokemon>>
+        >
+    >& group_to_rank_to_over_2
 );
 
 #endif //BATTLE_HALL_DATA_SOURCE_H

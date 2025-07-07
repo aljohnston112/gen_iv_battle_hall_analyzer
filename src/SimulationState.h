@@ -180,6 +180,7 @@ public:
     const uint8_t level;
     const std::array<PokemonType, 2> types;
     const int max_health;
+    const double pounds;
 
 private:
     static constexpr int HEALTH_INDEX =
@@ -233,6 +234,7 @@ public:
         level(pokemon.level),
         types(pokemon.types),
         max_health(pokemon.stats[HEALTH_INDEX]),
+        pounds(pokemon.pounds),
         ability(pokemon.ability),
         item(pokemon.item),
         current_stats(
@@ -622,8 +624,12 @@ public:
         const PokemonState& defender_state,
         const uint16_t defender_defense
     ) const {
+        if (attacker_move_info->move == Move::Endeavor) {
+            return std::max(0, defender_state.get_health() - get_health());
+        }
+
         if (attacker_move_info->move == Move::Counter) {
-            if (
+            if (defender_state.chosen_move.move != nullptr &&
                 defender_state.chosen_move.move->category == Category::PHYSICAL
             ) {
                 return defender_state.chosen_move.damage * 2;
@@ -631,7 +637,7 @@ public:
             return 0;
         }
         if (attacker_move_info->move == Move::MirrorCoat) {
-            if (
+            if (defender_state.chosen_move.move != nullptr &&
                 defender_state.chosen_move.move->category == Category::SPECIAL
             ) {
                 return defender_state.chosen_move.damage * 2;
@@ -686,6 +692,24 @@ public:
                 power = 30;
             } else {
                 power = 70;
+            }
+        } else if (attacker_move_info->move == Move::LowKick ||
+            attacker_move_info->move == Move::GrassKnot
+        ) {
+            if (const double defender_weight = defender_state.pounds;
+                defender_weight < 21.9
+            ) {
+                power = 20;
+            } else if (defender_weight < 55.1) {
+                power = 40;
+            } else if (defender_weight < 110.2) {
+                power = 60;
+            } else if (defender_weight < 220.4) {
+                power = 80;
+            } else if (defender_weight < 440.9) {
+                power = 100;
+            } else {
+                power = 120;
             }
         }
 
@@ -777,7 +801,7 @@ public:
 
         damage =
             std::floor(damage * power * attacker_attack / defender_defense);
-        damage = std::floor(damage / 50) + 2;
+        damage = std::floor(damage / 50.0) + 2.0;
 
         // STAB
         if (attacker_move_info->move == Move::WeatherBall) {
@@ -849,7 +873,7 @@ public:
             attacker_move_info->category == Category::PHYSICAL &&
             !move_has_flag(attacker_move, MoveFlag::HAS_FIXED_DAMAGE)
         ) {
-            damage = std::floor(damage / 2);
+            damage = std::floor(damage / 2.0);
         }
 
         if (attacker_move_info->move != Move::BrickBreak) {
@@ -858,7 +882,7 @@ public:
                 (defender_state.has_light_screen_up() &&
                     attacker_move_info->category == Category::SPECIAL)
             ) {
-                damage = std::floor(damage / 2);
+                damage = std::floor(damage / 2.0);
             }
         }
 
@@ -948,9 +972,13 @@ public:
 
     BestMove get_best_move_against_defender(
         const BattleState& battle_state,
-        const PokemonState& defender_state,
+        PokemonState& defender_state,
         const bool chosen_move_only
     ) {
+        if (charging) {
+            return chosen_move;
+        }
+
         BestMove best_move{};
         bool best_move_must_charge = false;
         auto attack = get_attack();
@@ -1071,10 +1099,27 @@ public:
                     move_must_charge = false;
                 }
             }
+
+            int damage_from_defender;
+            if (is_player) {
+                const auto backup = defender_state.chosen_move;
+                damage_from_defender =
+                    defender_state.get_best_move_against_defender(
+                        battle_state,
+                        *this,
+                        false
+                    ).damage;
+                defender_state.chosen_move = backup;
+            } else {
+                damage_from_defender = defender_state.chosen_move.damage;
+            }
+
             if ((!move_must_charge && !best_move_must_charge && damage >
                     best_move.damage) ||
                 (best_move_must_charge && damage > best_move.damage / 2) ||
-                (move_must_charge && damage > best_move.damage * 2)
+                (move_must_charge && damage > best_move.damage * 2 &&
+                    ((damage_from_defender < get_health() && attacker_faster) ||
+                        (damage_from_defender < get_health() / 2)))
             ) {
                 best_move.damage = damage;
                 best_move.move = move;

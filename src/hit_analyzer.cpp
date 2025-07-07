@@ -1,6 +1,7 @@
 #include "hit_analyzer.h"
 
 #include <format>
+#include <iostream>
 #include <ranges>
 
 #include "battle_hall_data_source.h"
@@ -21,12 +22,49 @@ void battle_all(
         std::vector<CustomPokemon>
     >& player_pokemon_forms
 ) {
+    std::unordered_map<
+        PokemonType,
+        std::unordered_map<
+            uint8_t,
+            std::unordered_map<
+                uint8_t, std::unordered_set<
+                    CustomPokemon,
+                    CustomPokemonHash,
+                    CustomPokemonEq
+                >
+            >
+        >
+    > type_to_rank_to_over_2{};
     for (uint8_t group_number = 4; group_number > 0; group_number--) {
-        const auto& rank_to_over_2 =
+        const auto& rank_to_over_2_ =
             group_to_rank_to_over_2.at(group_number);
-        for (unsigned char rank :
+        for (const uint8_t rank :
              std::ranges::reverse_view(GROUP_TO_RANKS.at(group_number))
         ) {
+            const auto& over_2_to_hall_pokemon =
+                rank_to_over_2_.at(rank);
+            for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
+                const auto& hall_pokemon =
+                    over_2_to_hall_pokemon.at(over_2);
+                for (const auto& opponent_pokemon : hall_pokemon) {
+                    for (const auto type : opponent_pokemon.types) {
+                        type_to_rank_to_over_2[type][rank][over_2].insert(
+                            opponent_pokemon);
+                    }
+                }
+            }
+        }
+    }
+
+    for (const auto [
+             type,
+             rank_to_over_2
+         ] : type_to_rank_to_over_2
+    ) {
+        if (type == PokemonType::COUNT) {
+            continue;
+        }
+        for (int8_t rank = 10; rank > 0; rank--) {
             const auto& over_2_to_hall_pokemon =
                 rank_to_over_2.at(rank);
             for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
@@ -36,17 +74,20 @@ void battle_all(
                     for (const auto& player_pokemon_ :
                          player_pokemon_forms | std::views::values
                     ) {
-                        if (rank == 5) {
+                        if (type == PokemonType::ROCK && over_2 == 0) {
                             for (const auto& player_pokemon : player_pokemon_) {
                                 const auto won =
                                     battle(player_pokemon, opponent_pokemon);
-                                if (won) {
+                                if (!won) {
                                     printf(std::format(
-                                            "Rank: {:02}, Over 2: {:02}, {}\n",
+                                            "Type: {}, Rank: {:02}, Over 2: {:02}, {}, Level: {}\n",
+                                            TYPE_TO_STRING.at(type),
                                             rank,
                                             over_2,
-                                            get_pokemon_name(opponent_pokemon.name
-                                            )
+                                            get_pokemon_name(
+                                                opponent_pokemon.name
+                                            ),
+                                            opponent_pokemon.level
                                         ).c_str()
                                     );
                                 }
@@ -83,8 +124,23 @@ void analyze() {
             battle_all(group_to_rank_to_over_2, player_pokemon_forms);
         }
     } else {
-        const auto& player_pokemon_forms =
-            convert_serebii_to_custom(all_serebii_pokemon.at("Sunkern"));
+        auto player_pokemon_forms =
+            convert_serebii_to_custom(all_serebii_pokemon.at("Azurill"));
+        for (auto& [
+                 form,
+                 p_list
+             ] : player_pokemon_forms
+        ) {
+            for (auto& p : p_list) {
+                p.stats[0] = 110;
+                p.stats[1] = 128;
+                p.stats[2] = 45;
+                p.stats[3] = 25;
+                p.stats[4] = 45;
+                p.stats[5] = 45;
+                p.item = Item::FocusSash;
+            }
+        }
         battle_all(group_to_rank_to_over_2, player_pokemon_forms);
     }
 }

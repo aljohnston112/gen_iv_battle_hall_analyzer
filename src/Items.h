@@ -160,4 +160,16 @@ static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"", Item::None}
 };
 
+static std::unordered_map<Item, std::string> initialize_item_to_string() {
+    std::unordered_map<Item, std::string> map{};
+    for (const auto& [item_name, item] : STRING_TO_ITEM) {
+        map[item] = item_name;
+    }
+    return map;
+}
+
+static std::unordered_map<Item, std::string> ITEM_TO_STRING =
+    initialize_item_to_string();
+
+
 #endif //ITEMS_H

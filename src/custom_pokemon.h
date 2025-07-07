@@ -17,6 +17,20 @@ struct CustomPokemon {
     std::array<PokemonType, 2> types;
     std::vector<const MoveInfo*> moves;
     std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats;
+    double pounds;
+};
+
+struct CustomPokemonHash {
+    std::size_t operator()(const CustomPokemon& p) const {
+        return std::hash<int>{}(static_cast<int>(p.name)) ^
+               (std::hash<int>{}(static_cast<int>(p.ability)) << 1);
+    }
+};
+
+struct CustomPokemonEq {
+    bool operator()(const CustomPokemon& a, const CustomPokemon& b) const {
+        return a.name == b.name && a.ability == b.ability;
+    }
 };
 
 void save_custom_pokemon(
