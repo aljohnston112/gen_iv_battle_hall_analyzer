@@ -1,9 +1,26 @@
 #ifndef ITEMS_H
 #define ITEMS_H
 
+#include <array>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+
+#include "moves.h"
+
+/*
+Ignored:
+    BrightPowder,
+    FocusBand,
+    KingsRock,
+    LaxIncense,
+    LightClay,
+    RazorClaw,
+    RazorFang,
+    ScopeLens,
+    Stick,
+    ZoomLens,
+ */
 
 enum class Item {
     ApicotBerry,
@@ -68,7 +85,66 @@ enum class Item {
     WhiteHerb,
     WiseGlasses,
     ZoomLens,
+
+    FistPlate,
+    SkyPlate,
+    ToxicPlate,
+    EarthPlate,
+    StonePlate,
+    InsectPlate,
+    SpookyPlate,
+    IronPlate,
+    FlamePlate,
+    SplashPlate,
+    MeadowPlate,
+    ZapPlate,
+    MindPlate,
+    IciclePlate,
+    DracoPlate,
+    DreadPlate,
+
     None
+};
+
+static constexpr std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS = [] {
+    std::array<bool, static_cast<int>(Item::None) + 1> array{};
+    array.fill(false);
+    array[static_cast<int>(Item::FistPlate)] = true;
+    array[static_cast<int>(Item::SkyPlate)] = true;
+    array[static_cast<int>(Item::ToxicPlate)] = true;
+    array[static_cast<int>(Item::EarthPlate)] = true;
+    array[static_cast<int>(Item::StonePlate)] = true;
+    array[static_cast<int>(Item::InsectPlate)] = true;
+    array[static_cast<int>(Item::SpookyPlate)] = true;
+    array[static_cast<int>(Item::IronPlate)] = true;
+    array[static_cast<int>(Item::FlamePlate)] = true;
+    array[static_cast<int>(Item::SplashPlate)] = true;
+    array[static_cast<int>(Item::MeadowPlate)] = true;
+    array[static_cast<int>(Item::ZapPlate)] = true;
+    array[static_cast<int>(Item::MindPlate)] = true;
+    array[static_cast<int>(Item::IciclePlate)] = true;
+    array[static_cast<int>(Item::DracoPlate)] = true;
+    array[static_cast<int>(Item::DreadPlate)] = true;
+    return array;
+}();
+
+static const std::unordered_map<Item, PokemonType> PLATE_ITEM_TYPES = {
+    {Item::FistPlate, PokemonType::FIGHTING},
+    {Item::SkyPlate, PokemonType::FLYING},
+    {Item::ToxicPlate, PokemonType::POISON},
+    {Item::EarthPlate, PokemonType::GROUND},
+    {Item::StonePlate, PokemonType::ROCK},
+    {Item::InsectPlate, PokemonType::BUG},
+    {Item::SpookyPlate, PokemonType::GHOST},
+    {Item::IronPlate, PokemonType::STEEL},
+    {Item::FlamePlate, PokemonType::FIRE},
+    {Item::SplashPlate, PokemonType::WATER},
+    {Item::MeadowPlate, PokemonType::GRASS},
+    {Item::ZapPlate, PokemonType::ELECTRIC},
+    {Item::MindPlate, PokemonType::PSYCHIC},
+    {Item::IciclePlate, PokemonType::ICE},
+    {Item::DracoPlate, PokemonType::DRAGON},
+    {Item::DreadPlate, PokemonType::DARK}
 };
 
 static const std::unordered_set CHOICE_ITEMS = {
@@ -170,6 +246,65 @@ static std::unordered_map<Item, std::string> initialize_item_to_string() {
 
 static std::unordered_map<Item, std::string> ITEM_TO_STRING =
     initialize_item_to_string();
+
+// 20% boost in power
+static const std::unordered_map<Item, PokemonType> ITEM_TO_TYPE = {
+    {Item::BlackBelt, PokemonType::FIGHTING},
+    {Item::BlackGlasses, PokemonType::DARK},
+    {Item::Charcoal, PokemonType::FIRE},
+    {Item::DragonFang, PokemonType::DRAGON},
+    {Item::HardStone, PokemonType::ROCK},
+    {Item::Magnet, PokemonType::ELECTRIC},
+    {Item::MetalCoat, PokemonType::STEEL},
+    {Item::MiracleSeed, PokemonType::GRASS},
+    {Item::MysticWater, PokemonType::WATER},
+    {Item::NeverMeltIce, PokemonType::ICE},
+    {Item::PoisonBarb, PokemonType::POISON},
+    {Item::SharpBeak, PokemonType::FLYING},
+    {Item::SilkScarf, PokemonType::NORMAL},
+    {Item::SilverPowder, PokemonType::BUG},
+    {Item::SoftSand, PokemonType::GROUND},
+    {Item::SpellTag, PokemonType::GHOST},
+    {Item::TwistedSpoon, PokemonType::PSYCHIC},
+};
+
+static std::array<
+    bool,
+    static_cast<int>(Item::None) + 1
+> make_power_items() {
+    std::array<bool, static_cast<int>(Item::None) + 1> array{};
+    array.fill(false);
+    for (const auto& item : ITEM_TO_TYPE | std::views::keys) {
+        array[static_cast<int>(item)] = true;
+    }
+    return array;
+}
+
+static const auto POWER_ITEMS =
+    make_power_items();
+
+
+/*
+    BigRoot, TODO 30% more HP from Leech Seed, Ingrain and Aqua Ring
+    HeatRock, TODO sun is eight turns instead of five turns
+    IcyRock, TODO hail is eight turns instead of five turns
+    IronBall, TODO Even if the holder has Klutz or is affected by Embargo,
+                   its Speed is still halved by the Iron Ball.
+                   Due to being grounded, the holder becomes susceptible
+                   to Arena Trap; the Spikes, and Toxic Spikes,
+                   even if it is Flying-type, has the Ability Levitate,
+                   or is under the effect of Telekinesis or Magnet Rise.
+                   An Iron Ball does not prevent Magnet Rise or Telekinesis
+                   from being used successfully.
+    QuickPowder, TODO doubles ditto's speed till it transforms.
+    RockyHelmet, TODO multi-hit moves cause damage for each hit
+    ShellBell, TODO If the holder uses a multistrike move,
+                    it recovers HP after the last strike,
+                    considering the damage from all of the strikes at once.
+                    The Shell Bell will not activate if the move only hits
+                    a Pokémon's substitute. Ignores heal block
+    SmoothRock, TODO sandstorm is eight turns instead of five turns
+ */
 
 
 #endif //ITEMS_H

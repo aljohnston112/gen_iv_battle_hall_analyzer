@@ -1,6 +1,8 @@
 #ifndef ABILITIES_H
 #define ABILITIES_H
 
+#include <array>
+#include <bitset>
 #include <unordered_map>
 #include <debug/vector>
 
@@ -22,6 +24,9 @@
  *    Illuminate
  *    InnerFocus
  *    KeenEye
+ *    LightningRod
+ *    MagnetPull
+ *    Minus
  */
 
 enum class Ability {
@@ -74,7 +79,7 @@ enum class Ability {
     LeafGuard,
     Levitate,
     LightningRod,
-    Limber,
+    Limber, // TODO skill swap and such will cure paralysis
     LiquidOoze,
     MagicGuard,
     MagmaArmor,
@@ -147,8 +152,61 @@ enum class Ability {
     WaterAbsorb,
     WaterVeil,
     WhiteSmoke,
-    WonderGuard
+    WonderGuard,
+    Disabled
 };
+
+static constexpr std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> IGNORABLE_ABILITIES = [] {
+    std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> flags{};
+    flags.fill(false);
+    flags[static_cast<int>(Ability::BattleArmor)] = true;
+    flags[static_cast<int>(Ability::ClearBody)] = true;
+    flags[static_cast<int>(Ability::Damp)] = true;
+    flags[static_cast<int>(Ability::DrySkin)] = true;
+    flags[static_cast<int>(Ability::Filter)] = true;
+    flags[static_cast<int>(Ability::FlashFire)] = true;
+    flags[static_cast<int>(Ability::FlowerGift)] = true;
+    flags[static_cast<int>(Ability::Heatproof)] = true;
+    flags[static_cast<int>(Ability::HyperCutter)] = true;
+    flags[static_cast<int>(Ability::Immunity)] = true;
+    flags[static_cast<int>(Ability::InnerFocus)] = true;
+    flags[static_cast<int>(Ability::Insomnia)] = true;
+    flags[static_cast<int>(Ability::KeenEye)] = true;
+    flags[static_cast<int>(Ability::LeafGuard)] = true;
+    flags[static_cast<int>(Ability::Levitate)] = true;
+    flags[static_cast<int>(Ability::LightningRod)] = true;
+    flags[static_cast<int>(Ability::Limber)] = true;
+    flags[static_cast<int>(Ability::MagmaArmor)] = true;
+    flags[static_cast<int>(Ability::MarvelScale)] = true;
+    flags[static_cast<int>(Ability::MotorDrive)] = true;
+    flags[static_cast<int>(Ability::Oblivious)] = true;
+    flags[static_cast<int>(Ability::OwnTempo)] = true;
+    flags[static_cast<int>(Ability::SandVeil)] = true;
+    flags[static_cast<int>(Ability::ShellArmor)] = true;
+    flags[static_cast<int>(Ability::ShieldDust)] = true;
+    flags[static_cast<int>(Ability::Simple)] = true;
+    flags[static_cast<int>(Ability::SnowCloak)] = true;
+    flags[static_cast<int>(Ability::SolidRock)] = true;
+    flags[static_cast<int>(Ability::Soundproof)] = true;
+    flags[static_cast<int>(Ability::StickyHold)] = true;
+    flags[static_cast<int>(Ability::StormDrain)] = true;
+    flags[static_cast<int>(Ability::Sturdy)] = true;
+    flags[static_cast<int>(Ability::SuctionCups)] = true;
+    flags[static_cast<int>(Ability::TangledFeet)] = true;
+    flags[static_cast<int>(Ability::ThickFat)] = true;
+    flags[static_cast<int>(Ability::Unaware)] = true;
+    flags[static_cast<int>(Ability::VitalSpirit)] = true;
+    flags[static_cast<int>(Ability::VoltAbsorb)] = true;
+    flags[static_cast<int>(Ability::WaterAbsorb)] = true;
+    flags[static_cast<int>(Ability::WaterVeil)] = true;
+    flags[static_cast<int>(Ability::WhiteSmoke)] = true;
+    flags[static_cast<int>(Ability::WonderGuard)] = true;
+    return flags;
+}();
+
+static bool ability_is_ignorable(Ability ability) {
+    return IGNORABLE_ABILITIES.at(static_cast<int>(ability));
+}
 
 static const std::unordered_map<Ability, std::string> ABILITY_TO_STRING = {
     {Ability::Adaptability, "Adaptability"},
