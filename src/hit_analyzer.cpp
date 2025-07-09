@@ -132,13 +132,14 @@ void analyze() {
              ] : player_pokemon_forms
         ) {
             for (auto& p : p_list) {
-                p.stats[0] = 110;
-                p.stats[1] = 128;
-                p.stats[2] = 45;
-                p.stats[3] = 25;
-                p.stats[4] = 45;
-                p.stats[5] = 45;
+                p.stats[0] = 70;
+                p.stats[1] = 21;
+                p.stats[2] = 31;
+                p.stats[3] = 17;
+                p.stats[4] = 29;
+                p.stats[5] = 23;
                 p.item = Item::FocusSash;
+                p.ability = Ability::HugePower;
             }
         }
         battle_all(group_to_rank_to_over_2, player_pokemon_forms);

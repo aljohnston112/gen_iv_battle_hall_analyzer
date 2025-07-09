@@ -27,6 +27,24 @@
  *    LightningRod
  *    MagnetPull
  *    Minus
+ *    NaturalCure
+ *    Pickup
+ *    Plus
+ *    Pressure
+ *    RunAway
+ *    SereneGrace
+ *    ShadowTag
+ *    ShellArmor
+ *    Sniper
+ *    SnowCloak
+ *    Static
+ *    Steadfast
+ *    Stench
+ *    StormDrain
+ *    Sturdy
+ *    SuctionCups
+ *    SuperLuck
+ *    TangledFeet
  */
 
 enum class Ability {
@@ -117,7 +135,7 @@ enum class Ability {
     ShellArmor,
     ShieldDust,
     Simple,
-    SkillLink,
+    SkillLink, // TODO
     SlowStart,
     Sniper,
     SnowCloak,
@@ -130,7 +148,7 @@ enum class Ability {
     Static,
     Steadfast,
     Stench,
-    StickyHold,
+    StickyHold, // TODO Covet, Thief, Knock Off, Trick, Switcheroo
     StormDrain,
     Sturdy,
     SuctionCups,
@@ -144,7 +162,9 @@ enum class Ability {
     TintedLens,
     Torrent,
     Trace,
-    Truant,
+    Truant, // Cannot be overwritten by Worry Seed,
+            // but it can be overwritten by Skill Swap, Role Play,
+            // or disabled with Gastro Acid.
     Unaware,
     Unburden,
     VitalSpirit,
@@ -206,6 +226,19 @@ static constexpr std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> IG
 
 static bool ability_is_ignorable(Ability ability) {
     return IGNORABLE_ABILITIES.at(static_cast<int>(ability));
+}
+
+static constexpr std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> NON_COPYABLE_ABILITIES = [] {
+    std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> flags{};
+    flags.fill(false);
+    flags[static_cast<int>(Ability::Forecast)] = true;
+    flags[static_cast<int>(Ability::Multitype)] = true;
+    flags[static_cast<int>(Ability::Trace)] = true;
+    return flags;
+}();
+
+static bool ability_is_copyable(Ability ability) {
+    return !NON_COPYABLE_ABILITIES.at(static_cast<int>(ability));
 }
 
 static const std::unordered_map<Ability, std::string> ABILITY_TO_STRING = {

@@ -17,7 +17,8 @@ std::string trim(const std::string& string) {
     auto end = string.end();
     do {
         --end;
-    } while (std::distance(start, end) > 0 && std::isspace(*end));
+    }
+    while (std::distance(start, end) > 0 && std::isspace(*end));
     return {start, end + 1};
 }
 
@@ -293,9 +294,9 @@ get_stats_for_battle_hall_pokemon(
 }
 
 double get_weight_for_hall_pokemon(
-const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
-const BattleHallPokemon& hall_pokemon
-    ) {
+    const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
+    const BattleHallPokemon& hall_pokemon
+) {
     std::string name = hall_pokemon.name;
     if (name.contains("Wormadam")) {
         name = "Wormadam";
@@ -350,7 +351,7 @@ std::vector<CustomPokemon> convert_hall_to_custom(
                 .pounds = get_weight_for_hall_pokemon(
                     all_serebii_pokemon,
                     hall_pokemon
-                    )
+                )
             }
         );
     }
@@ -555,7 +556,8 @@ void export_battle_hall_pokemon(
                         static_cast<int>(result.evs.at(Stat::SPECIAL_ATTACK)) <<
                         " SpA / ";
                     output_stream <<
-                        static_cast<int>(result.evs.at(Stat::SPECIAL_DEFENSE)) <<
+                        static_cast<int>(result.evs.at(Stat::SPECIAL_DEFENSE))
+                        <<
                         " SpD / ";
                     output_stream <<
                         static_cast<int>(result.evs.at(Stat::SPEED)) <<

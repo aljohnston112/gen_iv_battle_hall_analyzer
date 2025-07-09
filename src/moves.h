@@ -492,7 +492,7 @@ enum class MoveFlag {
     BREAKS_PROTECT,
     BURNS_DEFENDER,
     BYPASSES_PROTECT,
-    CAN_BE_REFLECTED_BY_MIRROR_COAT,
+    CAN_BE_REFLECTED_BY_MIRROR_MOVE,
     CAN_BE_SNATCHED,
     CHANGES_WEATHER,
     CONFUSES_DEFENDER,
@@ -541,6 +541,7 @@ enum class MoveFlag {
     IS_OTHER,
     HAS_POWER,
     PROTECTS_USER,
+    IS_SOUND_BASED,
     CANT_BE_USED_DURING_GRAVITY,
     POWERS_IRON_FIST,
     COUNT
@@ -1501,51 +1502,51 @@ static constexpr std::array<MoveFlagSet, static_cast<int>(Move::Count)> MOVE_FLA
     flags[static_cast<int>(Move::Feint)].set(static_cast<int>(MoveFlag::BREAKS_PROTECT));
     flags[static_cast<int>(Move::ShadowForce)].set(static_cast<int>(MoveFlag::BREAKS_PROTECT));
 
-    flags[static_cast<int>(Move::Attract)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Block)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Captivate)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Charm)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::ConfuseRay)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::CottonSpore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::DarkVoid)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::FakeTears)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Featherdance)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Flash)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Flatter)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::GastroAcid)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Glare)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Grasswhistle)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Growl)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Hypnosis)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Kinesis)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::LeechSeed)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Leer)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::LovelyKiss)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::MeanLook)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::MetalSound)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::PoisonGas)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::PoisonPowder)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::SandAttack)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::ScaryFace)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Screech)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Sing)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::SleepPowder)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Smokescreen)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::SpiderWeb)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Spore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::StringShot)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::StunSpore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Supersonic)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Swagger)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::SweetKiss)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::SweetScent)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::TailWhip)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::ThunderWave)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Tickle)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Toxic)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::WillOWisp)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::WorrySeed)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
-    flags[static_cast<int>(Move::Yawn)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_COAT));
+    flags[static_cast<int>(Move::Attract)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Block)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Captivate)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Charm)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::ConfuseRay)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::CottonSpore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::DarkVoid)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::FakeTears)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Featherdance)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Flash)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Flatter)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::GastroAcid)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Glare)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Grasswhistle)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Growl)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Hypnosis)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Kinesis)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::LeechSeed)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Leer)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::LovelyKiss)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::MeanLook)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::MetalSound)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::PoisonGas)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::PoisonPowder)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::SandAttack)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::ScaryFace)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Screech)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Sing)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::SleepPowder)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Smokescreen)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::SpiderWeb)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Spore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::StringShot)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::StunSpore)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Supersonic)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Swagger)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::SweetKiss)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::SweetScent)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::TailWhip)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::ThunderWave)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Tickle)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Toxic)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::WillOWisp)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::WorrySeed)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
+    flags[static_cast<int>(Move::Yawn)].set(static_cast<int>(MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE));
 
     flags[static_cast<int>(Move::AcidArmor)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
     flags[static_cast<int>(Move::Acupressure)].set(static_cast<int>(MoveFlag::CAN_BE_SNATCHED));
@@ -1797,6 +1798,23 @@ static constexpr std::array<MoveFlagSet, static_cast<int>(Move::Count)> MOVE_FLA
     flags[static_cast<int>(Move::Wrap)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
     flags[static_cast<int>(Move::WringOut)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
     flags[static_cast<int>(Move::XScissor)].set(static_cast<int>(MoveFlag::AFFECTED_BY_KINGS_ROCK));
+
+    flags[static_cast<int>(Move::Growl)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Roar)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Sing)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Supersonic)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Screech)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Snore)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::PerishSong)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::HealBell)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Uproar)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::HyperVoice)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::MetalSound)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Grasswhistle)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Howl)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::BugBuzz)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+    flags[static_cast<int>(Move::Chatter)].set(static_cast<int>(MoveFlag::IS_SOUND_BASED));
+
     return flags;
 }();
 

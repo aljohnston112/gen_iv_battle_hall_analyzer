@@ -3,6 +3,6 @@
 
 #include <cstdint>
 
-constexpr uint8_t LEVEL = 50;
+constexpr uint8_t LEVEL = 30;
 
 #endif //CONFIG_H
