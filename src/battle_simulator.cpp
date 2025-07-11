@@ -945,7 +945,17 @@ void check_trace(
     }
 }
 
-bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
+void check_intimidate(
+    const PokemonState& state0,
+    PokemonState& state1
+) {
+    if (state0.get_ability() == Ability::Intimidate) {
+        state1.change_stat_modifier(Stat::ATTACK, -1, true);
+    }
+}
+
+std::pair<bool, std::vector<const MoveInfo*>> battle(
+    const CustomPokemon& player, const CustomPokemon& opponent) {
     BattleState battle_state{player, opponent};
     auto player_state = PokemonState{
         player,
@@ -956,6 +966,8 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
         false
     };
 
+    std::vector<const MoveInfo*> player_moves{};
+
     // May suppress abilities
     check_mold_breaker(player_state, opponent_state);
     check_mold_breaker(opponent_state, player_state);
@@ -963,6 +975,8 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
     check_trace(opponent_state, player_state);
     check_download(player_state, opponent_state);
     check_download(opponent_state, player_state);
+    check_intimidate(player_state, opponent_state);
+    check_intimidate(opponent_state, player_state);
 
     const bool player_goes_first = player_state.outspeeds(
         opponent_state,
@@ -1058,14 +1072,14 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                 move != Move::GrassKnot &&
                 move != Move::Transform &&
                 (move_has_flag(
-                    move,
-                    MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
-                ) ||
-                move_has_flag(move, MoveFlag::CHANGES_WEATHER) ||
-                move_has_flag(move, MoveFlag::HAS_FIXED_DAMAGE) ||
-                move_has_flag(move, MoveFlag::MAKES_ATTACKER_FAINT) ||
-                move_has_flag(move, MoveFlag::IS_OTHER) ||
-                move_has_flag(move, MoveFlag::PROTECTS_USER))
+                        move,
+                        MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
+                    ) ||
+                    move_has_flag(move, MoveFlag::CHANGES_WEATHER) ||
+                    move_has_flag(move, MoveFlag::HAS_FIXED_DAMAGE) ||
+                    move_has_flag(move, MoveFlag::MAKES_ATTACKER_FAINT) ||
+                    move_has_flag(move, MoveFlag::IS_OTHER) ||
+                    move_has_flag(move, MoveFlag::PROTECTS_USER))
             ) {
                 printf("");
             }
@@ -1077,6 +1091,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                 battle_state.get_weather(),
                 battle_state.is_mid_turn()
             );
+            player_moves.push_back(player_move.move);
             apply_post_move_effects(
                 battle_state,
                 player_state,
@@ -1128,6 +1143,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                     battle_state.get_weather(),
                     battle_state.is_mid_turn()
                 );
+                player_moves.push_back(player_move.move);
                 apply_post_move_effects(
                     battle_state,
                     player_state,
@@ -1168,7 +1184,7 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
     }
 
     if (player_state.get_health() > 0) {
-        return true;
+        return std::make_pair(true, player_moves);
     }
-    return false;
+    return std::make_pair(false, player_moves);
 }

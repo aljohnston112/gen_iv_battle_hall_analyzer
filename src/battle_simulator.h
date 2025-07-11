@@ -3,6 +3,5 @@
 
 #include "custom_pokemon.h"
 
-bool battle(const CustomPokemon& player, const CustomPokemon& opponent);
-
+std::pair<bool, std::vector<const MoveInfo*>> battle(const CustomPokemon& player, const CustomPokemon& opponent);
 #endif //BATTLE_SIMULATOR_H

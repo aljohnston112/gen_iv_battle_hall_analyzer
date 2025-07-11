@@ -62,7 +62,7 @@ namespace thread_pool {
 
     unsigned int ThreadPool::getNumberOfThreads() {
         static unsigned int numThreads = std::thread::hardware_concurrency();
-        return 1;
+        return 12;
     }
 
     std::shared_ptr<ThreadPool> ThreadPool::getCPUWorkInstance() {

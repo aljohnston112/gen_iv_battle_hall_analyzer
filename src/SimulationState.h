@@ -349,7 +349,9 @@ public:
 
     void apply_damage(const int damage) {
         current_stats[HEALTH_INDEX] -= damage;
-        try_apply_berry(false);
+        if (current_stats[HEALTH_INDEX] > 0) {
+            try_apply_berry(false);
+        }
     }
 
     void heal(const int health_gained) {
@@ -1604,8 +1606,16 @@ public:
                     best_water_move.damage = damage;
                     best_water_move.times_to_hit = times_to_hit;
                 }
-            } else {
-                throw new std::logic_error("Move skipped when none picked");
+            } else if (best_move.move == nullptr) {
+                if (move->move == Move::SolarBeam) {
+                    best_move = {
+                        move,
+                        damage,
+                        1
+                    };
+                } else {
+                    throw new std::logic_error("Move skipped when none picked");
+                }
             }
         }
 
@@ -2009,7 +2019,9 @@ public:
         ) {
             return;
         }
-        if (defender_ability == Ability::Soundproof) {
+        if (defender_ability == Ability::Soundproof &&
+            move_has_flag(chosen_move.move->move, MoveFlag::IS_SOUND_BASED)
+        ) {
             return;
         }
 
