@@ -255,7 +255,8 @@ std::array<uint16_t, static_cast<int>(Stat::NO_STAT)>
 get_stats_for_battle_hall_pokemon(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const uint8_t level,
-    const BattleHallPokemon& hall_pokemon
+    const BattleHallPokemon& hall_pokemon,
+    const uint rank
 ) {
     std::string name = hall_pokemon.name;
     if (name.contains("Wormadam")) {
@@ -285,7 +286,7 @@ get_stats_for_battle_hall_pokemon(
             level,
             stat,
             value,
-            31,
+            rank * 2 + 6,
             hall_pokemon.evs.at(stat),
             hall_pokemon.nature
         );
@@ -308,7 +309,8 @@ double get_weight_for_hall_pokemon(
 std::vector<CustomPokemon> convert_hall_to_custom(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const BattleHallPokemon& hall_pokemon,
-    const uint8_t level
+    const uint8_t level,
+    const uint8_t rank
 ) {
     auto serebii_name = hall_pokemon.name;
     if (serebii_name == "WormadamP" ||
@@ -346,7 +348,8 @@ std::vector<CustomPokemon> convert_hall_to_custom(
                 .stats = get_stats_for_battle_hall_pokemon(
                     all_serebii_pokemon,
                     level,
-                    hall_pokemon
+                    hall_pokemon,
+                    rank
                 ),
                 .pounds = get_weight_for_hall_pokemon(
                     all_serebii_pokemon,
@@ -408,7 +411,8 @@ void write_all_hall_pokemon_as_custom(
                         convert_hall_to_custom(
                             all_serebii_pokemon,
                             hall_pokemon,
-                            level
+                            level,
+                            rank
                         );
                     for (const auto& custom : customs) {
                         converted[rank][types_past_2].emplace_back(custom);
