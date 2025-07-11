@@ -28,6 +28,8 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/Items.h
         src/Pokemon.h
         src/SimulationState.h
+        src/thread_pool.cpp
+        src/thread_pool.h
 )
 
 add_custom_command(

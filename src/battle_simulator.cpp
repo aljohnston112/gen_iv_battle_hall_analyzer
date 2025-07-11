@@ -1052,6 +1052,11 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                 move != Move::Revenge &&
                 move != Move::LastResort &&
                 move != Move::BugBite &&
+                move != Move::Payback &&
+                move != Move::Endeavor &&
+                move != Move::LowKick &&
+                move != Move::GrassKnot &&
+                move != Move::Transform &&
                 (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -1059,7 +1064,6 @@ bool battle(const CustomPokemon& player, const CustomPokemon& opponent) {
                 move_has_flag(move, MoveFlag::CHANGES_WEATHER) ||
                 move_has_flag(move, MoveFlag::HAS_FIXED_DAMAGE) ||
                 move_has_flag(move, MoveFlag::MAKES_ATTACKER_FAINT) ||
-                move_has_flag(move, MoveFlag::HITS_MULTIPLE_TIMES) ||
                 move_has_flag(move, MoveFlag::IS_OTHER) ||
                 move_has_flag(move, MoveFlag::PROTECTS_USER))
             ) {

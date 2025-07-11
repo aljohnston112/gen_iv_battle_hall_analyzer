@@ -1,6 +1,8 @@
 #include "hit_analyzer.h"
 
+#include <algorithm>
 #include <format>
+#include <future>
 #include <iostream>
 #include <ranges>
 
@@ -8,6 +10,38 @@
 #include "battle_simulator.h"
 #include "custom_pokemon.h"
 #include "serebii_pokemon_data_source.h"
+#include "thread_pool.h"
+
+struct BattleEntry {
+    CustomPokemon player;
+    CustomPokemon opponent;
+    PokemonType type;
+    uint8_t rank;
+    uint8_t over_2;
+};
+
+struct ResultEntry {
+    PokemonType type;
+    uint8_t rank;
+    uint8_t over_2;
+    CustomPokemon opponent;
+    bool won;
+};
+
+void do_battle(
+    const BattleEntry& battle_entry,
+    std::promise<ResultEntry>&& promise
+) {
+    promise.set_value(
+        {
+            battle_entry.type,
+            battle_entry.rank,
+            battle_entry.over_2,
+            battle_entry.opponent,
+            battle(battle_entry.player, battle_entry.opponent)
+        }
+    );
+}
 
 void battle_all(
     const std::unordered_map<
@@ -49,13 +83,15 @@ void battle_all(
                 for (const auto& opponent_pokemon : hall_pokemon) {
                     for (const auto type : opponent_pokemon.types) {
                         type_to_rank_to_over_2[type][rank][over_2].insert(
-                            opponent_pokemon);
+                            opponent_pokemon
+                        );
                     }
                 }
             }
         }
     }
 
+    std::vector<BattleEntry> battles{};
     for (const auto [
              type,
              rank_to_over_2
@@ -74,29 +110,116 @@ void battle_all(
                     for (const auto& player_pokemon_ :
                          player_pokemon_forms | std::views::values
                     ) {
-                        if (type == PokemonType::ROCK && over_2 == 0) {
-                            for (const auto& player_pokemon : player_pokemon_) {
-                                const auto won =
-                                    battle(player_pokemon, opponent_pokemon);
-                                if (!won) {
-                                    printf(std::format(
-                                            "Type: {}, Rank: {:02}, Over 2: {:02}, {}, Level: {}\n",
-                                            TYPE_TO_STRING.at(type),
-                                            rank,
-                                            over_2,
-                                            get_pokemon_name(
-                                                opponent_pokemon.name
-                                            ),
-                                            opponent_pokemon.level
-                                        ).c_str()
-                                    );
-                                }
-                            }
+                        for (const auto& player_pokemon : player_pokemon_) {
+                                battles.emplace_back(
+                                    player_pokemon,
+                                    opponent_pokemon,
+                                    type,
+                                    rank,
+                                    over_2
+                                );
                         }
                     }
                 }
             }
         }
+    }
+
+    std::unordered_map<
+        PokemonType,
+        std::unordered_map<
+            uint8_t,
+            std::unordered_map<
+                uint8_t, std::unordered_set<
+                    CustomPokemon,
+                    CustomPokemonHash,
+                    CustomPokemonEq
+                >
+            >
+        >
+    > type_to_rank_to_over_2_losses{};
+    for (const auto& [
+             type,
+             rank,
+             over_2,
+             opponent,
+             won
+         ] : thread_pool::ThreadPool::getCPUWorkInstance()->
+         createAndRunTasks<ResultEntry, std::vector<BattleEntry>, BattleEntry>(
+             do_battle,
+             battles
+         )
+    ) {
+        if (!won) {
+            type_to_rank_to_over_2_losses[type][rank][over_2].insert(opponent);
+        }
+    }
+
+
+    std::vector<ResultEntry> first_losses;
+    for (const auto [
+             type,
+             rank_to_over_2
+         ] : type_to_rank_to_over_2_losses
+    ) {
+        if (type == PokemonType::COUNT) {
+            continue;
+        }
+        for (int8_t rank = 1; rank <= 10; rank++) {
+            bool found = false;
+            if (rank_to_over_2.contains(rank)) {
+                const auto& over_2_to_hall_pokemon =
+                    rank_to_over_2.at(rank);
+                for (int8_t over_2 = 0; over_2 <= 17; over_2++) {
+                    if (over_2_to_hall_pokemon.contains(over_2)) {
+                        const auto& hall_pokemon =
+                            over_2_to_hall_pokemon.at(over_2);
+                        for (const auto& opponent_pokemon : hall_pokemon) {
+                            first_losses.emplace_back(
+                                type, rank, over_2, opponent_pokemon);
+                        }
+                        if (hall_pokemon.size() > 0) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (found) {
+                break;
+            }
+        }
+    }
+
+    std::ranges::sort(
+        first_losses,
+        [](const ResultEntry& a, const ResultEntry& b) {
+            if (a.rank != b.rank) {
+                return a.rank < b.rank;
+            }
+            return a.over_2 < b.over_2;
+        }
+    );
+    for (const auto& [
+             type,
+             rank,
+             over_2,
+             opponent,
+             won
+         ] : first_losses
+    ) {
+        printf(std::format(
+                "Type: {}, Rank: {:02}, Over 2: {:02}, {}, Level: {}, Ability: {}\n",
+                TYPE_TO_STRING.at(type),
+                rank,
+                over_2,
+                get_pokemon_name(
+                    opponent.name
+                ),
+                opponent.level,
+                ABILITY_TO_STRING.at(opponent.ability)
+            ).c_str()
+        );
     }
 }
 
