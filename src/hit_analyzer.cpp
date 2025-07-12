@@ -28,19 +28,21 @@ struct ResultEntry {
     bool won;
     std::vector<const MoveInfo*> moves;
 };
+
 struct ResultEntryHash {
     std::size_t operator()(const ResultEntry& entry) const {
         return std::hash<int>{}(static_cast<int>(entry.opponent.name)) ^
-               (std::hash<int>{}(static_cast<int>(entry.opponent.ability)) << 1);
+            (std::hash<int>{}(static_cast<int>(entry.opponent.ability)) << 1);
     }
 };
 
 struct ResultEntryEq {
     bool operator()(const ResultEntry& a, const ResultEntry& b) const {
         return a.opponent.name == b.opponent.name &&
-               a.opponent.ability == b.opponent.ability;
+            a.opponent.ability == b.opponent.ability;
     }
 };
+
 void do_battle(
     const BattleEntry& battle_entry,
     std::promise<ResultEntry>&& promise
@@ -57,6 +59,91 @@ void do_battle(
             moves
         }
     );
+}
+
+void print_max_streak(
+    const std::unordered_map<PokemonType, std::array<int, 18>>& streak_results
+) {
+    std::bitset<18> picked{};
+    uint current_sum = 0;
+    std::unordered_map<PokemonType, int> current_selection{};
+    for (const auto& [type, results] :
+         streak_results
+    ) {
+        // Find lowest available index
+        uint current_index = 0;
+        for (uint i = 0; i < 18; i++) {
+            if (!picked.test(i)) {
+                current_index = i;
+                break;
+            }
+        }
+
+        const int optimal_score = results[0];
+        int current_score = results[current_index];
+        if (optimal_score == current_score) {
+            current_sum += current_score;
+            current_selection[type] = current_index;
+            picked.set(current_index);
+        } else {
+            // Check the score lost for each of the selected if swapped
+            // with current index
+            std::vector<std::tuple<PokemonType, int, int>> potential_changes{};
+
+            for (const auto& [t, s] : current_selection) {
+                const auto int loss =
+                    streak_results.at(t)[current_index] -
+                    streak_results.at(t)[s];
+                potential_changes.push_back(
+                    std::make_tuple(t, loss, streak_results.at(type)[s]));
+            }
+            std::ranges::sort(
+                potential_changes,
+                [](const auto& a, const auto& b) {
+                    if (std::get<1>(a) != std::get<1>(b)) {
+                        return std::get<1>(a) > std::get<1>(b);
+                    }
+                    return std::get<2>(a) > std::get<2>(b);
+                }
+            );
+            bool swapped = false;
+            for (int i = 0; i < potential_changes.size(); i++) {
+                auto trade = potential_changes[i];
+                const auto loss = std::get<1>(trade);
+                if (const auto actual_gain = optimal_score + loss;
+                    actual_gain > 0
+                ) {
+                    current_sum += actual_gain;
+                    auto trade_type = std::get<0>(trade);
+                    current_selection[type] = current_selection[trade_type];
+                    current_selection[trade_type] = current_index;
+                    picked.set(current_index);
+                    swapped = true;
+                    std::cout << "Swapping " << TYPE_TO_STRING.at(type) << " ("
+                        << current_index << ") with "
+                        << TYPE_TO_STRING.at(trade_type) << " ("
+                        << current_selection[type] << ")\n";
+                    break;
+                }
+            }
+            if (!swapped) {
+                current_sum += current_score;
+                current_selection[type] = current_index;
+                picked.set(current_index);
+            }
+        }
+    }
+    printf("");
+    std::cout << "Final score: " << current_sum << '\n';
+    std::vector<std::pair<int, PokemonType>> by_index;
+    for (const auto& [type, index] : current_selection) {
+        by_index.emplace_back(index, type);
+    }
+    std::ranges::sort(by_index);
+    for (const auto& [index, type] : by_index) {
+        std::cout << "Streak " << index << ": Type " << TYPE_TO_STRING.at(type)
+            << '\n';
+    }
 }
 
 void battle_all(
@@ -127,7 +214,7 @@ void battle_all(
                          player_pokemon_forms | std::views::values
                     ) {
                         for (const auto& player_pokemon : player_pokemon_) {
-                            if (type == PokemonType::NORMAL) {
+                            if (type != PokemonType::COUNT) {
                                 battles.emplace_back(
                                     player_pokemon,
                                     opponent_pokemon,
@@ -179,6 +266,7 @@ void battle_all(
         }
     }
 
+    std::unordered_map<PokemonType, std::array<int, 18>> streak_results{};
     std::vector<ResultEntry> first_losses;
     for (const auto [
              type,
@@ -188,6 +276,8 @@ void battle_all(
         if (type == PokemonType::COUNT) {
             continue;
         }
+        auto& streaks = streak_results[type];
+        streaks.fill(-1);
         for (int8_t rank = 1; rank <= 10; rank++) {
             if (rank_to_over_2.contains(rank)) {
                 const auto& over_2_to_hall_pokemon =
@@ -202,7 +292,13 @@ void battle_all(
                         if (hall_pokemon.size() > 0) {
                             break;
                         }
+                    } else {
+                        streaks[over_2] = rank;
                     }
+                }
+            } else {
+                for (int8_t over_2 = 0; over_2 <= 17; over_2++) {
+                    streaks[over_2] = rank;
                 }
             }
         }
@@ -260,6 +356,19 @@ void battle_all(
         }
         printf("\n");
     }
+
+    for (const auto& [type, streaks] :
+         streak_results
+    ) {
+        printf(std::format("{} \n", TYPE_TO_STRING.at(type)).c_str());
+        int i = 0;
+        for (const auto& streak : streaks) {
+            printf(std::format("{}, {} \n", i, streak).c_str());
+            i++;
+        }
+    }
+
+    print_max_streak(streak_results);
 }
 
 void analyze() {
@@ -295,11 +404,11 @@ void analyze() {
         ) {
             for (auto& p : p_list) {
                 p.stats[0] = 70;
-                p.stats[1] = 40;
+                p.stats[1] = 25;
                 p.stats[2] = 29;
                 p.stats[3] = 17;
-                p.stats[4] = 29;
-                p.stats[5] = 30;
+                p.stats[4] = 35;
+                p.stats[5] = 21;
                 p.item = Item::FocusSash;
                 p.ability = Ability::HugePower;
             }
