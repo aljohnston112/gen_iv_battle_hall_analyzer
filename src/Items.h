@@ -34,6 +34,7 @@ enum class Item {
     ChoiceBand,
     ChoiceScarf,
     ChoiceSpecs,
+    DampRock,
     DragonFang,
     ExpertBelt,
     FlameOrb,
@@ -106,27 +107,28 @@ enum class Item {
     None
 };
 
-static constexpr std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS = [] {
-    std::array<bool, static_cast<int>(Item::None) + 1> array{};
-    array.fill(false);
-    array[static_cast<int>(Item::FistPlate)] = true;
-    array[static_cast<int>(Item::SkyPlate)] = true;
-    array[static_cast<int>(Item::ToxicPlate)] = true;
-    array[static_cast<int>(Item::EarthPlate)] = true;
-    array[static_cast<int>(Item::StonePlate)] = true;
-    array[static_cast<int>(Item::InsectPlate)] = true;
-    array[static_cast<int>(Item::SpookyPlate)] = true;
-    array[static_cast<int>(Item::IronPlate)] = true;
-    array[static_cast<int>(Item::FlamePlate)] = true;
-    array[static_cast<int>(Item::SplashPlate)] = true;
-    array[static_cast<int>(Item::MeadowPlate)] = true;
-    array[static_cast<int>(Item::ZapPlate)] = true;
-    array[static_cast<int>(Item::MindPlate)] = true;
-    array[static_cast<int>(Item::IciclePlate)] = true;
-    array[static_cast<int>(Item::DracoPlate)] = true;
-    array[static_cast<int>(Item::DreadPlate)] = true;
-    return array;
-}();
+static constexpr std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS
+    = [] {
+        std::array<bool, static_cast<int>(Item::None) + 1> array{};
+        array.fill(false);
+        array[static_cast<int>(Item::FistPlate)] = true;
+        array[static_cast<int>(Item::SkyPlate)] = true;
+        array[static_cast<int>(Item::ToxicPlate)] = true;
+        array[static_cast<int>(Item::EarthPlate)] = true;
+        array[static_cast<int>(Item::StonePlate)] = true;
+        array[static_cast<int>(Item::InsectPlate)] = true;
+        array[static_cast<int>(Item::SpookyPlate)] = true;
+        array[static_cast<int>(Item::IronPlate)] = true;
+        array[static_cast<int>(Item::FlamePlate)] = true;
+        array[static_cast<int>(Item::SplashPlate)] = true;
+        array[static_cast<int>(Item::MeadowPlate)] = true;
+        array[static_cast<int>(Item::ZapPlate)] = true;
+        array[static_cast<int>(Item::MindPlate)] = true;
+        array[static_cast<int>(Item::IciclePlate)] = true;
+        array[static_cast<int>(Item::DracoPlate)] = true;
+        array[static_cast<int>(Item::DreadPlate)] = true;
+        return array;
+    }();
 
 static const std::unordered_map<Item, PokemonType> PLATE_ITEM_TYPES = {
     {Item::FistPlate, PokemonType::FIGHTING},
@@ -185,6 +187,7 @@ static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Choice Band", Item::ChoiceBand},
     {"Choice Scarf", Item::ChoiceScarf},
     {"Choice Specs", Item::ChoiceSpecs},
+    {"Damp Rock", Item::DampRock},
     {"Dragon Fang", Item::DragonFang},
     {"Expert Belt", Item::ExpertBelt},
     {"Flame Orb", Item::FlameOrb},
@@ -197,6 +200,7 @@ static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Iron Ball", Item::IronBall},
     {"King's Rock", Item::KingsRock},
     {"Lax Incense", Item::LaxIncense},
+    {"Light Ball", Item::LightBall},
     {"Leftovers", Item::Leftovers},
     {"Liechi Berry", Item::LiechiBerry},
     {"Life Orb", Item::LifeOrb},
@@ -205,6 +209,7 @@ static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Magnet", Item::Magnet},
     {"Metal Coat", Item::MetalCoat},
     {"Metronome", Item::Metronome},
+    {"Mental Herb", Item::MentalHerb},
     {"Miracle Seed", Item::MiracleSeed},
     {"Muscle Band", Item::MuscleBand},
     {"Mystic Water", Item::MysticWater},
@@ -217,6 +222,7 @@ static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Quick Powder", Item::QuickPowder},
     {"Razor Claw", Item::RazorClaw},
     {"Razor Fang", Item::RazorFang},
+    {"Rocky Helmet", Item::RockyHelmet},
     {"Salac Berry", Item::SalacBerry},
     {"Scope Lens", Item::ScopeLens},
     {"Sharp Beak", Item::SharpBeak},

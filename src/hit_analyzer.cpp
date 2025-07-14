@@ -5,6 +5,9 @@
 #include <future>
 #include <iostream>
 #include <ranges>
+#include <stack>
+
+#include "hungarian.h"
 
 #include "battle_hall_data_source.h"
 #include "battle_simulator.h"
@@ -61,89 +64,141 @@ void do_battle(
     );
 }
 
-void print_max_streak(
-    const std::unordered_map<PokemonType, std::array<int, 18>>& streak_results
+void print_best_selection(
+    const int best_sum,
+    std::stack<int> best_selection,
+    const std::vector<
+        std::pair<PokemonType, std::array<int, NUMBER_OF_TYPES>>
+    >& ordered_streak_results
 ) {
-    std::bitset<18> picked{};
-    uint current_sum = 0;
-    std::unordered_map<PokemonType, int> current_selection{};
-    for (const auto& [type, results] :
+    std::vector<std::pair<int, std::pair<PokemonType, int>>> index_type_pairs;
+    int depth = static_cast<int>(best_selection.size()) - 1;
+    while (!best_selection.empty()) {
+        int index = best_selection.top();
+        best_selection.pop();
+        const auto& [type, streaks] = ordered_streak_results[depth];
+        index_type_pairs.emplace_back(
+            index, std::make_pair(type, streaks.at(index)));
+        --depth;
+    }
+
+    std::ranges::sort(index_type_pairs);
+
+    std::cout << "Best sum: " << best_sum << "\n";
+    for (const auto& [index, pair] : index_type_pairs) {
+        const auto& [type, streak] = pair;
+        std::cout << "Over 2: " << index << ", Type: " << TYPE_TO_STRING.
+            at(type)
+            << ", Rank: " << streak << "\n";
+    }
+}
+
+void print_max_streak(
+    const std::unordered_map<
+        PokemonType,
+        std::array<int, NUMBER_OF_TYPES>
+    >& streak_results,
+    int lowest_over_two
+) {
+    std::vector<std::pair<PokemonType, std::array<int, NUMBER_OF_TYPES>>>
+        ordered_streak_results;
+    for (const auto& [type, arr] :
          streak_results
     ) {
-        // Find lowest available index
-        uint current_index = 0;
-        for (uint i = 0; i < 18; i++) {
-            if (!picked.test(i)) {
-                current_index = i;
-                break;
-            }
-        }
-
-        const int optimal_score = results[0];
-        int current_score = results[current_index];
-        if (optimal_score == current_score) {
-            current_sum += current_score;
-            current_selection[type] = current_index;
-            picked.set(current_index);
-        } else {
-            // Check the score lost for each of the selected if swapped
-            // with current index
-            std::vector<std::tuple<PokemonType, int, int>> potential_changes{};
-
-            for (const auto& [t, s] : current_selection) {
-                const auto int loss =
-                    streak_results.at(t)[current_index] -
-                    streak_results.at(t)[s];
-                potential_changes.push_back(
-                    std::make_tuple(t, loss, streak_results.at(type)[s]));
-            }
-            std::ranges::sort(
-                potential_changes,
-                [](const auto& a, const auto& b) {
-                    if (std::get<1>(a) != std::get<1>(b)) {
-                        return std::get<1>(a) > std::get<1>(b);
+        ordered_streak_results.emplace_back(type, arr);
+    }
+    std::ranges::sort(
+        ordered_streak_results,
+        [](const auto& a, const auto& b) {
+            if (a.second[0] == b.second[0]) {
+                int ai = -1;
+                for (int i = 0; i < NUMBER_OF_TYPES; i++) {
+                    ai++;
+                    if (a.second[i] == -1) {
+                        break;
                     }
-                    return std::get<2>(a) > std::get<2>(b);
                 }
-            );
-            bool swapped = false;
-            for (int i = 0; i < potential_changes.size(); i++) {
-                auto trade = potential_changes[i];
-                const auto loss = std::get<1>(trade);
-                if (const auto actual_gain = optimal_score + loss;
-                    actual_gain > 0
-                ) {
-                    current_sum += actual_gain;
-                    auto trade_type = std::get<0>(trade);
-                    current_selection[type] = current_selection[trade_type];
-                    current_selection[trade_type] = current_index;
-                    picked.set(current_index);
-                    swapped = true;
-                    std::cout << "Swapping " << TYPE_TO_STRING.at(type) << " ("
-                        << current_index << ") with "
-                        << TYPE_TO_STRING.at(trade_type) << " ("
-                        << current_selection[type] << ")\n";
-                    break;
+                int bi = -1;
+                for (int i = 0; i < NUMBER_OF_TYPES; i++) {
+                    bi++;
+                    if (b.second[i] == -1) {
+                        break;
+                    }
                 }
+                return ai < bi;
             }
-            if (!swapped) {
-                current_sum += current_score;
-                current_selection[type] = current_index;
-                picked.set(current_index);
+            return a.second[0] > b.second[0];
+        }
+    );
+
+    for (const auto& [type, streaks] :
+         ordered_streak_results
+    ) {
+        printf(std::format("{} \n", TYPE_TO_STRING.at(type)).c_str());
+        int i = 0;
+        for (const auto& streak : streaks) {
+            printf(std::format("{}, {} \n", i, streak).c_str());
+            i++;
+        }
+    }
+
+    // libhungarian requires a C style array
+    std::vector<int> flat_streaks;
+    const int rows = ordered_streak_results.size();
+    flat_streaks.reserve(rows * NUMBER_OF_TYPES);
+    for (const auto& streaks :
+         ordered_streak_results | std::views::values
+    ) {
+        flat_streaks.insert(
+            flat_streaks.end(),
+            streaks.begin(),
+            streaks.end()
+        );
+    }
+    int** streak_matrix = array_to_matrix(
+        flat_streaks.data(),
+        rows,
+
+        NUMBER_OF_TYPES
+    );
+
+    hungarian_problem_t p;
+    hungarian_init(
+        &p,
+        streak_matrix,
+        rows, NUMBER_OF_TYPES,
+        HUNGARIAN_MODE_MAXIMIZE_UTIL
+    );
+    hungarian_solve(&p);
+
+    std::vector<std::pair<int, std::pair<PokemonType, int>>> assignments;
+    int total_streak = 0;
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < NUMBER_OF_TYPES; j++) {
+            if (p.assignment[i][j] == 1) {
+                auto [type, streaks] =
+                    ordered_streak_results.at(i);
+                int rank = streaks.at(j);
+                assignments.emplace_back(
+                    j,
+                    std::make_pair(type, rank)
+                );
+                if (rank > -1) {
+                    total_streak += rank;
+                }
             }
         }
     }
-    printf("");
-    std::cout << "Final score: " << current_sum << '\n';
-    std::vector<std::pair<int, PokemonType>> by_index;
-    for (const auto& [type, index] : current_selection) {
-        by_index.emplace_back(index, type);
+    std::ranges::sort(assignments);
+    std::cout << "\nTotal streak: " << total_streak << "\n";
+    for (const auto& [j, pair] : assignments) {
+        const auto& [type, rank] = pair;
+        std::cout << "Over 2: " << std::max(j, lowest_over_two)
+            << ", Type: " << TYPE_TO_STRING.at(type)
+            << ", Rank: " << rank << "\n";
     }
-    std::ranges::sort(by_index);
-    for (const auto& [index, type] : by_index) {
-        std::cout << "Streak " << index << ": Type " << TYPE_TO_STRING.at(type)
-            << '\n';
-    }
+    hungarian_free(&p);
 }
 
 void battle_all(
@@ -157,8 +212,18 @@ void battle_all(
     const std::unordered_map<
         std::string,
         std::vector<CustomPokemon>
-    >& player_pokemon_forms
+    >& player_pokemon_forms,
+    std::unordered_map<PokemonType, int> type_to_rank_to_skip
 ) {
+    int lowest_over_2 = 0;
+    for (const auto& rank :
+         type_to_rank_to_skip | std::views::values
+    ) {
+        if (rank >= 2) {
+            lowest_over_2++;
+        }
+    }
+
     std::unordered_map<
         PokemonType,
         std::unordered_map<
@@ -180,14 +245,16 @@ void battle_all(
         ) {
             const auto& over_2_to_hall_pokemon =
                 rank_to_over_2_.at(rank);
-            for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
-                const auto& hall_pokemon =
-                    over_2_to_hall_pokemon.at(over_2);
-                for (const auto& opponent_pokemon : hall_pokemon) {
-                    for (const auto type : opponent_pokemon.types) {
-                        type_to_rank_to_over_2[type][rank][over_2].insert(
-                            opponent_pokemon
-                        );
+            for (int8_t over_2 = NUMBER_OF_TYPES - 1; over_2 >= 0; over_2--) {
+                if (over_2 >= lowest_over_2) {
+                    const auto& hall_pokemon =
+                        over_2_to_hall_pokemon.at(over_2);
+                    for (const auto& opponent_pokemon : hall_pokemon) {
+                        for (const auto type : opponent_pokemon.types) {
+                            type_to_rank_to_over_2[type][rank][over_2].insert(
+                                opponent_pokemon
+                            );
+                        }
                     }
                 }
             }
@@ -203,25 +270,38 @@ void battle_all(
         if (type == PokemonType::COUNT) {
             continue;
         }
-        for (int8_t rank = 10; rank > 0; rank--) {
-            const auto& over_2_to_hall_pokemon =
-                rank_to_over_2.at(rank);
-            for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
-                const auto& hall_pokemon =
-                    over_2_to_hall_pokemon.at(over_2);
-                for (const auto& opponent_pokemon : hall_pokemon) {
-                    for (const auto& player_pokemon_ :
-                         player_pokemon_forms | std::views::values
-                    ) {
-                        for (const auto& player_pokemon : player_pokemon_) {
-                            if (type != PokemonType::COUNT) {
-                                battles.emplace_back(
-                                    player_pokemon,
-                                    opponent_pokemon,
-                                    type,
-                                    rank,
-                                    over_2
-                                );
+        int lowest_rank = 0;
+        if (type_to_rank_to_skip.contains(type)) {
+            lowest_rank = type_to_rank_to_skip.at(type);
+        }
+        for (int8_t rank = 10; rank > lowest_rank; rank--) {
+            if (rank_to_over_2.contains(rank)) {
+                const auto& over_2_to_hall_pokemon =
+                    rank_to_over_2.at(rank);
+                for (int8_t over_2 = NUMBER_OF_TYPES - 1;
+                     over_2 >= 0;
+                     over_2--
+                ) {
+                    if (over_2_to_hall_pokemon.contains(over_2)) {
+                        const auto& hall_pokemon =
+                            over_2_to_hall_pokemon.at(over_2);
+                        for (const auto& opponent_pokemon : hall_pokemon) {
+                            for (const auto& player_pokemon_ :
+                                 player_pokemon_forms | std::views::values
+                            ) {
+                                for (const auto& player_pokemon :
+                                     player_pokemon_
+                                ) {
+                                    if (type != PokemonType::COUNT) {
+                                        battles.emplace_back(
+                                            player_pokemon,
+                                            opponent_pokemon,
+                                            type,
+                                            rank,
+                                            over_2
+                                        );
+                                    }
+                                }
                             }
                         }
                     }
@@ -243,7 +323,7 @@ void battle_all(
             >
         >
     > type_to_rank_to_over_2_losses{};
-    std::unordered_set<const MoveInfo*> used_moves{};
+    std::unordered_map<const MoveInfo*, int> used_moves{};
     for (auto& results :
          thread_pool::ThreadPool::getCPUWorkInstance()->
          createAndRunTasks<ResultEntry, std::vector<BattleEntry>, BattleEntry>(
@@ -262,11 +342,18 @@ void battle_all(
         if (!won) {
             type_to_rank_to_over_2_losses[type][rank][over_2].insert(results);
         } else {
-            used_moves.insert_range(moves);
+            for (const auto& move : moves) {
+                if (used_moves.contains(move)) {
+                    used_moves[move]++;
+                } else {
+                    used_moves[move] = 1;
+                }
+            }
         }
     }
 
-    std::unordered_map<PokemonType, std::array<int, 18>> streak_results{};
+    std::unordered_map<PokemonType, std::array<int, NUMBER_OF_TYPES>>
+        streak_results{};
     std::vector<ResultEntry> first_losses;
     for (const auto [
              type,
@@ -278,11 +365,14 @@ void battle_all(
         }
         auto& streaks = streak_results[type];
         streaks.fill(-1);
-        for (int8_t rank = 1; rank <= 10; rank++) {
+        for (int8_t rank = 0; rank <= 10; rank++) {
             if (rank_to_over_2.contains(rank)) {
                 const auto& over_2_to_hall_pokemon =
                     rank_to_over_2.at(rank);
-                for (int8_t over_2 = 0; over_2 <= 17; over_2++) {
+                for (int8_t over_2 = lowest_over_2;
+                     over_2 < NUMBER_OF_TYPES;
+                     over_2++
+                ) {
                     if (over_2_to_hall_pokemon.contains(over_2)) {
                         const auto& hall_pokemon =
                             over_2_to_hall_pokemon.at(over_2);
@@ -296,8 +386,13 @@ void battle_all(
                         streaks[over_2] = rank;
                     }
                 }
-            } else {
-                for (int8_t over_2 = 0; over_2 <= 17; over_2++) {
+            } else if (type_to_rank_to_skip.at(type) != -1 &&
+                type_to_rank_to_skip.at(type) < rank
+            ) {
+                for (int8_t over_2 = lowest_over_2;
+                     over_2 < NUMBER_OF_TYPES;
+                     over_2++
+                ) {
                     streaks[over_2] = rank;
                 }
             }
@@ -318,14 +413,17 @@ void battle_all(
     );
 
     printf("Moves used: ");
-    for (const auto& move : used_moves) {
+    for (const auto& [move, times_used] : used_moves) {
         printf(std::format(
-                "{}, ",
-                move->name
+                "{}: {}, ",
+                move->name,
+                times_used
             ).c_str()
         );
     }
     printf("\n");
+
+    std::unordered_map<PokemonType, int> printed_types{};
     for (const auto& [
              type,
              rank,
@@ -335,84 +433,54 @@ void battle_all(
              moves
          ] : first_losses
     ) {
-        printf(std::format(
-                "Type: {}, Rank: {:02}, Over 2: {:02}, {}, Level: {}, Ability: {}, ",
-                TYPE_TO_STRING.at(type),
-                rank,
-                over_2,
-                get_pokemon_name(
-                    opponent.name
-                ),
-                opponent.level,
-                ABILITY_TO_STRING.at(opponent.ability)
-            ).c_str()
-        );
-        for (const auto& move : moves) {
+        if (over_2 >= lowest_over_2 &&
+            (!printed_types.contains(type) ||
+                (printed_types.contains(type) &&
+                    printed_types.at(type) == rank))
+        ) {
             printf(std::format(
-                    "Move: {}, ",
-                    move->name
+                    "Type: {}, Rank: {:02}, Over 2: {:02}, {}, Level: {}, Ability: {}, ",
+                    TYPE_TO_STRING.at(type),
+                    rank,
+                    over_2,
+                    get_pokemon_name(
+                        opponent.name
+                    ),
+                    opponent.level,
+                    ABILITY_TO_STRING.at(opponent.ability)
                 ).c_str()
             );
-        }
-        printf("\n");
-    }
-
-    for (const auto& [type, streaks] :
-         streak_results
-    ) {
-        printf(std::format("{} \n", TYPE_TO_STRING.at(type)).c_str());
-        int i = 0;
-        for (const auto& streak : streaks) {
-            printf(std::format("{}, {} \n", i, streak).c_str());
-            i++;
+            for (const auto& move : moves) {
+                printf(std::format(
+                        "Move: {}, ",
+                        move->name
+                    ).c_str()
+                );
+            }
+            printf("\n");
+            printed_types[type] = rank;
         }
     }
-
-    print_max_streak(streak_results);
+    print_max_streak(streak_results, lowest_over_2);
 }
 
-void analyze() {
-    const auto all_serebii_pokemon =
-        get_all_serebii_pokemon();
-    const auto all_moves =
-        get_all_pokemon_moves(
-            all_serebii_pokemon
-        );
-    const auto group_to_rank_to_over_2 =
-        get_all_custom_hall_pokemon(
-            all_serebii_pokemon,
-            get_all_battle_hall_pokemon(
-                all_moves
-            ),
-            all_moves
-        );
-
-    constexpr bool all = false;
-    if (all) {
-        for (const auto& [_, serebii_pokemon] : all_serebii_pokemon) {
-            const auto& player_pokemon_forms =
-                convert_serebii_to_custom(serebii_pokemon);
-            battle_all(group_to_rank_to_over_2, player_pokemon_forms);
-        }
-    } else {
-        auto player_pokemon_forms =
-            convert_serebii_to_custom(all_serebii_pokemon.at("Azurill"));
-        for (auto& [
-                 form,
-                 p_list
-             ] : player_pokemon_forms
-        ) {
-            for (auto& p : p_list) {
-                p.stats[0] = 70;
-                p.stats[1] = 25;
-                p.stats[2] = 29;
-                p.stats[3] = 17;
-                p.stats[4] = 35;
-                p.stats[5] = 21;
-                p.item = Item::FocusSash;
-                p.ability = Ability::HugePower;
-            }
-        }
-        battle_all(group_to_rank_to_over_2, player_pokemon_forms);
-    }
+void analyze(
+    const std::unordered_map<
+        uint8_t,
+        std::unordered_map<
+            uint8_t,
+            std::unordered_map<uint8_t, std::vector<CustomPokemon>>
+        >
+    >& group_to_rank_to_over_2,
+    const std::unordered_map<
+        std::string,
+        std::vector<CustomPokemon>
+    >& player_pokemon_forms,
+    const std::unordered_map<PokemonType, int>& type_to_rank_to_skip
+) {
+    battle_all(
+        group_to_rank_to_over_2,
+        player_pokemon_forms,
+        type_to_rank_to_skip
+    );
 }

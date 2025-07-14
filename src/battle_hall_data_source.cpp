@@ -399,7 +399,7 @@ void write_all_hall_pokemon_as_custom(
              const uint8_t rank : ranks
         ) {
             for (uint8_t types_past_2 = 0;
-                 types_past_2 <= NUMBER_OF_TYPES;
+                 types_past_2 < NUMBER_OF_TYPES;
                  types_past_2++
             ) {
                 const auto level = get_hall_pokemon_level(
@@ -466,7 +466,7 @@ std::unordered_map<
              const uint8_t rank : ranks
         ) {
             for (uint8_t types_past_2 = 0;
-                 types_past_2 <= NUMBER_OF_TYPES;
+                 types_past_2 < NUMBER_OF_TYPES;
                  types_past_2++
             ) {
                 std::string filename = std::format(
@@ -515,7 +515,7 @@ void export_battle_hall_pokemon(
         ) {
             const auto& over_2_to_hall_pokemon =
                 rank_to_over_2_.at(rank);
-            for (int8_t over_2 = 17; over_2 >= 0; over_2--) {
+            for (int8_t over_2 = NUMBER_OF_TYPES - 1; over_2 >= 0; over_2--) {
                 const auto& hall_pokemon =
                     over_2_to_hall_pokemon.at(over_2);
                 for (const auto& opponent_pokemon : hall_pokemon) {

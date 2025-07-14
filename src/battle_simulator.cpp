@@ -1075,7 +1075,6 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
                         move,
                         MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
                     ) ||
-                    move_has_flag(move, MoveFlag::CHANGES_WEATHER) ||
                     move_has_flag(move, MoveFlag::HAS_FIXED_DAMAGE) ||
                     move_has_flag(move, MoveFlag::MAKES_ATTACKER_FAINT) ||
                     move_has_flag(move, MoveFlag::IS_OTHER) ||
@@ -1086,7 +1085,8 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
         }
 
         if (player_goes_first) {
-            player_state.execute_move(
+            battle_state.execute_move(
+                player_state,
                 opponent_state,
                 battle_state.get_weather(),
                 battle_state.is_mid_turn()
@@ -1104,7 +1104,8 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
             }
             battle_state.set_mid_turn();
             if (!opponent_state.is_flinched()) {
-                opponent_state.execute_move(
+                battle_state.execute_move(
+                    opponent_state,
                     player_state,
                     battle_state.get_weather(),
                     battle_state.is_mid_turn()
@@ -1121,7 +1122,8 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
                 break;
             }
         } else {
-            opponent_state.execute_move(
+            battle_state.execute_move(
+                opponent_state,
                 player_state,
                 battle_state.get_weather(),
                 battle_state.is_mid_turn()
@@ -1138,7 +1140,8 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
             }
             battle_state.set_mid_turn();
             if (!player_state.is_flinched()) {
-                player_state.execute_move(
+                battle_state.execute_move(
+                    player_state,
                     opponent_state,
                     battle_state.get_weather(),
                     battle_state.is_mid_turn()

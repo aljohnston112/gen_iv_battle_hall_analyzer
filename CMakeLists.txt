@@ -30,7 +30,12 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/SimulationState.h
         src/thread_pool.cpp
         src/thread_pool.h
+        external/libhungarian/hungarian.c
+        external/libhungarian/hungarian.h
+        src/SimulationState.cpp
 )
+target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
+
 
 add_custom_command(
         TARGET gen_iv_battle_hall_team_builder POST_BUILD
