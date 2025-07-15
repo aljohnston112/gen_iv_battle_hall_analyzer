@@ -12,8 +12,11 @@
 #include "nature.h"
 #include "serebii_pokemon_data_source.h"
 
-constexpr int NUMBER_OF_MOVES = 4;
-constexpr int NUMBER_OF_EVS = 6;
+static constexpr uint8_t NUMBER_OF_GROUPS = 4;
+static constexpr uint8_t MAX_RANK = 10;
+
+constexpr uint8_t NUMBER_OF_MOVES = 4;
+constexpr uint8_t NUMBER_OF_EVS = 6;
 
 constexpr uint8_t NUMBER_OF_TYPES = static_cast<uint8_t>(PokemonType::COUNT);
 const std::map<uint8_t, std::set<uint8_t>> GROUP_TO_RANKS = {
@@ -31,39 +34,49 @@ struct BattleHallPokemon {
     std::unordered_map<Stat, uint8_t> evs;
 };
 
-std::unordered_map<
-    uint8_t,
-    std::vector<BattleHallPokemon>
+std::array<
+    std::vector<BattleHallPokemon>,
+    NUMBER_OF_GROUPS
 > get_all_battle_hall_pokemon(
-    const std::vector<const MoveInfo*>& all_moves
+    const std::vector<const MoveInfo*>& all_move_infos
 );
 
 void print_all_battle_hall_pokemon(
-    const std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>& data
+    const std::array<
+        std::vector<BattleHallPokemon>,
+        NUMBER_OF_GROUPS
+    >& group_to_hall_pokemon
 );
 
-std::unordered_map<
-    uint8_t,
-    std::unordered_map<
-        uint8_t, std::unordered_map<uint8_t, std::vector<CustomPokemon>>
-    >
+std::array<
+    std::array<
+        std::array<std::vector<CustomPokemon>, NUMBER_OF_TYPES>,
+        MAX_RANK
+    >,
+    NUMBER_OF_GROUPS
 > get_all_custom_hall_pokemon(
-    const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon,
     const std::unordered_map<
-        uint8_t,
-        std::vector<BattleHallPokemon>
-    >& all_battle_hall_pokemon,
-    const std::vector<const MoveInfo*>& all_moves
+        std::string,
+        SerebiiPokemon
+    >& name_to_serebii_pokemon,
+    const std::array<
+        std::vector<BattleHallPokemon>,
+        NUMBER_OF_GROUPS
+    >& group_to_battle_hall_pokemon,
+    const std::vector<const MoveInfo*>& all_move_infos
 );
 
 void export_battle_hall_pokemon(
-    const std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>& data,
     const std::unordered_map<
         uint8_t,
-        std::unordered_map<
-            uint8_t,
-            std::unordered_map<uint8_t, std::vector<CustomPokemon>>
-        >
+        std::vector<BattleHallPokemon>
+    >& group_to_hall_pokemon,
+    const std::array<
+        std::array<
+            std::array<std::vector<CustomPokemon>, NUMBER_OF_TYPES>,
+            MAX_RANK
+        >,
+        NUMBER_OF_GROUPS
     >& group_to_rank_to_over_2
 );
 

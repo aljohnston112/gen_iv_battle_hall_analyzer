@@ -29,8 +29,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
-#define HUNGARIAN_NOT_ASSIGNED 0 
+
+#define HUNGARIAN_NOT_ASSIGNED 0
 #define HUNGARIAN_ASSIGNED 1
 
 #define HUNGARIAN_MODE_MINIMIZE_COST   0
@@ -38,21 +38,23 @@ extern "C" {
 
 
 typedef struct {
-  int num_rows;
-  int num_cols;
-  int** cost;
-  int** assignment;  
+    int num_rows;
+    int num_cols;
+    int** cost;
+    int** assignment;
 } hungarian_problem_t;
 
 /** This method initialize the hungarian_problem structure and init 
  *  the  cost matrices (missing lines or columns are filled with 0).
  *  It returns the size of the quadratic(!) assignment matrix. **/
-int hungarian_init(hungarian_problem_t* p, 
-		   int** cost_matrix, 
-		   int rows, 
-		   int cols, 
-		   int mode);
-  
+int hungarian_init(
+    hungarian_problem_t* p,
+    int** cost_matrix,
+    int rows,
+    int cols,
+    int mode
+);
+
 /** Free the memory allocated by init. **/
 void hungarian_free(hungarian_problem_t* p);
 
@@ -60,21 +62,18 @@ void hungarian_free(hungarian_problem_t* p);
 void hungarian_solve(hungarian_problem_t* p);
 
 /** Print the computed optimal assignment. **/
-void hungarian_print_assignment(hungarian_problem_t* p);
+void hungarian_print_assignment(const hungarian_problem_t* p);
 
 /** Print the cost matrix. **/
-void hungarian_print_costmatrix(hungarian_problem_t* p);
+void hungarian_print_cost_matrix(const hungarian_problem_t* p);
 
 /** Print cost matrix and assignment matrix. **/
-void hungarian_print_status(hungarian_problem_t* p);
+void hungarian_print_status(const hungarian_problem_t* p);
 
-int** array_to_matrix(int* m, int rows, int cols);
+int** array_to_matrix(const int* m, int rows, int cols);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
-
-

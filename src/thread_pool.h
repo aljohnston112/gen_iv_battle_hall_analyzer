@@ -67,7 +67,7 @@ namespace thread_pool {
         >
         std::vector<PromiseResult> createAndRunTasks(
             std::function<void(ParameterType&, std::promise<PromiseResult>&&)>&& function,
-            DataContainer& allData
+            const DataContainer& allData
         ) {
             std::vector<PromiseResult> results{};
             std::vector<std::future<PromiseResult>> futures;

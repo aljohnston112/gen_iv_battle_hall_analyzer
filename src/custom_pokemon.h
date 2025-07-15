@@ -23,7 +23,7 @@ struct CustomPokemon {
 struct CustomPokemonHash {
     std::size_t operator()(const CustomPokemon& p) const {
         return std::hash<int>{}(static_cast<int>(p.name)) ^
-               (std::hash<int>{}(static_cast<int>(p.ability)) << 1);
+               std::hash<int>{}(static_cast<int>(p.ability)) << 1;
     }
 };
 

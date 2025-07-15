@@ -39,8 +39,7 @@ static const auto TYPE_TO_STRING =
     create_reverse_type_map();
 
 static std::string get_type_name(const PokemonType type) {
-    const auto it = TYPE_TO_STRING.find(type);
-    return (it != TYPE_TO_STRING.end()) ? it->second : "unknown";
+    return TYPE_TO_STRING.at(type);
 }
 
 enum class Stat {

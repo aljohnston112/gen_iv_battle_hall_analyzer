@@ -8,7 +8,7 @@ int calculate_hp_stat(
     const uint8_t iv,
     const u_int16_t ev
 ) {
-    return ((2 * base + iv + (ev / 4)) * level) / 100 + level + 10;
+    return (2 * base + iv + ev / 4) * level / 100 + level + 10;
 }
 
 int calculate_non_hp_stat(
@@ -19,7 +19,7 @@ int calculate_non_hp_stat(
     const u_int16_t ev,
     const Nature nature
 ) {
-    const int intermediate = ((2 * base + iv + (ev / 4)) * level) / 100 + 5;
+    const int intermediate = (2 * base + iv + ev / 4) * level / 100 + 5;
     double nature_multiplier = 1.0;
     if (nature.down == stat) {
         nature_multiplier = 0.9;

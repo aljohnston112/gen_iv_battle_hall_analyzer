@@ -3,30 +3,39 @@
 
 #include <cstdint>
 
+#include "battle_hall_data_source.h"
 #include "serebii_pokemon_data_source.h"
 
 constexpr uint8_t LEVEL = 30;
 constexpr bool SKIP_RANKS = false;
 
-const std::unordered_map<PokemonType, int> type_to_rank_to_skip = {
-    {PokemonType::DARK, 5},
-    {PokemonType::WATER, 5},
-    {PokemonType::FLYING, 5},
-    {PokemonType::POISON, 5},
-    {PokemonType::GROUND, 5},
-    {PokemonType::GHOST, 5},
-    {PokemonType::FIRE, 8},
-    {PokemonType::NORMAL, 5},
-    {PokemonType::ELECTRIC, 5},
-    {PokemonType::STEEL, 2},
-    {PokemonType::BUG, 3},
-    {PokemonType::PSYCHIC, 2},
-    {PokemonType::DRAGON, 5},
-    {PokemonType::ROCK, 2},
-    {PokemonType::GRASS, 2},
-    {PokemonType::FIGHTING, 2},
-    {PokemonType::ICE, 5},
-};
+static std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {
+    static const std::unordered_map<PokemonType, int> type_to_rank_to_skip = {
+        {PokemonType::DARK, 0},
+        {PokemonType::WATER, 1},
+        {PokemonType::FLYING, 1},
+        {PokemonType::POISON, 1},
+        {PokemonType::GROUND, 1},
+        {PokemonType::GHOST, 1},
+        {PokemonType::FIRE, 1},
+        {PokemonType::NORMAL, 1},
+        {PokemonType::ELECTRIC, 5},
+        {PokemonType::STEEL, 2},
+        {PokemonType::BUG, 3},
+        {PokemonType::PSYCHIC, 2},
+        {PokemonType::DRAGON, 5},
+        {PokemonType::ROCK, 1},
+        {PokemonType::GRASS, 1},
+        {PokemonType::FIGHTING, 1},
+        {PokemonType::ICE, 1},
+    };
+
+    std::array<int, NUMBER_OF_TYPES> out{};
+    for (const auto& [type, rank] : type_to_rank_to_skip) {
+        out[static_cast<int>(type)] = rank;
+    }
+    return out;
+}
 
 static std::vector<
     std::unordered_map<std::string, std::vector<CustomPokemon>>
@@ -37,7 +46,7 @@ static std::vector<
         std::string,
         std::vector<CustomPokemon>
     >> pokemon_forms{};
-    constexpr bool all = true;
+    constexpr bool all = false;
     if (all) {
         for (const auto& serebii_pokemon : all_serebii_pokemon |
              std::views::values

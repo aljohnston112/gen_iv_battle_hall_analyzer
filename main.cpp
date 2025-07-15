@@ -33,7 +33,7 @@ int main() {
             analyze(
                 group_to_rank_to_over_2,
                 pokemon_form,
-                type_to_rank_to_skip
+                get_type_to_rank_to_skip()
             );
         } else {
             analyze(group_to_rank_to_over_2, pokemon_form);

@@ -176,8 +176,10 @@ enum class Ability {
     Disabled
 };
 
-static constexpr std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> IGNORABLE_ABILITIES = [] {
-    std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> flags{};
+constexpr size_t NUMBER_OF_ABILITIES = static_cast<size_t>(Ability::Disabled);
+
+static constexpr std::array<bool, NUMBER_OF_ABILITIES> IGNORABLE_ABILITIES = [] {
+    std::array<bool, NUMBER_OF_ABILITIES> flags{};
     flags.fill(false);
     flags[static_cast<int>(Ability::BattleArmor)] = true;
     flags[static_cast<int>(Ability::ClearBody)] = true;
@@ -228,8 +230,8 @@ static bool ability_is_ignorable(Ability ability) {
     return IGNORABLE_ABILITIES.at(static_cast<int>(ability));
 }
 
-static constexpr std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> NON_COPYABLE_ABILITIES = [] {
-    std::array<bool, static_cast<size_t>(Ability::Disabled) + 1> flags{};
+static constexpr std::array<bool, NUMBER_OF_ABILITIES> NON_COPYABLE_ABILITIES = [] {
+    std::array<bool, NUMBER_OF_ABILITIES> flags{};
     flags.fill(false);
     flags[static_cast<int>(Ability::Forecast)] = true;
     flags[static_cast<int>(Ability::Multitype)] = true;

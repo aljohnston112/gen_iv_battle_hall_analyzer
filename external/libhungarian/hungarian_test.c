@@ -30,41 +30,51 @@
 
 
 int main() {
+    hungarian_problem_t p;
 
-  hungarian_problem_t p;
+    /* an example cost matrix */
+    const int r[4 * 3] = {
+        100, 1, 1,
+        100, 2, 2,
+        1, 0, 0,
+        0, 2, 0
+    };
+    int** m = array_to_matrix(r, 4, 3);
 
-  /* an example cost matrix */
-  int r[4*3] =  {  100, 1, 1, 
-		   100, 2, 2, 
-		   1, 0, 0, 
-		   0, 2, 0 };
-  int** m = array_to_matrix(r,4,3);
+    /* initialize the hungarian_problem using the cost matrix*/
+    const int matrix_size = hungarian_init(
+        &p,
+        m,
+        4,
+        3,
+        HUNGARIAN_MODE_MINIMIZE_COST
+    );
 
-  /* initialize the gungarian_problem using the cost matrix*/
-  int matrix_size = hungarian_init(&p, m , 4,3, HUNGARIAN_MODE_MINIMIZE_COST) ;
+    fprintf(
+        stderr,
+        "assignment matrix has a now a size %d rows and %d columns.\n\n",
+        matrix_size,
+        matrix_size
+    );
 
-  fprintf(stderr, "assignement matrix has a now a size %d rows and %d columns.\n\n",  matrix_size,matrix_size);
+    /* some output */
+    fprintf(stderr, "cost-matrix:");
+    hungarian_print_cost_matrix(&p);
 
-  /* some output */
-  fprintf(stderr, "cost-matrix:");
-  hungarian_print_costmatrix(&p);
+    /* solve the assignment problem */
+    hungarian_solve(&p);
 
-  /* solve the assignement problem */
-  hungarian_solve(&p);
+    /* some output */
+    fprintf(stderr, "assignment:");
+    hungarian_print_assignment(&p);
 
-  /* some output */
-  fprintf(stderr, "assignment:");
-  hungarian_print_assignment(&p);
+    /* free used memory */
+    hungarian_free(&p);
 
-  /* free used memory */
-  hungarian_free(&p);
+    for (int idx = 0; idx < 4; idx += 1) {
+        free(m[idx]);
+    }
+    free(m);
 
-  int idx;
-  for (idx=0; idx < 4; idx+=1) {
-    free(m[idx]);
-  }
-  free(m);
-
-  return 0;
+    return 0;
 }
-

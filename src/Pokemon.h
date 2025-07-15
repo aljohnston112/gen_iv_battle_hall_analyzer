@@ -1032,8 +1032,7 @@ static const auto POKEMON_TO_STRING =
     create_reverse_map();
 
 static std::string get_pokemon_name(const Pokemon p) {
-    const auto it = POKEMON_TO_STRING.find(p);
-    return (it != POKEMON_TO_STRING.end()) ? it->second : "Unknown";
+    return POKEMON_TO_STRING.at(p);
 }
 
 #endif //POKEMON_H
