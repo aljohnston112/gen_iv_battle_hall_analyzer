@@ -76,7 +76,8 @@ void print_best_selection(
     while (!best_selection.empty()) {
         int index = best_selection.top();
         best_selection.pop();
-        const auto& [type, streaks] = ordered_streak_results[depth];
+        const auto& [type, streaks] =
+            ordered_streak_results[depth];
         index_type_pairs.emplace_back(
             index, std::make_pair(type, streaks.at(index)));
         --depth;
@@ -85,7 +86,9 @@ void print_best_selection(
     std::ranges::sort(index_type_pairs);
 
     std::cout << "Best sum: " << best_sum << "\n";
-    for (const auto& [index, pair] : index_type_pairs) {
+    for (const auto& [index, pair] :
+         index_type_pairs
+    ) {
         const auto& [type, streak] = pair;
         std::cout << "Over 2: " << index << ", Type: " << TYPE_TO_STRING.
             at(type)
@@ -99,7 +102,7 @@ void print_max_streak(
         std::array<int, NUMBER_OF_TYPES>
     >& streak_results,
     const int lowest_over_two,
-    std::unordered_map<PokemonType, int> type_to_rank_to_skip
+    const std::unordered_map<PokemonType, int>& type_to_rank_to_skip
 ) {
     std::vector<std::pair<PokemonType, std::array<int, NUMBER_OF_TYPES>>>
         ordered_streak_results;
@@ -136,10 +139,14 @@ void print_max_streak(
     for (const auto& [type, streaks] :
          ordered_streak_results
     ) {
-        printf(std::format("{} \n", TYPE_TO_STRING.at(type)).c_str());
+        printf(
+            std::format("{} \n", TYPE_TO_STRING.at(type)).c_str()
+        );
         int i = 0;
         for (const auto& streak : streaks) {
-            printf(std::format("{}, {} \n", i, streak).c_str());
+            printf(
+                std::format("{}, {} \n", i, streak).c_str()
+            );
             i++;
         }
     }
@@ -461,7 +468,8 @@ void battle_all(
                     printed_types.at(type) == rank))
         ) {
             printf(std::format(
-                    "Type: {}, Rank: {:02}, Over 2: {:02}, {}, Level: {}, Ability: {}, ",
+                    "Type: {}, Rank: {:02}, Over 2: {:02}, {}, "
+                    "Level: {}, Ability: {}, ",
                     TYPE_TO_STRING.at(type),
                     rank,
                     over_2,

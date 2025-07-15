@@ -955,7 +955,8 @@ void check_intimidate(
 }
 
 std::pair<bool, std::vector<const MoveInfo*>> battle(
-    const CustomPokemon& player, const CustomPokemon& opponent) {
+    const CustomPokemon& player, const CustomPokemon& opponent
+) {
     BattleState battle_state{player, opponent};
     auto player_state = PokemonState{
         player,
@@ -978,7 +979,7 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
     check_intimidate(player_state, opponent_state);
     check_intimidate(opponent_state, player_state);
 
-    const bool player_goes_first = player_state.outspeeds(
+    bool player_goes_first = player_state.outspeeds(
         opponent_state,
         nullptr,
         nullptr,
@@ -1066,6 +1067,8 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
                 move != Move::GrassKnot &&
                 move != Move::Transform &&
                 move != Move::FakeOut &&
+                move != Move::FutureSight && // TODO probably useless
+                move != Move::WringOut &&
                 (move_has_flag(
                         move,
                         MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -1079,7 +1082,7 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
             }
         }
 
-        const bool player_goes_first = player_state.outspeeds(
+        player_goes_first = player_state.outspeeds(
             opponent_state,
             opponent_move.move,
             player_move.move,

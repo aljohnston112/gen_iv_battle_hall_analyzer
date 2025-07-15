@@ -312,5 +312,51 @@ static const auto POWER_ITEMS =
     SmoothRock, TODO sandstorm is eight turns instead of five turns
  */
 
+/*
+ For fling
+    10 	All Berries, all Incenses, all Scarves,
+    Big Root, Bright Powder, Choice Band, Choice Scarf, Choice Specs,
+    Destiny Knot, Expert Belt, Focus Band, Focus Sash, Lagging Tail, Leftovers,
+    Mental Herb, Metal Powder, Muscle Band, Power Herb, Quick Powder,
+    Reaper Cloth, Shed Shell, Silk Scarf, Silver Powder, Smooth Rock, Soft Sand,
+    Soothe Bell, White Herb, Wide Lens, Wise Glasses, Zoom Lens
+
+    30 	All status condition healing items (besides Berries), all Potions,
+    all herbal medicine, all drinks, all Vitamins, all Shards, all Mulches,
+    all battle items, all Flutes, Ether, Elixir, Max Ether, Max Elixir, Repel,
+    Super Repel, Max Repel, Amulet Coin, Berry Juice, Big Mushroom, Big Pearl,
+    Black Belt, Black Glasses, Black Sludge, Charcoal, Cleanse Tag,
+    Deep Sea Scale, Dragon Scale, Escape Rope, Everstone, Fire Stone, Flame Orb,
+    Fluffy Tail, Heart Scale, Honey, Ice Stone, King's Rock, Lava Cookie,
+    Leaf Stone, Life Orb, Light Ball, Light Clay, Lucky Egg, Magnet,
+    Max Mushrooms, Max Revive, Metal Coat, Metronome, Miracle Seed, Moon Stone,
+    Mystic Water, Never-Melt Ice, Nugget, Old Gateau, Pearl, Poké Doll,
+    Prism Scale, Rare Candy, Razor Fang, Revive, Sacred Ash, Scope Lens,
+    Shell Bell, Shoal Salt, Shoal Shell, Smoke Ball, Snowball, Soul Dew,
+    Spell Tag, Star Piece, Stardust, Sun Stone, Thunder Stone, Tiny Mushroom,
+    Toxic Orb, Twisted Spoon, Upgrade, Water Stone
+
+    40 	Icy Rock, Lucky Punch
+
+    50 	Dubious Disc, Sharp Beak
+
+    60 	Adamant Orb, Damp Rock, Griseous Orb, Heat Rock, Leek, Lustrous Orb,
+    Macho Brace, Rocky Helmet
+
+    70 	All Drives, all Power items
+    Dragon Fang, Poison Barb
+
+    80 	Dawn Stone, Dusk Stone, Electirizer, Magmarizer, Odd Keystone,
+    Oval Stone, Protector, Quick Claw, Razor Claw, Shiny Stone, Sticky Barb
+
+    90 	All Plates
+    Deep Sea Tooth, Grip Claw, Thick Club
+
+    100 	All Fossils
+    Hard Stone, Rare Bone, Room Service
+
+    130 	Iron Ball
+*/
+
 
 #endif //ITEMS_H

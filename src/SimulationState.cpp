@@ -332,9 +332,9 @@ void PokemonState::heal(const int health_gained) {
 
     const auto ability = get_ability();
     if ((ability == Ability::Chlorophyll &&
-        weather == Weather::SUN) ||
+            weather == Weather::SUN) ||
         (ability == Ability::SwiftSwim &&
-        weather == Weather::RAIN) ||
+            weather == Weather::RAIN) ||
         (ability == Ability::Unburden && unburdened)
     ) {
         speed = speed * 2;
@@ -863,6 +863,7 @@ uint PokemonState::get_damage_of_attacker_move(
     // Moves with dynamic power
     double power = attacker_move_info->power;
     const auto status = get_status();
+    const auto item = get_item_for_effect();
     if (attacker_move == Move::Eruption ||
         attacker_move == Move::WaterSpout
     ) {
@@ -909,6 +910,19 @@ uint PokemonState::get_damage_of_attacker_move(
         } else {
             power = 120;
         }
+    } else if (attacker_move == Move::Fling) {
+        if (item == Item::None) {
+            power = 0;
+        } else if (item == Item::ChoiceBand) {
+            power = 10;
+        } else {
+            throw std::runtime_error{
+                "No fling: " + ITEM_TO_STRING.at(item)
+            };
+        }
+    } else if (attacker_move == Move::WringOut) {
+        power =
+            1 + 120 * defender_state.get_health() / defender_state.max_health;
     }
 
     // Technician
@@ -938,7 +952,6 @@ uint PokemonState::get_damage_of_attacker_move(
         }
     }
 
-    const auto item = get_item_for_effect();
     // Items that increase power
     if (item == Item::Metronome) {
         const double multiplier = 1.0 + std::max(
@@ -1005,7 +1018,7 @@ uint PokemonState::get_damage_of_attacker_move(
         attacker_move_info,
         weather
     );
-    if (auto& defender_field_location =
+    if (const auto& defender_field_location =
             defender_state.get_field_location();
         defender_field_location != FieldLocation::ON_FIELD &&
         attacker_faster
@@ -1558,7 +1571,6 @@ BestMove PokemonState::get_best_move_against_defender(
         for (int i = 0; i < 3; i++) {
             MoveInfo temp = *best_move.move;
             temp.power = (i + 1) * 10;
-            best_move.move = &temp;
             damage_to_defender +=
                 get_damage_of_attacker_move(
                     attack,

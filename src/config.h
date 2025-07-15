@@ -28,7 +28,7 @@ const std::unordered_map<PokemonType, int> type_to_rank_to_skip = {
     {PokemonType::ICE, 5},
 };
 
-static  std::vector<
+static std::vector<
     std::unordered_map<std::string, std::vector<CustomPokemon>>
 > get_pokemon_forms(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon
@@ -37,10 +37,11 @@ static  std::vector<
         std::string,
         std::vector<CustomPokemon>
     >> pokemon_forms{};
-    constexpr bool all = false;
+    constexpr bool all = true;
     if (all) {
         for (const auto& serebii_pokemon : all_serebii_pokemon |
-             std::views::values) {
+             std::views::values
+        ) {
             pokemon_forms.push_back(
                 convert_serebii_to_custom(
                     serebii_pokemon,
@@ -52,7 +53,7 @@ static  std::vector<
     } else {
         pokemon_forms.push_back(
             convert_serebii_to_custom(
-                all_serebii_pokemon.at("Makuhita"),
+                all_serebii_pokemon.at("Azurill"),
                 true,
                 true
             )
@@ -61,10 +62,12 @@ static  std::vector<
              pokemon_forms.at(0) | std::views::values
         ) {
             static std::unordered_set moves_to_include{
-                Move::ThunderPunch,
-                Move::Fling,
-                Move::Detect,
-                Move::CloseCombat
+                // Move::ThunderPunch,
+                // Move::Fling,
+                // Move::Detect,
+                // Move::CloseCombat,
+                Move::Return,
+                Move::Waterfall,
             };
             for (auto& p : p_list) {
                 std::vector<const MoveInfo*> moves{};
@@ -75,14 +78,14 @@ static  std::vector<
                 }
                 p.moves = moves;
 
-                p.stats[0] = 93;
-                p.stats[1] = 68;
-                p.stats[2] = 36;
-                p.stats[3] = 26;
-                p.stats[4] = 52;
-                p.stats[5] = 26;
-                p.item = Item::ChoiceBand;
-                p.ability = Ability::Guts;
+                p.stats[0] = 70;
+                p.stats[1] = 38;
+                p.stats[2] = 32;
+                p.stats[3] = 15;
+                p.stats[4] = 29;
+                p.stats[5] = 33;
+                p.item = Item::FocusSash;
+                p.ability = Ability::HugePower;
             }
         }
     }

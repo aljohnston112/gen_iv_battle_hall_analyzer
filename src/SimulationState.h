@@ -266,6 +266,7 @@ public:
     void set_trapped_counter(int turns);
 
     [[nodiscard]] bool is_first_turn() const;
+
 };
 
 class BattleState {
