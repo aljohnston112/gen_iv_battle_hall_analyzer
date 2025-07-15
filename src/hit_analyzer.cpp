@@ -98,10 +98,12 @@ void print_max_streak(
         PokemonType,
         std::array<int, NUMBER_OF_TYPES>
     >& streak_results,
-    int lowest_over_two
+    const int lowest_over_two,
+    std::unordered_map<PokemonType, int> type_to_rank_to_skip
 ) {
     std::vector<std::pair<PokemonType, std::array<int, NUMBER_OF_TYPES>>>
         ordered_streak_results;
+    ordered_streak_results.reserve(streak_results.size());
     for (const auto& [type, arr] :
          streak_results
     ) {
@@ -144,7 +146,7 @@ void print_max_streak(
 
     // libhungarian requires a C style array
     std::vector<int> flat_streaks;
-    const int rows = ordered_streak_results.size();
+    const int rows = static_cast<int>(ordered_streak_results.size());
     flat_streaks.reserve(rows * NUMBER_OF_TYPES);
     for (const auto& streaks :
          ordered_streak_results | std::views::values
@@ -186,6 +188,11 @@ void print_max_streak(
                 );
                 if (rank > -1) {
                     total_streak += rank;
+                    if (type_to_rank_to_skip.contains(type) &&
+                        type_to_rank_to_skip.at(type) != -1
+                    ) {
+                        total_streak -= type_to_rank_to_skip.at(type);
+                    }
                 }
             }
         }
@@ -197,6 +204,17 @@ void print_max_streak(
         std::cout << "Over 2: " << std::max(j, lowest_over_two)
             << ", Type: " << TYPE_TO_STRING.at(type)
             << ", Rank: " << rank << "\n";
+    }
+
+    for (const auto& pair : assignments | std::views::values) {
+        const auto& [type, rank] = pair;
+        const auto& s = TYPE_TO_STRING.at(type);
+        auto upper_view = s | std::views::transform([](char c) {
+            return std::toupper(static_cast<unsigned char>(c));
+        });
+        std::string upper(upper_view.begin(), upper_view.end());
+
+        std::cout << "{ PokemonType::" << upper + ", " << rank << "},\n";
     }
     hungarian_free(&p);
 }
@@ -223,6 +241,7 @@ void battle_all(
             lowest_over_2++;
         }
     }
+    lowest_over_2 = std::min(NUMBER_OF_TYPES - 1, lowest_over_2);
 
     std::unordered_map<
         PokemonType,
@@ -262,7 +281,7 @@ void battle_all(
     }
 
     std::vector<BattleEntry> battles{};
-    for (const auto [
+    for (const auto& [
              type,
              rank_to_over_2
          ] : type_to_rank_to_over_2
@@ -292,15 +311,13 @@ void battle_all(
                                 for (const auto& player_pokemon :
                                      player_pokemon_
                                 ) {
-                                    if (type != PokemonType::COUNT) {
-                                        battles.emplace_back(
-                                            player_pokemon,
-                                            opponent_pokemon,
-                                            type,
-                                            rank,
-                                            over_2
-                                        );
-                                    }
+                                    battles.emplace_back(
+                                        player_pokemon,
+                                        opponent_pokemon,
+                                        type,
+                                        rank,
+                                        over_2
+                                    );
                                 }
                             }
                         }
@@ -342,6 +359,11 @@ void battle_all(
         if (!won) {
             type_to_rank_to_over_2_losses[type][rank][over_2].insert(results);
         } else {
+            if (!type_to_rank_to_over_2_losses[type][rank].contains(over_2)) {
+                type_to_rank_to_over_2_losses[type][rank][over_2] =
+                    std::unordered_set<
+                        ResultEntry, ResultEntryHash, ResultEntryEq>{};
+            }
             for (const auto& move : moves) {
                 if (used_moves.contains(move)) {
                     used_moves[move]++;
@@ -355,7 +377,7 @@ void battle_all(
     std::unordered_map<PokemonType, std::array<int, NUMBER_OF_TYPES>>
         streak_results{};
     std::vector<ResultEntry> first_losses;
-    for (const auto [
+    for (const auto& [
              type,
              rank_to_over_2
          ] : type_to_rank_to_over_2_losses
@@ -365,11 +387,11 @@ void battle_all(
         }
         auto& streaks = streak_results[type];
         streaks.fill(-1);
-        for (int8_t rank = 0; rank <= 10; rank++) {
+        for (int rank = 0; rank <= 10; rank++) {
             if (rank_to_over_2.contains(rank)) {
                 const auto& over_2_to_hall_pokemon =
                     rank_to_over_2.at(rank);
-                for (int8_t over_2 = lowest_over_2;
+                for (int over_2 = lowest_over_2;
                      over_2 < NUMBER_OF_TYPES;
                      over_2++
                 ) {
@@ -379,21 +401,21 @@ void battle_all(
                         for (const auto& result_entry : hall_pokemon) {
                             first_losses.emplace_back(result_entry);
                         }
-                        if (hall_pokemon.size() > 0) {
+                        if (!hall_pokemon.empty()) {
                             break;
                         }
-                    } else {
-                        streaks[over_2] = rank;
+                        streaks[over_2] = std::max(streaks[over_2], rank);
                     }
                 }
-            } else if (type_to_rank_to_skip.at(type) != -1 &&
+            } else if (type_to_rank_to_skip.contains(type) &&
+                type_to_rank_to_skip.at(type) != -1 &&
                 type_to_rank_to_skip.at(type) < rank
             ) {
-                for (int8_t over_2 = lowest_over_2;
+                for (int over_2 = lowest_over_2;
                      over_2 < NUMBER_OF_TYPES;
                      over_2++
                 ) {
-                    streaks[over_2] = rank;
+                    streaks[over_2] = std::max(streaks[over_2], rank);
                 }
             }
         }
@@ -461,7 +483,7 @@ void battle_all(
             printed_types[type] = rank;
         }
     }
-    print_max_streak(streak_results, lowest_over_2);
+    print_max_streak(streak_results, lowest_over_2, type_to_rank_to_skip);
 }
 
 void analyze(

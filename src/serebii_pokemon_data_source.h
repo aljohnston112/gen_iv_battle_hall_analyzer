@@ -62,7 +62,9 @@ std::unordered_map<
     std::string,
     std::vector<CustomPokemon>
 > convert_serebii_to_custom(
-    const SerebiiPokemon& serebii_pokemon
+    const SerebiiPokemon& serebii_pokemon,
+    bool is_player,
+    bool all_moves = false
 );
 
 

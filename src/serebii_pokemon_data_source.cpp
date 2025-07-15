@@ -441,8 +441,9 @@ get_moves_for_serebii_pokemon(
     const SerebiiPokemon& serebii_pokemon
 ) {
     std::unordered_map<Move, const MoveInfo*> shared_moves;
-    for (const auto& moves : serebii_pokemon.level_to_moves |
-         std::views::values) {
+    for (const auto& moves :
+         serebii_pokemon.level_to_moves | std::views::values
+    ) {
         for (const auto& move : moves) {
             shared_moves[move.move] = &move;
         }
@@ -592,8 +593,24 @@ std::unordered_map<
         std::string,
         std::unordered_map<Move, const MoveInfo*>
     >& form_moves,
-    const bool is_player
+    const bool is_player,
+    const bool all_moves
 ) {
+    if (all_moves) {
+        std::unordered_map<
+            std::string,
+            std::unordered_set<const MoveInfo*>
+        > forms_moves;
+        for (const auto& [form, move_map] : form_moves) {
+            for (const auto& move :
+                 move_map | std::views::values
+            ) {
+                forms_moves[form].emplace(move);
+            }
+        }
+        return forms_moves;
+    }
+
     std::unordered_map<
         std::string,
         std::unordered_set<const MoveInfo*>
@@ -605,7 +622,9 @@ std::unordered_map<
         > moves;
         const uint8_t min_accuracy = is_player ? 100 : 0;
         auto others = std::vector<const MoveInfo*>{};
-        for (const auto& move : move_map | std::views::values) {
+        for (const auto& move :
+             move_map | std::views::values
+        ) {
             if (move->accuracy < min_accuracy ||
                 IGNORED_MOVES.contains(move->move)
             ) {
@@ -631,7 +650,7 @@ std::unordered_map<
             ) {
                 others.push_back(move);
             } else if (current_move == nullptr ||
-                current_move != nullptr && move->power > current_move->power
+                move->power > current_move->power
             ) {
                 type_map[static_cast<int>(move->type)] = move;
             }
@@ -654,15 +673,19 @@ std::unordered_map<
     std::string,
     std::vector<CustomPokemon>
 > convert_serebii_to_custom(
-    const SerebiiPokemon& serebii_pokemon
+    const SerebiiPokemon& serebii_pokemon,
+    const bool is_player,
+    const bool all_moves
 ) {
     std::unordered_map<std::string, std::vector<CustomPokemon>> customs;
     const auto moves =
         get_moves_for_serebii_pokemon(serebii_pokemon);
+
     const auto serebii_moves =
         gather_moves(
             moves,
-            true
+            is_player,
+            all_moves
         );
     for (const auto& [
              form,
@@ -716,8 +739,9 @@ std::unordered_map<
         }
         std::sort(types.begin(), types.end());
         const Pokemon name_enum = STRING_TO_POKEMON.at(name);
-        const std::vector<Ability> abilities = ABILITY_MAP.at(name_enum);
+        const std::vector<Ability>& abilities = ABILITY_MAP.at(name_enum);
         std::vector<CustomPokemon> pokemon{};
+        pokemon.reserve(abilities.size());
         for (const auto& ability : abilities) {
             pokemon.emplace_back(
                 CustomPokemon{

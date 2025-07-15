@@ -1024,12 +1024,6 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
             battle_state.get_weather(),
             battle_state.is_mid_turn()
         );
-        const bool player_goes_first = player_state.outspeeds(
-            opponent_state,
-            opponent_move.move,
-            player_move.move,
-            battle_state.get_weather()
-        );
 
         // For debugging unimplemented attacks
         std::array<Move, 2> moves = {};
@@ -1071,6 +1065,7 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
                 move != Move::LowKick &&
                 move != Move::GrassKnot &&
                 move != Move::Transform &&
+                move != Move::FakeOut &&
                 (move_has_flag(
                         move,
                         MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -1083,6 +1078,13 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
                 printf("");
             }
         }
+
+        const bool player_goes_first = player_state.outspeeds(
+            opponent_state,
+            opponent_move.move,
+            player_move.move,
+            battle_state.get_weather()
+        );
 
         if (player_goes_first) {
             battle_state.execute_move(

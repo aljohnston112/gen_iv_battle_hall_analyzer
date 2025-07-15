@@ -256,7 +256,7 @@ void PokemonState::eat_berry(const Item item) {
     return current_stats[HEALTH_INDEX];
 }
 
-void PokemonState::apply_damage(const int damage) {
+void PokemonState::apply_damage(const uint damage) {
     current_stats[HEALTH_INDEX] -= damage;
     if (current_stats[HEALTH_INDEX] > 0) {
         try_apply_berry(false);
@@ -331,8 +331,11 @@ void PokemonState::heal(const int health_gained) {
     }
 
     const auto ability = get_ability();
-    if (ability == Ability::Chlorophyll &&
-        weather == Weather::SUN
+    if ((ability == Ability::Chlorophyll &&
+        weather == Weather::SUN) ||
+        (ability == Ability::SwiftSwim &&
+        weather == Weather::RAIN) ||
+        (ability == Ability::Unburden && unburdened)
     ) {
         speed = speed * 2;
     } else if (ability == Ability::QuickFeet) {
@@ -341,12 +344,6 @@ void PokemonState::heal(const int health_gained) {
         slow_start_count < 5
     ) {
         speed = speed / 2;
-    } else if (ability == Ability::SwiftSwim &&
-        weather == Weather::RAIN
-    ) {
-        speed = speed * 2;
-    } else if (ability == Ability::Unburden && unburdened) {
-        speed = speed * 2;
     }
 
     if (status == Status::PARALYZED &&
@@ -359,7 +356,7 @@ void PokemonState::heal(const int health_gained) {
 
 void PokemonState::change_stat_modifier(
     const Stat stat,
-    int8_t change,
+    int change,
     const bool from_other
 ) {
     assert(change != 0 && change >= -6 && change <= 6);
@@ -708,6 +705,7 @@ void PokemonState::apply_end_of_turn_effects(
     // 10.2 Spikes
     // 10.3 Stealth Rock
 
+    first_turn = false;
     was_hit_ = false;
     flinched = false;
     slow_start_count++;
@@ -737,7 +735,7 @@ void PokemonState::apply_end_of_turn_effects(
     return get_speed(weather) > other_state.get_speed(weather);
 }
 
-int PokemonState::get_damage_of_attacker_move(
+uint PokemonState::get_damage_of_attacker_move(
     uint16_t attacker_attack,
     const MoveInfo* attacker_move_info,
     PokemonState& defender_state,
@@ -1291,7 +1289,7 @@ BestMove PokemonState::get_best_move_against_defender(
     auto special_attack = get_special_attack(weather);
     const auto defender_ability = defender_state.get_ability();
     if (defender_ability == Ability::Unaware) {
-        uint16_t backup = stat_stages.at(ATTACK_INDEX);
+        int8_t backup = stat_stages.at(ATTACK_INDEX);
         stat_stages[ATTACK_INDEX] = 0;
         attack = get_attack(weather);
         stat_stages[ATTACK_INDEX] = backup;
@@ -1312,7 +1310,7 @@ BestMove PokemonState::get_best_move_against_defender(
         defender_state.get_special_defense(weather);
     const auto attacker_ability = get_ability();
     if (attacker_ability == Ability::Unaware) {
-        uint16_t backup = stat_stages.at(DEFENSE_INDEX);
+        int8_t backup = stat_stages.at(DEFENSE_INDEX);
         stat_stages[DEFENSE_INDEX] = 0;
         defense = get_defense();
         stat_stages[DEFENSE_INDEX] = backup;
@@ -1409,7 +1407,7 @@ BestMove PokemonState::get_best_move_against_defender(
             is_special ? special_attack : attack;
         const auto defense_used =
             is_special ? special_defense : defense;
-        auto damage =
+        uint damage =
             get_damage_of_attacker_move(
                 attack_used,
                 move,
@@ -1455,7 +1453,7 @@ BestMove PokemonState::get_best_move_against_defender(
         if (item == Item::LifeOrb) {
             damage = std::floor(damage * 1.3);
         }
-        damage = std::max(damage, 1);
+        damage = std::max(damage, 1u);
         bool move_must_charge = false;
         if (move_has_flag(
                 move->move,
@@ -1471,7 +1469,7 @@ BestMove PokemonState::get_best_move_against_defender(
             }
         }
 
-        int damage_from_defender;
+        uint damage_from_defender;
         if (is_player) {
             const auto backup = defender_state.chosen_move;
             damage_from_defender =
@@ -1484,6 +1482,27 @@ BestMove PokemonState::get_best_move_against_defender(
             defender_state.chosen_move = backup;
         } else {
             damage_from_defender = defender_state.chosen_move.damage;
+        }
+
+        if (move->move == Move::FakeOut && is_first_turn()) {
+            best_move.move = move;
+            best_move.damage = damage;
+            best_move.times_to_hit = 1;
+            chosen_move = best_move;
+            return best_move;
+        }
+        if (move->move == Move::FakeOut && !is_first_turn()) {
+            continue;
+        }
+        if (get_move_priority(move) >
+            get_move_priority(defender_state.chosen_move.move) &&
+            damage >= defender_state.get_health()
+        ) {
+            best_move.move = move;
+            best_move.damage = damage;
+            best_move.times_to_hit = 1;
+            chosen_move = best_move;
+            return best_move;
         }
         if (((get_move_priority(move) <
                     get_move_priority(defender_state.chosen_move.move) &&
@@ -1525,12 +1544,12 @@ BestMove PokemonState::get_best_move_against_defender(
                     1
                 };
             } else {
-                throw new std::logic_error("Move skipped when none picked");
+                throw std::logic_error{"Move skipped when none picked"};
             }
         }
     }
 
-    int damage_to_defender = 0;
+    uint damage_to_defender = 0;
     if (best_move.move != nullptr &&
         best_move.move->move != Move::TripleKick
     ) {
@@ -1633,7 +1652,7 @@ BestMove PokemonState::get_best_move_against_defender(
                 MoveFlag::HEALS_ATTACKER
             )
         ) {
-            int potential_hp_gain = 0;
+            uint potential_hp_gain = 0;
 
             if (move->move == Move::Absorb ||
                 move->move == Move::MegaDrain ||
@@ -1661,7 +1680,7 @@ BestMove PokemonState::get_best_move_against_defender(
                 if (get_item() == Item::BigRoot) {
                     potential_hp_gain = std::floor(damage * 0.65);
                 }
-                potential_hp_gain = std::max(1, potential_hp_gain);
+                potential_hp_gain = std::max(1u, potential_hp_gain);
                 if (defender_ability == Ability::LiquidOoze) {
                     potential_hp_gain = -potential_hp_gain;
                 }
@@ -1783,7 +1802,7 @@ BestMove PokemonState::get_best_move_against_defender(
                         }
                     }
                     if (defender_state.chosen_move.damage > 0) {
-                        int damage_to_attacker = 0;
+                        uint damage_to_attacker = 0;
                         if (defender_state.chosen_move.move->move !=
                             Move::TripleKick
                         ) {
@@ -1934,6 +1953,10 @@ void PokemonState::set_trapped_counter(const int turns) {
     trapped_counter = turns;
 }
 
+[[nodiscard]] bool PokemonState::is_first_turn() const {
+    return first_turn;
+}
+
 BattleState::BattleState(
     const CustomPokemon& player_pokemon,
     const CustomPokemon& opponent_pokemon
@@ -1995,9 +2018,14 @@ void BattleState::execute_move(
         return;
     }
 
+
     const auto attacker_move = chosen_move.move->move;
+    if (attacker_move == Move::FakeOut && !attacker_state.is_first_turn()) {
+        return;
+    }
+
     if (move_has_flag(attacker_move, MoveFlag::CHANGES_WEATHER)) {
-        uint turns = 5;
+        int turns = 5;
         if (attacker_move == Move::Sandstorm) {
             if (attacker_state.get_item_for_effect() == Item::SmoothRock) {
                 turns = 8;
@@ -2248,6 +2276,9 @@ void BattleState::execute_move(
                         defender_state.get_health() - 1
                     );
                     defender_state.clear_item();
+                }
+                if (attacker_move == Move::FakeOut) {
+                    defender_state.set_flinched();
                 }
             }
 

@@ -33,7 +33,7 @@ enum class FieldLocation {
 
 struct BestMove {
     const MoveInfo* move = nullptr;
-    int damage = 0;
+    uint damage = 0;
     uint times_to_hit = 1;
 };
 
@@ -95,6 +95,8 @@ class PokemonState {
     BestMove chosen_move{};
     double pounds;
 
+    bool first_turn = true;
+
 public:
     const bool is_player;
     const CustomPokemon pokemon;
@@ -133,7 +135,7 @@ public:
 
     [[nodiscard]] int32_t get_health() const;
 
-    void apply_damage(int damage);
+    void apply_damage(uint damage);
 
     void heal(int health_gained);
 
@@ -149,7 +151,7 @@ public:
 
     void change_stat_modifier(
         Stat stat,
-        int8_t change,
+        int change,
         bool from_other
     );
 
@@ -227,7 +229,7 @@ public:
         Weather weather
     ) const ;
 
-    int get_damage_of_attacker_move(
+    uint get_damage_of_attacker_move(
         uint16_t attacker_attack,
         const MoveInfo* attacker_move_info,
         PokemonState& defender_state,
@@ -262,6 +264,8 @@ public:
     void clear_metronome();
 
     void set_trapped_counter(int turns);
+
+    [[nodiscard]] bool is_first_turn() const;
 };
 
 class BattleState {
