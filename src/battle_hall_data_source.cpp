@@ -102,12 +102,12 @@ std::array<std::vector<BattleHallPokemon>, NUMBER_OF_GROUPS> parse_file(
             current_group_number = static_cast<int8_t>(
                 std::stoi(line.substr(6))
             );
-            grouped_pokemon[current_group_number] = {};
+            grouped_pokemon[current_group_number - 1] = {};
         } else if (!line.empty()) {
             if (current_group_number == -1) {
                 throw std::runtime_error{"Invalid file: Missing group number"};
             }
-            grouped_pokemon[current_group_number].emplace_back(
+            grouped_pokemon[current_group_number - 1].emplace_back(
                 parse_pokemon_line(all_move_infos, line)
             );
         }

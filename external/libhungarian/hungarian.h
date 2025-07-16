@@ -70,7 +70,7 @@ void hungarian_print_cost_matrix(const hungarian_problem_t* p);
 /** Print cost matrix and assignment matrix. **/
 void hungarian_print_status(const hungarian_problem_t* p);
 
-int** array_to_matrix(const int* m, int rows, int cols);
+int** array_to_matrix(const int* matrix, int rows, int cols);
 
 #ifdef __cplusplus
 }

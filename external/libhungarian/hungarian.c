@@ -393,12 +393,12 @@ done:
     free(col_mate);
 }
 
-int** array_to_matrix(const int* m, const int rows, const int cols) {
+int** array_to_matrix(const int* matrix, const int rows, const int cols) {
     int** r = calloc(rows, sizeof(int*));
     for (int i = 0; i < rows; i++) {
         r[i] = (int*)calloc(cols, sizeof(int));
         for (int j = 0; j < cols; j++)
-            r[i][j] = m[i * cols + j];
+            r[i][j] = matrix[i * cols + j];
     }
     return r;
 }
