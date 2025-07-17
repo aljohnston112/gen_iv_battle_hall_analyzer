@@ -5,7 +5,6 @@
 #include <future>
 #include <iostream>
 #include <ranges>
-#include <stack>
 
 #include "hungarian.h"
 
@@ -460,6 +459,7 @@ std::vector<
             return a.second[0] > b.second[0];
         }
     );
+    return ordered_type_and_over_2_to_streak_pairs;
 }
 
 void print_streaks(
@@ -503,12 +503,17 @@ int** create_streak_matrix(
     );
 }
 
-void calculate_and_print_max_streak(
+std::pair<
+    int,
+    std::array<
+        std::pair<PokemonType, int>,
+        NUMBER_OF_TYPES
+    >
+> calculate_over_2_assignments(
     const std::array<
         std::array<int, NUMBER_OF_TYPES>,
         NUMBER_OF_TYPES
     >& type_to_over_2_to_streak,
-    const std::array<int, NUMBER_OF_TYPES>& lowest_over_2_for_types,
     const std::array<int, NUMBER_OF_TYPES>& type_to_rank_to_skip
 ) {
     const auto ordered_type_and_over_2_to_streak_pairs =
@@ -542,9 +547,10 @@ void calculate_and_print_max_streak(
 
     // Calculate total streak and store the over_2 assignment for each type
     std::array<
-        std::pair<PokemonType, int>, number_of_columns
+        std::pair<PokemonType, int>,
+        number_of_columns
     > type_to_over_2_assignment{};
-    int total_streak = 0;
+    uint16_t total_streak = 0;
     for (uint8_t row = 0; row < number_of_rows; row++) {
         for (uint8_t column = 0; column < number_of_columns; column++) {
             if (hungarian_problem.assignment[row][column] == 1) {
@@ -563,9 +569,21 @@ void calculate_and_print_max_streak(
             }
         }
     }
-
-    // Print total streak
     std::ranges::sort(type_to_over_2_assignment);
+    hungarian_free(&hungarian_problem);
+    free(streak_matrix);
+    return {total_streak, type_to_over_2_assignment};
+}
+
+void calculate_and_print_max_streak(
+    const uint16_t total_streak,
+    const std::array<
+        std::pair<PokemonType, int>,
+        NUMBER_OF_TYPES
+    >& type_to_over_2_assignment,
+    const std::array<int, NUMBER_OF_TYPES>& lowest_over_2_for_types
+) {
+    // Print total streak
     std::cout << "\nTotal streak: " << total_streak << "\n";
 
     // Print ranks beaten in the order they should be challenged
@@ -592,11 +610,9 @@ void calculate_and_print_max_streak(
         std::string upper(upper_view.begin(), upper_view.end());
         std::cout << "{ PokemonType::" << upper + ", " << rank << "},\n";
     }
-    hungarian_free(&hungarian_problem);
-    free(streak_matrix);
 }
 
-void battle_all(
+void analyze(
     const std::array<
         std::array<
             std::array<std::vector<CustomPokemon>, NUMBER_OF_TYPES>,
@@ -637,30 +653,17 @@ void battle_all(
     );
     print_used_moves(used_moves);
     print_walls(lowest_over_2_for_types, first_losses);
-    calculate_and_print_max_streak(
+
+    const auto [
+        total_streak,
+        type_to_over_2_assignment
+    ] = calculate_over_2_assignments(
         type_to_over_2_to_streak,
-        lowest_over_2_for_types,
         type_to_rank_to_skip
     );
-}
-
-void analyze(
-    const std::array<
-        std::array<
-            std::array<std::vector<CustomPokemon>, NUMBER_OF_TYPES>,
-            MAX_RANK
-        >,
-        NUMBER_OF_GROUPS
-    >& group_to_rank_to_over_2_to_hall_pokemon,
-    const std::unordered_map<
-        std::string,
-        std::vector<CustomPokemon>
-    >& player_pokemon_forms,
-    const std::array<int, NUMBER_OF_TYPES>& type_to_rank_to_skip
-) {
-    battle_all(
-        group_to_rank_to_over_2_to_hall_pokemon,
-        player_pokemon_forms,
-        type_to_rank_to_skip
+    calculate_and_print_max_streak(
+        total_streak,
+        type_to_over_2_assignment,
+        lowest_over_2_for_types
     );
 }

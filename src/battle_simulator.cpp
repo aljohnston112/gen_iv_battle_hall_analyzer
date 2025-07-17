@@ -195,7 +195,7 @@ void apply_post_move_effects(
 
     // Protect
     if (move_has_flag(move, MoveFlag::BREAKS_PROTECT)) {
-        defender_state.break_protect();
+        defender_state.clear_protect();
     }
 
     // Healing
@@ -209,7 +209,7 @@ void apply_post_move_effects(
         ) {
             int health_gained = attacker_move.damage / 2;
 
-            if (attacker_state.get_item() == Item::BigRoot) {
+            if (attacker_state.get_item_for_effect() == Item::BigRoot) {
                 health_gained = std::floor(attacker_move.damage * 0.65);
             }
 
@@ -242,7 +242,7 @@ void apply_post_move_effects(
                 attacker_state.heal(attacker_state.max_health / 4);
             }
         }
-        if (attacker_state.get_item() == Item::ShellBell) {
+        if (attacker_state.get_item_for_effect() == Item::ShellBell) {
             attacker_state.heal(attacker_move.damage / 8);
         }
     }
@@ -288,10 +288,10 @@ void apply_post_move_effects(
     }
 
     if (move == Move::BugBite) {
-        if (BERRIES.contains(defender_state.get_item()) &&
+        if (BERRIES.contains(defender_state.get_item_for_effect()) &&
             defender_ability != Ability::StickyHold
         ) {
-            attacker_state.eat_berry(defender_state.get_item());
+            attacker_state.eat_berry(defender_state.get_item_for_effect());
             defender_state.clear_item();
         }
     }
@@ -353,9 +353,9 @@ void apply_post_move_effects(
         if (defender_ability == Ability::RoughSkin) {
             attacker_state.apply_damage(attacker_state.max_health / 8);
         }
-        if (defender_state.get_item() == Item::RockyHelmet) {
+        if (defender_state.get_item_for_effect() == Item::RockyHelmet) {
             attacker_state.apply_damage(attacker_state.max_health / 6);
-        } else if (defender_state.get_item() == Item::StickyBarb &&
+        } else if (defender_state.get_item_for_effect() == Item::StickyBarb &&
             attacker_state.try_set_item(Item::StickyBarb)
         ) {
             defender_state.clear_item();
@@ -364,7 +364,7 @@ void apply_post_move_effects(
 
     // Life orb
     if (attacker_ability != Ability::MagicGuard &&
-        attacker_state.get_item() == Item::LifeOrb &&
+        attacker_state.get_item_for_effect() == Item::LifeOrb &&
         attacker_move.damage > 0 &&
         move_has_flag(attacker_move.move->move, MoveFlag::HAS_POWER)
     ) {
@@ -380,7 +380,7 @@ void apply_post_move_effects(
     const bool is_fling = move == Move::Fling;
     if (!defender_state.has_type(PokemonType::FIRE) && apply_effect) {
         const bool flung_flame_orb =
-            (is_fling && attacker_state.get_item() == Item::FlameOrb);
+        (is_fling && attacker_state.get_item_for_effect() == Item::FlameOrb);
         if (move_has_flag(move, MoveFlag::BURNS_DEFENDER) ||
             flung_flame_orb
         ) {
@@ -407,7 +407,7 @@ void apply_post_move_effects(
         !defender_state.has_type(PokemonType::STEEL) && apply_effect
     ) {
         const bool flung_poison_barb = is_fling &&
-            attacker_state.get_item() == Item::PoisonBarb;
+            attacker_state.get_item_for_effect() == Item::PoisonBarb;
         if (move_has_flag(move, MoveFlag::POISONS_DEFENDER) ||
             flung_poison_barb
         ) {
@@ -835,19 +835,19 @@ void apply_post_move_effects(
 
     if (is_fling) {
         // TODO other items
-        if (attacker_state.get_item() == Item::KingsRock ||
-            attacker_state.get_item() == Item::RazorFang
+        if (attacker_state.get_item_for_effect() == Item::KingsRock ||
+            attacker_state.get_item_for_effect() == Item::RazorFang
         ) {
             defender_state.set_flinched();
-        } else if (attacker_state.get_item() == Item::LightBall) {
+        } else if (attacker_state.get_item_for_effect() == Item::LightBall) {
             defender_state.try_apply_status(
                 Status::PARALYZED,
                 weather,
                 attacker_state
             );
-        } else if (attacker_state.get_item() == Item::MentalHerb) {
+        } else if (attacker_state.get_item_for_effect() == Item::MentalHerb) {
             defender_state.set_infatuated();
-        } else if (attacker_state.get_item() == Item::WhiteHerb) {
+        } else if (attacker_state.get_item_for_effect() == Item::WhiteHerb) {
             defender_state.clear_negative_stat_changes();
         }
         attacker_state.clear_item();
@@ -914,7 +914,7 @@ void check_mold_breaker(
     if (state0.get_ability() == Ability::MoldBreaker &&
         ability_is_ignorable(state1.get_ability())
     ) {
-        state1.clear_ability();
+        state1.disable_ability();
     }
 }
 
@@ -972,8 +972,10 @@ std::pair<bool, std::vector<const MoveInfo*>> battle(
     // May suppress abilities
     check_mold_breaker(player_state, opponent_state);
     check_mold_breaker(opponent_state, player_state);
+    // May change ability
     check_trace(player_state, opponent_state);
     check_trace(opponent_state, player_state);
+    // May change stats
     check_download(player_state, opponent_state);
     check_download(opponent_state, player_state);
     check_intimidate(player_state, opponent_state);
