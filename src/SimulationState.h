@@ -95,41 +95,40 @@ class PokemonState {
     std::vector<const MoveInfo*> moves;
     std::array<PokemonType, 2> types;
     Ability ability;
+    double pounds;
     Item item;
-    std::array<int32_t, 6> current_stats;
+    std::array<int16_t, 6> current_stats;
     std::array<int8_t, 6> stat_stages = {0, 0, 0, 0, 0, 0};
     FieldLocation field_location = FieldLocation::ON_FIELD;
 
     Status status = Status::NONE;
     int turns_badly_poisoned = 0;
-    int trapped_counter = 0;
     bool confused = false;
-    bool flinched = false;
     bool infatuated = false;
+
+    int trapped_counter = 0;
+    bool flinched = false;
     bool was_hit_ = false;
-    bool flash_fired = false;
 
     bool charging = false;
     bool recharging = false;
-    int multi_turn_move_counter = 0;
+    uint8_t multi_turn_move_counter = 0;
 
     bool grounded;
     int metronome = 0;
-    bool is_choiced = false;
+    bool is_choiced_ = false;
 
     bool protected_ = false;
     bool reflect = false;
     bool light_screen = false;
 
+    bool flash_fired = false;
     uint slow_start_count = 0;
     bool truant = false;
     bool unburdened = false;
 
     BestMove last_used_move{};
     BestMove chosen_move{};
-    double pounds;
-
-    bool first_turn = true;
 
     [[nodiscard]] Item get_item() const {
         return item;
@@ -168,8 +167,7 @@ class PokemonState {
         } else if (berry == Item::LumBerry) {
             if (status != Status::NONE) {
                 status = Status::NONE;
-            }
-            if (confused) {
+            } else if (confused) {
                 confused = false;
             }
             eaten = true;
@@ -186,11 +184,14 @@ class PokemonState {
             );
             eaten = true;
         } else if (berry == Item::SalacBerry) {
-            change_stat_modifier(Stat::SPEED, 1, false);
+            change_stat_modifier(
+                Stat::SPEED,
+                1,
+                false
+            );
             eaten = true;
         } else if (berry == Item::SitrusBerry) {
-            const auto current_health =
-                current_stats[HEALTH_INDEX];
+            const auto current_health = current_stats[HEALTH_INDEX];
             current_stats[HEALTH_INDEX] =
                 std::min(max_health, current_health + max_health / 4);
             eaten = true;
@@ -202,14 +203,14 @@ class PokemonState {
     }
 
     void try_apply_berry(const bool eaten) {
-        if (BERRIES.contains(get_item_for_effect()) ||
-            (BERRIES.contains(this->item) && eaten)
+        const auto item = get_item_for_effect();
+        if (const bool is_berry = BERRIES.contains(item);
+            is_berry
         ) {
             const int current_health = get_health();
-            const bool less_than_half_health = current_health <= max_health
-                / 2;
+            const bool less_than_half_health = current_health <= max_health / 2;
             const bool eats_stat_berry =
-                STAT_BERRIES.contains(get_item_for_effect()) &&
+                STAT_BERRIES.contains(item) &&
                 ((current_health <= max_health / 4) ||
                     (get_ability() == Ability::Gluttony &&
                         less_than_half_health)
@@ -220,87 +221,17 @@ class PokemonState {
                 (item == Item::LumBerry &&
                     (status != Status::NONE || confused)
                 );
-            const bool eats_sitrus = less_than_half_health;
+            const bool eats_sitrus =
+                item == Item::SitrusBerry && less_than_half_health;
             const bool eats_berry =
                 eaten ||
                 eats_stat_berry ||
-                eats_sitrus ||
-                eats_status_berry;
+                eats_status_berry ||
+                eats_sitrus;
             if (eats_berry) {
                 apply_berry();
             }
         }
-    }
-
-    uint get_damage_of_attacker_move(
-        uint16_t attacker_attack,
-        const MoveInfo* attacker_move_info,
-        PokemonState& defender_state,
-        uint16_t defender_defense,
-        Weather weather,
-        bool is_mid_turn
-    );
-
-    int get_weather_ball_damage(
-        PokemonState& defender_state,
-        const int32_t attack,
-        const int32_t special_attack,
-        const int32_t defense,
-        const int32_t special_defense,
-        const Weather weather,
-        const bool is_mid_turn
-    ) {
-        for (const auto castform_move : pokemon.moves) {
-            if (castform_move->move == Move::WeatherBall) {
-                const auto category =
-                    castform_move->category;
-                const bool is_special =
-                    category == Category::SPECIAL;
-                const auto attack_used =
-                    is_special
-                        ? special_attack
-                        : attack;
-                const auto defense_used =
-                    is_special
-                        ? special_defense
-                        : defense;
-                MoveInfo new_move = *castform_move;
-                switch (weather) {
-                case Weather::CLEAR:
-                    new_move.type = PokemonType::NORMAL;
-                    break;
-                case Weather::SUN:
-                    new_move.type = PokemonType::FIRE;
-                    break;
-                case Weather::RAIN:
-                    new_move.type = PokemonType::WATER;
-                    break;
-                case Weather::HAIL:
-                    new_move.type = PokemonType::ICE;
-                    break;
-                case Weather::SANDSTORM:
-                    new_move.type = PokemonType::ROCK;
-                    break;
-                case Weather::FOG:
-                    new_move.type = PokemonType::NORMAL;
-                    break;
-                }
-                if (weather != Weather::CLEAR) {
-                    new_move.power = new_move.power * 2;
-                }
-                const auto damage =
-                    get_damage_of_attacker_move(
-                        attack_used,
-                        &new_move,
-                        defender_state,
-                        defense_used,
-                        weather,
-                        is_mid_turn
-                    );
-                return damage;
-            }
-        }
-        return 0;
     }
 
 public:
@@ -313,19 +244,19 @@ public:
         moves(pokemon.moves),
         types(pokemon.types),
         ability(pokemon.ability),
+        pounds(pokemon.pounds),
         item(pokemon.item),
         current_stats(
             {
-                pokemon.stats[HEALTH_INDEX],
-                pokemon.stats[ATTACK_INDEX],
-                pokemon.stats[DEFENSE_INDEX],
-                pokemon.stats[SPECIAL_ATTACK_INDEX],
-                pokemon.stats[SPECIAL_DEFENSE_INDEX],
-                pokemon.stats[SPEED_INDEX]
+                static_cast<int16_t>(pokemon.stats[HEALTH_INDEX]),
+                static_cast<int16_t>(pokemon.stats[ATTACK_INDEX]),
+                static_cast<int16_t>(pokemon.stats[DEFENSE_INDEX]),
+                static_cast<int16_t>(pokemon.stats[SPECIAL_ATTACK_INDEX]),
+                static_cast<int16_t>(pokemon.stats[SPECIAL_DEFENSE_INDEX]),
+                static_cast<int16_t>(pokemon.stats[SPEED_INDEX])
             }
         ),
         grounded(item == Item::IronBall),
-        pounds(pokemon.pounds),
         is_player(is_player),
         pokemon(std::move(pokemon)),
         level(pokemon.level),
@@ -445,7 +376,7 @@ public:
         this->item = backup;
     }
 
-    [[nodiscard]] int32_t get_health() const {
+    [[nodiscard]] int16_t get_health() const {
         return current_stats[HEALTH_INDEX];
     }
 
@@ -463,8 +394,34 @@ public:
         );
     }
 
-    [[nodiscard]] int32_t get_attack(const Weather weather) const {
-        uint16_t stat = current_stats[ATTACK_INDEX];
+    [[nodiscard]] bool is_truant() const {
+        return truant;
+    }
+
+    [[nodiscard]] uint8_t get_multi_turn_move_counter() const {
+        return multi_turn_move_counter;
+    }
+
+    [[nodiscard]] bool is_choiced() const {
+        return is_choiced_;
+    }
+
+    void set_is_choiced() {
+        is_choiced_ = true;
+    }
+
+    [[nodiscard]] int16_t get_attack(
+        const Weather weather,
+        const Ability other_ability
+    ) {
+        int16_t stat = current_stats[ATTACK_INDEX];
+        if (other_ability == Ability::Unaware) {
+            const int8_t backup = stat_stages.at(ATTACK_INDEX);
+            stat_stages[ATTACK_INDEX] = 0;
+            stat = get_attack(weather, Ability::Disabled);
+            stat_stages[ATTACK_INDEX] = backup;
+        }
+
         const auto ability = get_ability();
         if (ability == Ability::FlowerGift &&
             weather == Weather::SUN
@@ -481,8 +438,15 @@ public:
         return stat;
     }
 
-    [[nodiscard]] int32_t get_defense() const {
+    [[nodiscard]] int16_t get_defense(const Ability other_ability) {
         uint16_t stat = current_stats[DEFENSE_INDEX];
+        if (other_ability == Ability::Unaware) {
+            const int8_t backup = stat_stages.at(DEFENSE_INDEX);
+            stat_stages[DEFENSE_INDEX] = 0;
+            stat = get_defense(Ability::Disabled);
+            stat_stages[DEFENSE_INDEX] = backup;
+        }
+
         if (get_ability() == Ability::MarvelScale &&
             status != Status::NONE
         ) {
@@ -491,9 +455,18 @@ public:
         return stat;
     }
 
-    [[nodiscard]] int32_t get_special_attack(
-        const Weather weather) const {
+    [[nodiscard]] int16_t get_special_attack(
+        const Weather weather,
+        const Ability other_ability
+    ) {
         uint16_t stat = current_stats[SPECIAL_ATTACK_INDEX];
+        if (other_ability == Ability::Unaware) {
+            const int8_t backup = stat_stages.at(SPECIAL_ATTACK_INDEX);
+            stat_stages[SPECIAL_ATTACK_INDEX] = 0;
+            stat = get_special_attack(weather, Ability::Disabled);
+            stat_stages[SPECIAL_ATTACK_INDEX] = backup;
+        }
+
         if (get_ability() == Ability::SolarPower &&
             weather == Weather::SUN
         ) {
@@ -502,10 +475,18 @@ public:
         return stat;
     }
 
-    [[nodiscard]] int32_t get_special_defense(
-        const Weather weather
-    ) const {
+    [[nodiscard]] int16_t get_special_defense(
+        const Weather weather,
+        const Ability other_ability
+    ) {
         uint16_t stat = current_stats[SPECIAL_DEFENSE_INDEX];
+        if (other_ability == Ability::Unaware) {
+            const int8_t backup = stat_stages.at(SPECIAL_DEFENSE_INDEX);
+            stat_stages[SPECIAL_DEFENSE_INDEX] = 0;
+            stat = get_special_defense(weather, Ability::Disabled);
+            stat_stages[SPECIAL_DEFENSE_INDEX] = backup;
+        }
+
         if (get_ability() == Ability::FlowerGift &&
             weather == Weather::SUN
         ) {
@@ -514,7 +495,7 @@ public:
         return stat;
     }
 
-    [[nodiscard]] int32_t get_speed(const Weather weather) const {
+    [[nodiscard]] int16_t get_speed(const Weather weather) const {
         uint16_t speed = current_stats[SPEED_INDEX];
         if (const auto item = get_item_for_effect();
             item == Item::ChoiceScarf
@@ -546,6 +527,26 @@ public:
             speed = std::floor(speed * 0.25);
         }
         return speed;
+    }
+
+    int8_t get_attack_stage() const {
+        return stat_stages.at(ATTACK_INDEX);
+    }
+
+    int8_t get_defense_stage() const {
+        return stat_stages.at(DEFENSE_INDEX);
+    }
+
+    int8_t get_special_attack_stage() const {
+        return stat_stages.at(SPECIAL_ATTACK_INDEX);
+    }
+
+    int8_t get_special_defense_stage() const {
+        return stat_stages.at(SPECIAL_DEFENSE_INDEX);
+    }
+
+    int8_t get_speed_stage() const {
+        return stat_stages.at(SPEED_INDEX);
     }
 
     void change_stat_modifier(
@@ -613,19 +614,21 @@ public:
         PokemonState& other_state
     ) {
         if (const auto ability = get_ability();
-            status == Status::NONE &&
-            !((ability == Ability::Immunity ||
-                    has_type(PokemonType::POISON) ||
-                    has_type(PokemonType::STEEL)) &&
-                (status == Status::POISON ||
-                    status == Status::BADLY_POISONED)) &&
-            !((ability == Ability::Insomnia ||
-                ability == Ability::VitalSpirit) && status == Status::SLEEP) &&
-            !(ability == Ability::LeafGuard && weather == Weather::SUN) &&
-            !(ability == Ability::Limber && status == Status::PARALYZED) &&
-            !(ability == Ability::MagmaArmor && status == Status::FROZEN) &&
-            !((ability == Ability::WaterVeil || has_type(PokemonType::WATER)) &&
-                status == Status::BURN)
+            get_status() == Status::NONE &&
+            !((status == Status::BADLY_POISONED ||
+                    status == Status::POISON) &&
+                ability == Ability::Immunity ||
+                has_type(PokemonType::POISON) ||
+                has_type(PokemonType::STEEL)) &&
+            !(status == Status::SLEEP &&
+                (ability == Ability::Insomnia ||
+                    ability == Ability::VitalSpirit)) &&
+            !(status == Status::BURN &&
+                (ability == Ability::WaterVeil ||
+                    has_type(PokemonType::WATER))) &&
+            !(status == Status::PARALYZED && ability == Ability::Limber) &&
+            !(status == Status::FROZEN && ability == Ability::MagmaArmor) &&
+            !(weather == Weather::SUN && ability == Ability::LeafGuard)
         ) {
             this->status = status;
             if (ability == Ability::Synchronize &&
@@ -709,15 +712,15 @@ public:
         light_screen = false;
     }
 
-    [[nodiscard]] bool is_first_turn() const {
-        return first_turn;
-    }
-
-    [[nodiscard]] BestMove& get_last_used_move() {
+    [[nodiscard]] BestMove get_last_used_move() const {
         return last_used_move;
     }
 
-    [[nodiscard]] BestMove& get_chosen_move() {
+    void set_chosen_move(BestMove&& best_move) {
+        this->chosen_move = std::move(best_move);
+    }
+
+    [[nodiscard]] BestMove get_chosen_move() const {
         return chosen_move;
     }
 
@@ -746,7 +749,7 @@ public:
         this->moves = other.moves;
         this->pounds = other.pounds;
         this->ability = other.ability;
-        this->is_choiced = false;
+        this->is_choiced_ = false;
     }
 
     void apply_end_of_turn_effects(
@@ -774,51 +777,260 @@ public:
         return get_speed(weather) > other_state.get_speed(weather);
     }
 
-    BestMove get_best_move_against_defender(
-        PokemonState& defender_state,
-        bool chosen_move_only,
-        Weather weather,
-        bool is_mid_turn
-    );
-
-};
-
-class BattleState {
-    PokemonState player_state;
-    PokemonState opponent_state;
-    Weather weather = Weather::CLEAR;
-    bool mid_turn = false;
-    int weather_turns = 0;
-
-public:
-    BattleState(
-        const CustomPokemon& player_pokemon,
-        const CustomPokemon& opponent_pokemon
-    );
-
-    [[nodiscard]] Weather get_weather() const;
-
-    /**
-     * @param weather
-     * @param turns -1 for weather that should not end.
-     */
-    void set_weather(
-        Weather weather,
-        int turns
-    );
-
-    [[nodiscard]] bool is_mid_turn() const;
-
-    void set_mid_turn();
-
-    void end_turn();
-
-    void execute_move(
-        PokemonState& attacker_state,
+    uint get_damage_of_attacker_move(
+        const MoveInfo* attacker_move_info,
         PokemonState& defender_state,
         Weather weather,
         bool is_mid_turn
     );
+
+    int get_weather_ball_damage(
+        const MoveInfo* attacker_move_info,
+        PokemonState& defender_state,
+        const Weather weather,
+        const bool is_mid_turn
+    ) {
+        assert(attacker_move_info->move == Move::WeatherBall);
+        MoveInfo new_move = *attacker_move_info;
+        switch (weather) {
+        case Weather::CLEAR:
+            new_move.type = PokemonType::NORMAL;
+            break;
+        case Weather::SUN:
+            new_move.type = PokemonType::FIRE;
+            break;
+        case Weather::RAIN:
+            new_move.type = PokemonType::WATER;
+            break;
+        case Weather::HAIL:
+            new_move.type = PokemonType::ICE;
+            break;
+        case Weather::SANDSTORM:
+            new_move.type = PokemonType::ROCK;
+            break;
+        case Weather::FOG:
+            new_move.type = PokemonType::NORMAL;
+            break;
+        }
+        if (weather != Weather::CLEAR) {
+            new_move.power = new_move.power * 2;
+        }
+        const auto damage =
+            get_damage_of_attacker_move(
+                &new_move,
+                defender_state,
+                weather,
+                is_mid_turn
+            );
+        return damage;
+    }
+
+    void move_failed() {
+        set_chosen_move(
+            BestMove{
+                .move = chosen_move.move,
+                .damage = 0,
+                .times_to_hit = 1
+            }
+        );
+        last_used_move = chosen_move;
+    }
+
+    void move_succeeded() {
+        last_used_move = chosen_move;
+    }
+
 };
+
+static bool check_transform(PokemonState& attacker_state) {
+    if (const auto& all_attacker_moves =
+            attacker_state.get_moves();
+        all_attacker_moves.size() == 1 &&
+        all_attacker_moves[0]->move == Move::Transform
+    ) {
+        attacker_state.set_chosen_move(
+            BestMove{
+                .move = all_attacker_moves[0],
+                .damage = 0,
+                .times_to_hit = 1
+            }
+        );
+        return true;
+    }
+    return false;
+}
+
+struct BattleStats {
+    int32_t attack;
+    int32_t special_attack;
+    int32_t defense;
+    int32_t special_defense;
+};
+
+inline BattleStats get_battle_stats(
+    PokemonState& attacker_state,
+    PokemonState& defender_state,
+    const Weather weather
+) {
+    // Attack stats
+    const auto defender_ability = defender_state.get_ability();
+    auto attack =
+        attacker_state.get_attack(weather, defender_ability);
+    auto special_attack =
+        attacker_state.get_special_attack(weather, defender_ability);
+    if (const auto attacker_item = attacker_state.get_item_for_effect();
+        attacker_item == Item::ChoiceBand
+    ) {
+        attack = std::floor(attack * 1.5);
+    } else if (attacker_item == Item::ChoiceSpecs) {
+        special_attack = std::floor(special_attack * 1.5);
+    }
+
+    // Defense stats
+    const auto attacker_ability = attacker_state.get_ability();
+    const auto defense = defender_state.get_defense(attacker_ability);
+    auto special_defense =
+        defender_state.get_special_defense(weather, attacker_ability);
+
+    if (weather == Weather::SANDSTORM &&
+        defender_state.has_type(PokemonType::ROCK)
+    ) {
+        special_defense = std::floor(special_defense * 1.5);
+    }
+    return BattleStats{
+        .attack = attack,
+        .special_attack = special_attack,
+        .defense = defense,
+        .special_defense = special_defense
+    };
+}
+
+inline void recalculate_chosen_move_damage(
+    PokemonState& attacker_state,
+    PokemonState& defender_state,
+    const BestMove& attacker_chosen_move,
+    const Weather weather,
+    const bool is_mid_turn
+) {
+    attacker_state.set_chosen_move(
+        BestMove{
+            .move = attacker_chosen_move.move,
+            .damage = attacker_state.get_damage_of_attacker_move(
+                attacker_chosen_move.move,
+                defender_state,
+                weather,
+                is_mid_turn
+            ),
+            .times_to_hit = attacker_chosen_move.times_to_hit
+        }
+    );
+}
+
+inline uint8_t get_times_to_hit(
+    const bool attacker_is_player,
+    const MoveInfo* const& move
+) {
+    uint8_t times_to_hit = 1;
+    if (move_has_flag(
+            move->move,
+            MoveFlag::HITS_MULTIPLE_TIMES
+        )
+    ) {
+        if (move->move == Move::Bonemerang ||
+            move->move == Move::DoubleHit ||
+            move->move == Move::DoubleKick ||
+            move->move == Move::Twineedle
+        ) {
+            times_to_hit = 2;
+        } else if (move->move == Move::ArmThrust ||
+            move->move == Move::Barrage ||
+            move->move == Move::BoneRush ||
+            move->move == Move::BulletSeed ||
+            move->move == Move::CometPunch ||
+            move->move == Move::DoubleSlap ||
+            move->move == Move::FuryAttack ||
+            move->move == Move::FurySwipes ||
+            move->move == Move::IcicleSpear ||
+            move->move == Move::PinMissile ||
+            move->move == Move::RockBlast ||
+            move->move == Move::SpikeCannon
+        ) {
+            if (attacker_is_player) {
+                times_to_hit = 2;
+            } else {
+                times_to_hit = 5;
+            }
+        } else if (move->move == Move::TripleKick) {
+            times_to_hit = 3;
+        }
+    }
+    return times_to_hit;
+}
+
+inline bool does_move_have_to_charge(
+    const MoveInfo* const& move,
+    const Item attacker_item,
+    const Weather weather
+) {
+    bool move_must_charge = false;
+    if (move_has_flag(
+            move->move,
+            MoveFlag::REQUIRES_CHARGING_TURN
+        )
+    ) {
+        move_must_charge = true;
+        if ((move->move == Move::SolarBeam &&
+                weather == Weather::SUN) ||
+            attacker_item == Item::PowerHerb
+        ) {
+            move_must_charge = false;
+        }
+    }
+    return move_must_charge;
+}
+
+inline bool should_skip_move(
+    const PokemonState& attacker_state,
+    const MoveInfo* move,
+    const BestMove defender_chosen_move
+) {
+    const bool defender_is_player = !attacker_state.is_player;
+    const auto attackers_last_used_move =
+        attacker_state.get_last_used_move();
+    const auto category = move->category;
+    return category == Category::STATUS ||
+
+        (attacker_state.is_choiced() &&
+            attackers_last_used_move.move != nullptr &&
+            move->move != attackers_last_used_move.move->move) ||
+
+        move->move == Move::DreamEater ||
+
+        (move->move == Move::FocusPunch &&
+            ((defender_is_player &&
+                    defender_chosen_move.move != nullptr &&
+                    defender_chosen_move.move->category != Category::STATUS) ||
+                !defender_is_player)
+        );
+}
+
+inline bool check_fake_out(
+    PokemonState& attacker_state,
+    const MoveInfo* attacker_move,
+    const uint damage,
+    const bool is_first_turn
+) {
+    if (attacker_move->move == Move::FakeOut && is_first_turn) {
+        attacker_state.set_chosen_move(
+            BestMove{
+                .move = attacker_move,
+                .damage = damage,
+                .times_to_hit = 1
+            }
+        );
+        return true;
+    }
+    return false;
+}
 
 #endif //POKEMONSTATE_H
