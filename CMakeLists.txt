@@ -20,19 +20,19 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/custom_pokemon.cpp
         src/custom_pokemon.h
         src/nature.cpp
-        src/battle_simulator.cpp
-        src/battle_simulator.h
+        src/BattleState.cpp
+        src/BattleState.h
         src/abilities.h
         src/type_effectiveness.h
         src/type_effectiveness.cpp
         src/Items.h
         src/Pokemon.h
-        src/SimulationState.h
+        src/PokemonState.h
         src/thread_pool.cpp
         src/thread_pool.h
         external/libhungarian/hungarian.c
         external/libhungarian/hungarian.h
-        src/SimulationState.cpp
+        src/PokemonState.cpp
 )
 target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
 

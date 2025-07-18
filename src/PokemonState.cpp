@@ -1,4 +1,4 @@
-#include "SimulationState.h"
+#include "PokemonState.h"
 
 #include <cassert>
 #include <cmath>
@@ -80,7 +80,7 @@ void PokemonState::apply_end_of_turn_effects(
     // 6.1 Aqua Ring
     // 6.2 Speed Boost, Shed Skin
     if (ability == Ability::SpeedBoost) {
-        change_stat_modifier(Stat::SPEED, 1, false);
+        change_stat_stage(Stat::SPEED, 1, false);
     }
     if (ability == Ability::ShedSkin && !is_player) {
         clear_status();
@@ -189,7 +189,7 @@ uint PokemonState::get_damage_of_attacker_move(
     const uint16_t defender_defense =
         is_special
             ? defender_state.get_special_defense(weather, defender_ability)
-            : defender_state.get_defense(defender_ability);
+            : defender_state.get_defense(weather, defender_ability);
 
     const auto attacker_health = get_health();
     const auto attacker_move = attacker_move_info->move;
@@ -558,7 +558,7 @@ uint PokemonState::get_damage_of_attacker_move(
 
     // Type effectiveness
     auto defender_types = defender_state.types;
-    if (defender_state.get_item() == Item::IronBall &&
+    if (grounded &&
         attacker_move_info->type == PokemonType::GROUND
     ) {
         if (defender_types[0] == PokemonType::FLYING) {

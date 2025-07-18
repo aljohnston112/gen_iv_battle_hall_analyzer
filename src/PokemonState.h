@@ -77,18 +77,18 @@ inline int calculate_stat_based_on_stage(
 }
 
 class PokemonState {
-    static constexpr int HEALTH_INDEX =
-        static_cast<int>(Stat::HEALTH);
-    static constexpr int ATTACK_INDEX =
-        static_cast<int>(Stat::ATTACK);
-    static constexpr int DEFENSE_INDEX =
-        static_cast<int>(Stat::DEFENSE);
-    static constexpr int SPECIAL_ATTACK_INDEX =
-        static_cast<int>(Stat::SPECIAL_ATTACK);
-    static constexpr int SPECIAL_DEFENSE_INDEX =
-        static_cast<int>(Stat::SPECIAL_DEFENSE);
-    static constexpr int SPEED_INDEX =
-        static_cast<int>(Stat::SPEED);
+    static constexpr int8_t HEALTH_INDEX =
+        static_cast<int8_t>(Stat::HEALTH);
+    static constexpr int8_t ATTACK_INDEX =
+        static_cast<int8_t>(Stat::ATTACK);
+    static constexpr int8_t DEFENSE_INDEX =
+        static_cast<int8_t>(Stat::DEFENSE);
+    static constexpr int8_t SPECIAL_ATTACK_INDEX =
+        static_cast<int8_t>(Stat::SPECIAL_ATTACK);
+    static constexpr int8_t SPECIAL_DEFENSE_INDEX =
+        static_cast<int8_t>(Stat::SPECIAL_DEFENSE);
+    static constexpr int8_t SPEED_INDEX =
+        static_cast<int8_t>(Stat::SPEED);
     static constexpr int8_t MAX_STAT_STAGE = 6;
     static constexpr int8_t MIN_STAT_STAGE = -6;
 
@@ -139,7 +139,7 @@ class PokemonState {
         if (const auto berry = get_item_for_effect();
             berry == Item::ApicotBerry
         ) {
-            change_stat_modifier(
+            change_stat_stage(
                 Stat::SPECIAL_DEFENSE,
                 1,
                 false
@@ -151,14 +151,14 @@ class PokemonState {
             }
             eaten = true;
         } else if (berry == Item::GanlonBerry) {
-            change_stat_modifier(
+            change_stat_stage(
                 Stat::DEFENSE,
                 1,
                 false
             );
             eaten = true;
         } else if (berry == Item::LiechiBerry) {
-            change_stat_modifier(
+            change_stat_stage(
                 Stat::ATTACK,
                 1,
                 false
@@ -177,14 +177,14 @@ class PokemonState {
             }
             eaten = true;
         } else if (berry == Item::PetayaBerry) {
-            change_stat_modifier(
+            change_stat_stage(
                 Stat::SPECIAL_ATTACK,
                 1,
                 false
             );
             eaten = true;
         } else if (berry == Item::SalacBerry) {
-            change_stat_modifier(
+            change_stat_stage(
                 Stat::SPEED,
                 1,
                 false
@@ -234,6 +234,37 @@ class PokemonState {
         }
     }
 
+    int16_t get_stat(
+        const Weather weather,
+        const Ability other_ability,
+        const Stat stat_enum
+    ) {
+        const int8_t stat_index = static_cast<int8_t>(stat_enum);
+        uint16_t stat = current_stats.at(stat_index);
+        if (other_ability == Ability::Unaware) {
+            const int8_t backup = stat_stages.at(stat_index);
+            stat_stages[stat_index] = 0;
+            switch (stat_enum) {
+            case Stat::ATTACK:
+                stat = get_attack(weather, Ability::Disabled);
+                break;
+            case Stat::DEFENSE:
+                stat = get_defense(weather, Ability::Disabled);
+                break;
+            case Stat::SPECIAL_ATTACK:
+                stat = get_special_attack(weather, Ability::Disabled);
+                break;
+            case Stat::SPECIAL_DEFENSE:
+                stat = get_special_defense(weather, Ability::Disabled);
+                break;
+            default:
+                break;
+            }
+            stat_stages[stat_index] = backup;
+        }
+        return stat;
+    }
+
 public:
     const bool is_player;
     const CustomPokemon pokemon;
@@ -273,40 +304,6 @@ public:
         return moves;
     }
 
-    [[nodiscard]] double get_weight() const {
-        return pounds;
-    }
-
-    [[nodiscard]] bool is_confused() const {
-        return confused;
-    }
-
-    void set_confused() {
-        if (get_ability() != Ability::OwnTempo) {
-            confused = true;
-        }
-    }
-
-    [[nodiscard]] bool was_flash_fired() const {
-        return this->flash_fired;
-    }
-
-    void done_recharging() {
-        recharging = false;
-    }
-
-    [[nodiscard]] int get_metronome_count() const {
-        return metronome;
-    }
-
-    [[nodiscard]] bool has_reflect_up() const {
-        return reflect;
-    }
-
-    [[nodiscard]] bool has_light_screen_up() const {
-        return light_screen;
-    }
-
     [[nodiscard]] bool has_type(const PokemonType type) const {
         return types[0] == type || types[1] == type;
     }
@@ -324,7 +321,9 @@ public:
         const Ability ability,
         const bool can_overwrite_truant
     ) {
-        if (can_overwrite_truant || get_ability() != Ability::Truant) {
+        if (can_overwrite_truant ||
+            get_ability() != Ability::Truant
+        ) {
             this->ability = ability;
         }
     }
@@ -394,34 +393,11 @@ public:
         );
     }
 
-    [[nodiscard]] bool is_truant() const {
-        return truant;
-    }
-
-    [[nodiscard]] uint8_t get_multi_turn_move_counter() const {
-        return multi_turn_move_counter;
-    }
-
-    [[nodiscard]] bool is_choiced() const {
-        return is_choiced_;
-    }
-
-    void set_is_choiced() {
-        is_choiced_ = true;
-    }
-
     [[nodiscard]] int16_t get_attack(
         const Weather weather,
         const Ability other_ability
     ) {
-        int16_t stat = current_stats[ATTACK_INDEX];
-        if (other_ability == Ability::Unaware) {
-            const int8_t backup = stat_stages.at(ATTACK_INDEX);
-            stat_stages[ATTACK_INDEX] = 0;
-            stat = get_attack(weather, Ability::Disabled);
-            stat_stages[ATTACK_INDEX] = backup;
-        }
-
+        int16_t stat = get_stat(weather, other_ability, Stat::ATTACK);
         const auto ability = get_ability();
         if (ability == Ability::FlowerGift &&
             weather == Weather::SUN
@@ -438,15 +414,11 @@ public:
         return stat;
     }
 
-    [[nodiscard]] int16_t get_defense(const Ability other_ability) {
-        uint16_t stat = current_stats[DEFENSE_INDEX];
-        if (other_ability == Ability::Unaware) {
-            const int8_t backup = stat_stages.at(DEFENSE_INDEX);
-            stat_stages[DEFENSE_INDEX] = 0;
-            stat = get_defense(Ability::Disabled);
-            stat_stages[DEFENSE_INDEX] = backup;
-        }
-
+    [[nodiscard]] int16_t get_defense(
+        const Weather weather,
+        const Ability other_ability
+    ) {
+        int16_t stat = get_stat(weather, other_ability, Stat::DEFENSE);
         if (get_ability() == Ability::MarvelScale &&
             status != Status::NONE
         ) {
@@ -459,14 +431,7 @@ public:
         const Weather weather,
         const Ability other_ability
     ) {
-        uint16_t stat = current_stats[SPECIAL_ATTACK_INDEX];
-        if (other_ability == Ability::Unaware) {
-            const int8_t backup = stat_stages.at(SPECIAL_ATTACK_INDEX);
-            stat_stages[SPECIAL_ATTACK_INDEX] = 0;
-            stat = get_special_attack(weather, Ability::Disabled);
-            stat_stages[SPECIAL_ATTACK_INDEX] = backup;
-        }
-
+        int16_t stat = get_stat(weather, other_ability, Stat::SPECIAL_ATTACK);
         if (get_ability() == Ability::SolarPower &&
             weather == Weather::SUN
         ) {
@@ -479,14 +444,7 @@ public:
         const Weather weather,
         const Ability other_ability
     ) {
-        uint16_t stat = current_stats[SPECIAL_DEFENSE_INDEX];
-        if (other_ability == Ability::Unaware) {
-            const int8_t backup = stat_stages.at(SPECIAL_DEFENSE_INDEX);
-            stat_stages[SPECIAL_DEFENSE_INDEX] = 0;
-            stat = get_special_defense(weather, Ability::Disabled);
-            stat_stages[SPECIAL_DEFENSE_INDEX] = backup;
-        }
-
+        int16_t stat = get_stat(weather, other_ability, Stat::SPECIAL_DEFENSE);
         if (get_ability() == Ability::FlowerGift &&
             weather == Weather::SUN
         ) {
@@ -549,19 +507,19 @@ public:
         return stat_stages.at(SPEED_INDEX);
     }
 
-    void change_stat_modifier(
+    void change_stat_stage(
         const Stat stat,
-        int change,
+        int8_t stage_change,
         const bool from_other
     ) {
-        assert(change != 0 && change >= -6 && change <= 6);
+        assert(stage_change != 0 && stage_change >= -6 && stage_change <= 6);
         if (get_ability() == Ability::Simple) {
-            change = change * 2;
+            stage_change = stage_change * 2;
         }
-        const int index = static_cast<int>(stat);
+        const int8_t index = static_cast<int8_t>(stat);
         const auto stage = stat_stages[index];
-        const auto new_stage = static_cast<int8_t>(stage + change);
-        if (change > 0) {
+        const int8_t new_stage = stage + stage_change;
+        if (stage_change > 0) {
             stat_stages[index] = std::min(new_stage, MAX_STAT_STAGE);
         } else {
             if (const auto ability = get_ability();
@@ -646,12 +604,14 @@ public:
         status = Status::NONE;
     }
 
-    [[nodiscard]] bool is_flinched() const {
-        return flinched;
+    [[nodiscard]] bool is_confused() const {
+        return confused;
     }
 
-    void set_flinched() {
-        flinched = true;
+    void set_confused() {
+        if (get_ability() != Ability::OwnTempo) {
+            confused = true;
+        }
     }
 
     void set_infatuated() {
@@ -660,8 +620,28 @@ public:
         }
     }
 
-    void set_flash_fire() {
-        this->flash_fired = true;
+    void set_trapped_counter(const int turns) {
+        trapped_counter = turns;
+    }
+
+    [[nodiscard]] bool is_flinched() const {
+        return flinched;
+    }
+
+    void set_flinched() {
+        flinched = true;
+    }
+
+    [[nodiscard]] bool was_hit() const {
+        return was_hit_;
+    }
+
+    void set_was_hit() {
+        was_hit_ = true;
+    }
+
+    [[nodiscard]] bool is_charging() const {
+        return charging;
     }
 
     void start_charging() {
@@ -672,16 +652,20 @@ public:
         charging = false;
     }
 
-    [[nodiscard]] bool is_charging() const {
-        return charging;
+    [[nodiscard]] bool is_recharging() const {
+        return recharging;
     }
 
     void used_move_that_requires_recharge() {
         recharging = true;
     }
 
-    [[nodiscard]] bool is_recharging() const {
-        return recharging;
+    void done_recharging() {
+        recharging = false;
+    }
+
+    [[nodiscard]] uint8_t get_multi_turn_move_counter() const {
+        return multi_turn_move_counter;
     }
 
     void increment_multi_turn_move_counter(const uint8_t max_turns) {
@@ -692,36 +676,8 @@ public:
         }
     }
 
-    void set_was_hit() {
-        was_hit_ = true;
-    }
-
-    [[nodiscard]] bool was_hit() const {
-        return was_hit_;
-    }
-
-    void clear_protect() {
-        protected_ = false;
-    }
-
-    void break_reflect() {
-        reflect = false;
-    }
-
-    void break_light_screen() {
-        light_screen = false;
-    }
-
-    [[nodiscard]] BestMove get_last_used_move() const {
-        return last_used_move;
-    }
-
-    void set_chosen_move(BestMove&& best_move) {
-        this->chosen_move = std::move(best_move);
-    }
-
-    [[nodiscard]] BestMove get_chosen_move() const {
-        return chosen_move;
+    [[nodiscard]] int get_metronome_count() const {
+        return metronome;
     }
 
     void increase_metronome() {
@@ -732,12 +688,73 @@ public:
         metronome = 0;
     }
 
+    [[nodiscard]] bool is_choiced() const {
+        return is_choiced_;
+    }
+
+    void set_is_choiced() {
+        is_choiced_ = true;
+    }
+
     [[nodiscard]] bool is_protected() const {
         return protected_;
     }
 
-    void set_trapped_counter(const int turns) {
-        trapped_counter = turns;
+    void clear_protect() {
+        protected_ = false;
+    }
+
+    [[nodiscard]] bool has_reflect_up() const {
+        return reflect;
+    }
+
+    void break_reflect() {
+        reflect = false;
+    }
+
+    [[nodiscard]] bool has_light_screen_up() const {
+        return light_screen;
+    }
+
+    void break_light_screen() {
+        light_screen = false;
+    }
+
+    [[nodiscard]] bool was_flash_fired() const {
+        return this->flash_fired;
+    }
+
+    void set_flash_fire() {
+        this->flash_fired = true;
+    }
+
+    [[nodiscard]] bool is_truant() const {
+        return truant;
+    }
+
+    [[nodiscard]] BestMove get_last_used_move() const {
+        return last_used_move;
+    }
+
+    [[nodiscard]] BestMove get_chosen_move() const {
+        return chosen_move;
+    }
+
+    void set_chosen_move(BestMove&& best_move) {
+        this->chosen_move = std::move(best_move);
+    }
+
+    void update_last_used_move(const bool move_failed) {
+        if (!move_failed) {
+            set_chosen_move(
+                BestMove{
+                    .move = chosen_move.move,
+                    .damage = 0,
+                    .times_to_hit = 1
+                }
+            );
+        }
+        last_used_move = chosen_move;
     }
 
     void transform(const PokemonState& other) {
@@ -751,11 +768,6 @@ public:
         this->ability = other.ability;
         this->is_choiced_ = false;
     }
-
-    void apply_end_of_turn_effects(
-        Weather weather,
-        PokemonState& defender_state
-    );
 
     [[nodiscard]] bool outspeeds(
         const PokemonState& other_state,
@@ -776,13 +788,6 @@ public:
         }
         return get_speed(weather) > other_state.get_speed(weather);
     }
-
-    uint get_damage_of_attacker_move(
-        const MoveInfo* attacker_move_info,
-        PokemonState& defender_state,
-        Weather weather,
-        bool is_mid_turn
-    );
 
     int get_weather_ball_damage(
         const MoveInfo* attacker_move_info,
@@ -825,21 +830,17 @@ public:
         return damage;
     }
 
-    void move_failed() {
-        set_chosen_move(
-            BestMove{
-                .move = chosen_move.move,
-                .damage = 0,
-                .times_to_hit = 1
-            }
-        );
-        last_used_move = chosen_move;
-    }
+    uint get_damage_of_attacker_move(
+        const MoveInfo* attacker_move_info,
+        PokemonState& defender_state,
+        Weather weather,
+        bool is_mid_turn
+    );
 
-    void move_succeeded() {
-        last_used_move = chosen_move;
-    }
-
+    void apply_end_of_turn_effects(
+        Weather weather,
+        PokemonState& defender_state
+    );
 };
 
 static bool check_transform(PokemonState& attacker_state) {
@@ -888,7 +889,8 @@ inline BattleStats get_battle_stats(
 
     // Defense stats
     const auto attacker_ability = attacker_state.get_ability();
-    const auto defense = defender_state.get_defense(attacker_ability);
+    const auto defense =
+        defender_state.get_defense(weather, attacker_ability);
     auto special_defense =
         defender_state.get_special_defense(weather, attacker_ability);
 

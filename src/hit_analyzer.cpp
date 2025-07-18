@@ -9,7 +9,7 @@
 #include "hungarian.h"
 
 #include "battle_hall_data_source.h"
-#include "battle_simulator.h"
+#include "BattleState.h"
 #include "custom_pokemon.h"
 #include "serebii_pokemon_data_source.h"
 #include "thread_pool.h"
