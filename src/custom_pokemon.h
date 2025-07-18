@@ -42,4 +42,5 @@ std::vector<CustomPokemon> load_custom_pokemon(
     const std::string& filename,
     const std::vector<const MoveInfo*>& all_moves
 );
+
 #endif //CUSTOMPOKEMON_H

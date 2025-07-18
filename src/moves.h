@@ -2411,6 +2411,17 @@ static const std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Shadow Force", Move::ShadowForce}
 };
 
+static std::unordered_map<Move, std::string> create_reverse_move_map() {
+    std::unordered_map<Move, std::string> reverse_map;
+    for (const auto& [str, move] : MOVE_MAP) {
+        reverse_map[move] = str;
+    }
+    return reverse_map;
+}
+
+static const auto MOVE_TO_STRING =
+    create_reverse_move_map();
+
 static void verify_map() {
     std::unordered_set<Move> moves;
     for (int i = 0; i < static_cast<int>(Move::Count); ++i) {
