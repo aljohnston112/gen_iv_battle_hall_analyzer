@@ -1,7 +1,8 @@
 #include <future>
-#include <iostream>
 
 #include "thread_pool.h"
+
+#include "config.h"
 
 namespace thread_pool {
     ThreadPool::ThreadPool(const int numThreads) {
@@ -62,7 +63,10 @@ namespace thread_pool {
 
     unsigned int ThreadPool::getNumberOfThreads() {
         static unsigned int numThreads = std::thread::hardware_concurrency();
-        return numThreads;
+        if (MULTI_THREADED) {
+            return numThreads;
+        }
+        return 1;
     }
 
     std::shared_ptr<ThreadPool> ThreadPool::getCPUWorkInstance() {

@@ -5,7 +5,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "custom_pokemon.h"
@@ -67,9 +66,9 @@ std::array<
 );
 
 void export_battle_hall_pokemon(
-    const std::unordered_map<
-        uint8_t,
-        std::vector<BattleHallPokemon>
+    const std::array<
+        std::vector<BattleHallPokemon>,
+        NUMBER_OF_GROUPS
     >& group_to_hall_pokemon,
     const std::array<
         std::array<

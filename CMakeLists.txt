@@ -32,7 +32,6 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/thread_pool.h
         external/libhungarian/hungarian.c
         external/libhungarian/hungarian.h
-        src/PokemonState.cpp
 )
 target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
 

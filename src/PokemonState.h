@@ -1735,16 +1735,16 @@ inline int apply_damage_modifiers(
             move_type == PokemonType::FIGHTING)
     ) {
         effectiveness = 1.0;
-    } else if (attacker_ability == Ability::WonderGuard &&
-        effectiveness < 2.0
-    ) {
-        return 0;
     }
     const auto defender_ability = defender_state.get_ability();
     if (defender_ability == Ability::SolidRock &&
         effectiveness >= 2.0
     ) {
         effectiveness = std::floor(effectiveness * 0.75);
+    } else if (defender_ability == Ability::WonderGuard &&
+        effectiveness < 2.0
+    ) {
+        return 0;
     }
 
     damage = std::floor(damage * effectiveness);
@@ -1859,8 +1859,8 @@ inline uint PokemonState::get_damage_of_attacker_move(
     }
     const uint16_t defender_defense =
         is_special
-            ? defender_state.get_special_defense(weather, defender_ability)
-            : defender_state.get_defense(weather, defender_ability);
+            ? defender_state.get_defense(weather, defender_ability)
+            : defender_state.get_special_defense(weather, defender_ability);
     // Abilities that change attack stat
     if (attacker_move_info->category == Category::PHYSICAL) {
         if ((attacker_ability == Ability::Guts &&

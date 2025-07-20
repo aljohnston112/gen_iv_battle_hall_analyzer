@@ -509,7 +509,8 @@ enum class Pokemon {
     Zangoose,
     Zapdos,
     Zigzagoon,
-    Zubat
+    Zubat,
+    Count
 };
 
 static const std::unordered_map<std::string, Pokemon> STRING_TO_POKEMON = {

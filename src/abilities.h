@@ -3,7 +3,6 @@
 
 #include <array>
 #include <bitset>
-#include <unordered_map>
 #include <debug/vector>
 
 #include "Pokemon.h"

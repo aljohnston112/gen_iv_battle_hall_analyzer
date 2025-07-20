@@ -502,6 +502,17 @@ class BattleState {
         bool best_move_must_charge = false;
         const MoveInfo* weather_ball = nullptr;
         const auto defender_move = defender_chosen_move.move;
+        const auto defender_ability = defender_state.get_ability();
+        bool unable_to_hit_defender = (defender_move != nullptr &&
+                (move_has_flag(
+                        defender_move->move,
+                        MoveFlag::GOES_UNDER_GROUND
+                    ) ||
+                    move_has_flag(
+                        defender_move->move,
+                        MoveFlag::GOES_UNDER_WATER
+                    ))) ||
+            (defender_ability == Ability::WonderGuard);
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
@@ -569,7 +580,6 @@ class BattleState {
 
             bool move_must_charge =
                 does_move_have_to_charge(attacker_move, attacker_item, weather);
-
             if (((attacker_move_priority < defender_move_priority &&
                         damage_from_defender < attacker_health) ||
                     attacker_move_priority == 0 ||
@@ -601,7 +611,9 @@ class BattleState {
                     best_water_move.times_to_hit = times_to_hit;
                 }
             } else if (best_move.move == nullptr) {
-                if (attacker_move->move == Move::SolarBeam) {
+                if ((attacker_move->move == Move::SolarBeam) ||
+                    unable_to_hit_defender
+                ) {
                     best_move = {
                         attacker_move,
                         damage,
@@ -636,8 +648,9 @@ class BattleState {
         uint hits_to_defender;
         if (damage_to_defender != 0) {
             hits_to_defender = defender_health / damage_to_defender;
-        } else if (attacker_pokemon.name == Pokemon::Wobbuffet &&
-            defender_move == nullptr
+        } else if ((attacker_pokemon.name == Pokemon::Wobbuffet &&
+                defender_move == nullptr) ||
+            unable_to_hit_defender
         ) {
             hits_to_defender = std::numeric_limits<uint>::max();
         } else {
@@ -716,7 +729,6 @@ class BattleState {
         }
 
         // Healing may be better too
-        const auto defender_ability = defender_state.get_ability();
         const auto defenders_last_used_move =
             defender_state.get_last_used_move();
         for (const auto& move : attacker_pokemon.moves) {
@@ -1174,7 +1186,7 @@ class BattleState {
             field_location = FieldLocation::ON_FIELD;
         }
 
-        if (field_location != FieldLocation::ON_FIELD && is_mid_turn) {
+        if (field_location != FieldLocation::ON_FIELD && !is_mid_turn) {
             // Defender attack may miss or do double damage
             choose_move_against_defender(
                 defender_state.is_player,

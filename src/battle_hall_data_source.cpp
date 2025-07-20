@@ -18,8 +18,7 @@ std::string strip_space(const std::string& string) {
     auto end = string.end();
     do {
         --end;
-    }
-    while (std::distance(start, end) > 0 && std::isspace(*end));
+    } while (std::distance(start, end) > 0 && std::isspace(*end));
 
     return {start, end + 1};
 }
@@ -541,8 +540,10 @@ std::array<
 }
 
 void export_battle_hall_pokemon(
-    const std::unordered_map<uint8_t, std::vector<BattleHallPokemon>>&
-    group_to_hall_pokemon,
+    const std::array<
+        std::vector<BattleHallPokemon>,
+        NUMBER_OF_GROUPS
+    >& group_to_hall_pokemon,
     const std::array<
         std::array<
             std::array<std::vector<CustomPokemon>, NUMBER_OF_TYPES>,
@@ -555,7 +556,7 @@ void export_battle_hall_pokemon(
     for (uint8_t group_number = NUMBER_OF_GROUPS; group_number > 0; group_number
          --) {
         const auto& rank_to_over_2_ =
-            group_to_rank_to_over_2.at(group_number);
+            group_to_rank_to_over_2.at(group_number - 1);
         for (const uint8_t rank :
              std::ranges::reverse_view(GROUP_TO_RANKS.at(group_number))
         ) {
@@ -566,7 +567,7 @@ void export_battle_hall_pokemon(
                     over_2_to_hall_pokemon.at(over_2);
                 for (const auto& opponent_pokemon : hall_pokemon) {
                     auto it = std::ranges::find_if(
-                        group_to_hall_pokemon.at(group_number),
+                        group_to_hall_pokemon.at(group_number - 1),
                         [opponent_pokemon](const BattleHallPokemon& p) {
                             return p.name == get_pokemon_name(
                                 opponent_pokemon.name);

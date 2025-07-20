@@ -6,6 +6,7 @@
 #include "battle_hall_data_source.h"
 #include "serebii_pokemon_data_source.h"
 
+constexpr bool MULTI_THREADED = false;
 constexpr uint8_t LEVEL = 30;
 constexpr bool SKIP_RANKS = false;
 

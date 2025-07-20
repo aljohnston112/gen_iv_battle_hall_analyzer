@@ -2,7 +2,6 @@
 #define HIT_ANALYZER_H
 
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "battle_hall_data_source.h"

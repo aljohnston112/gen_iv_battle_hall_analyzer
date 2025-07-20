@@ -15,14 +15,20 @@ int main() {
         get_all_pokemon_moves(
             all_serebii_pokemon
         );
+    const auto all_battle_hall_pokemon =
+        get_all_battle_hall_pokemon(
+            all_moves
+        );
     const auto group_to_rank_to_over_2 =
         get_all_custom_hall_pokemon(
             all_serebii_pokemon,
-            get_all_battle_hall_pokemon(
-                all_moves
-            ),
+            all_battle_hall_pokemon,
             all_moves
         );
+    // export_battle_hall_pokemon(
+    //     all_battle_hall_pokemon,
+    //     group_to_rank_to_over_2
+    // );
 
     const auto player_pokemon_forms =
         get_pokemon_forms(all_serebii_pokemon);
@@ -39,19 +45,6 @@ int main() {
             analyze(group_to_rank_to_over_2, pokemon_form);
         }
     }
-
-    // const auto all_battle_hall_pokemon =
-    //     get_all_battle_hall_pokemon(
-    //         all_moves
-    //     );
-    // export_battle_hall_pokemon(
-    //     all_battle_hall_pokemon,
-    //     get_all_custom_hall_pokemon(
-    //         all_serebii_pokemon,
-    //         all_battle_hall_pokemon,
-    //         all_moves
-    //     )
-    // );
 
     const auto end =
         std::chrono::high_resolution_clock::now();
