@@ -44,18 +44,18 @@ struct BattleEntry {
 
 struct BattleEntryHash {
     std::size_t operator()(const BattleEntry& entry) const {
-        return (static_cast<int>(entry.type) <<
+        return (static_cast<uint64_t>(entry.type) <<
                 (bits_for_level +
                     (bits_for_ability * 2) +
                     (bits_for_pokemon * 2))) |
-            (entry.opponent.level <<
-                ((bits_for_ability * 2) + (bits_for_pokemon * 2))) |
-            (static_cast<int>(entry.opponent.name) <<
-                (bits_for_ability * (2 + bits_for_pokemon))) |
-            (static_cast<int>(entry.opponent.ability) <<
+            ((static_cast<u_int64_t>(entry.opponent.level) <<
+                (((bits_for_ability * 2) + (bits_for_pokemon * 2)))) |
+            (static_cast<uint64_t>(entry.opponent.name) <<
+                ((2 * bits_for_ability) + bits_for_pokemon)) |
+            (static_cast<uint64_t>(entry.opponent.ability) <<
                 (bits_for_ability + bits_for_pokemon)) |
-            (static_cast<int>(entry.player.name) + bits_for_ability) |
-            static_cast<int>(entry.player.ability);
+            (static_cast<uint64_t>(entry.player.name) << bits_for_ability) |
+            static_cast<uint64_t>(entry.player.ability));
     }
 };
 
