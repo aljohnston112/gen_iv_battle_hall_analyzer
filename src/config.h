@@ -6,9 +6,11 @@
 #include "battle_hall_data_source.h"
 #include "serebii_pokemon_data_source.h"
 
-constexpr bool MULTI_THREADED = false;
+constexpr bool MULTI_THREADED = true;
 constexpr uint8_t LEVEL = 30;
 constexpr bool SKIP_RANKS = false;
+constexpr bool ALL_MOVES = false;
+constexpr bool USE_HIGHEST_RANK_FOR_WALLS = true;
 
 static std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {
     static const std::unordered_map<PokemonType, int> type_to_rank_to_skip = {
@@ -32,7 +34,9 @@ static std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {
     };
 
     std::array<int, NUMBER_OF_TYPES> out{};
-    for (const auto& [type, rank] : type_to_rank_to_skip) {
+    for (const auto& [type, rank] :
+         type_to_rank_to_skip
+    ) {
         out[static_cast<int>(type)] = rank;
     }
     return out;
@@ -78,16 +82,25 @@ static std::vector<
                 // Move::CloseCombat,
                 Move::Return,
                 Move::Waterfall,
+                Move::KnockOff,
+                Move::Surf,
             };
             for (auto& p : p_list) {
                 std::vector<const MoveInfo*> moves{};
-                for (const auto& move : p.moves) {
-                    if (moves_to_include.contains(move->move)) {
-                        moves.push_back(move);
+                if constexpr (!ALL_MOVES) {
+                    for (const auto& move : p.moves) {
+                        if (moves_to_include.contains(move->move)) {
+                            moves.push_back(move);
+                        }
+                    }
+                } else {
+                    for (const auto& move : p.moves) {
+                        if (move->accuracy == 100) {
+                            moves.push_back(move);
+                        }
                     }
                 }
                 p.moves = moves;
-
                 p.stats[0] = 70;
                 p.stats[1] = 38;
                 p.stats[2] = 32;

@@ -125,9 +125,14 @@ class PokemonState {
     bool light_screen = false;
 
     bool flash_fired = false;
-    uint slow_start_count = 0;
+    uint8_t slow_start_count = 0;
     bool truant = false;
     bool unburdened = false;
+
+    uint16_t rollout_power = 0;
+    uint8_t rollout_turns = 0;
+
+    bool knocked_off = false;
 
     BestMove last_used_move{};
     BestMove chosen_move{};
@@ -350,7 +355,7 @@ public:
     }
 
     bool try_set_item(const Item item) {
-        if (this->item == Item::None) {
+        if (this->item == Item::None && !knocked_off) {
             this->item = item;
             grounded = this->item == Item::IronBall;
             if (ability == Ability::Multitype &&
@@ -364,9 +369,10 @@ public:
         return false;
     }
 
-    void clear_item() {
+    void clear_item(const bool knocked_off = false) {
         if (item != Item::None) {
             unburdened = true;
+            this->knocked_off = knocked_off;
         }
         item = Item::None;
         grounded = false;
@@ -640,6 +646,8 @@ public:
 
     void set_flinched() {
         flinched = true;
+        rollout_power = 0;
+        rollout_turns = 0;
     }
 
     [[nodiscard]] bool was_hit() const {
@@ -744,6 +752,26 @@ public:
 
     [[nodiscard]] bool is_truant() const {
         return truant;
+    }
+
+    [[nodiscard]] uint16_t get_rollout_power() const {
+        return rollout_power;
+    }
+
+    void set_rollout_power(const uint16_t rollout_power) {
+        this->rollout_power = rollout_power;
+    }
+
+    [[nodiscard]] uint16_t get_rollout_turns() const {
+        return rollout_turns;
+    }
+
+    void start_rollout() {
+        this->rollout_turns = 5;
+    }
+
+    void stop_rollout() {
+        this->rollout_turns = 0;
     }
 
     [[nodiscard]] BestMove get_last_used_move() const {
@@ -998,9 +1026,19 @@ public:
     }
 
     void update_end_of_turn(const Ability ability) {
+        if (rollout_power > 0) {
+            rollout_turns--;
+        }
+        if (rollout_turns != 0) {
+            rollout_power *= 2;
+        } else {
+            rollout_power = 0;
+        }
         was_hit_ = false;
         flinched = false;
-        slow_start_count++;
+        if (slow_start_count < 5) {
+            slow_start_count++;
+        }
         if (ability == Ability::Truant) {
             truant = !truant;
             recharging = false;
@@ -1090,52 +1128,6 @@ inline bool check_transform(PokemonState& attacker_state) {
         return true;
     }
     return false;
-}
-
-struct BattleStats {
-    int32_t attack;
-    int32_t special_attack;
-    int32_t defense;
-    int32_t special_defense;
-};
-
-inline BattleStats get_battle_stats(
-    PokemonState& attacker_state,
-    PokemonState& defender_state,
-    const Weather weather
-) {
-    // Attack stats
-    const auto defender_ability = defender_state.get_ability();
-    auto attack =
-        attacker_state.get_attack(weather, defender_ability);
-    auto special_attack =
-        attacker_state.get_special_attack(weather, defender_ability);
-    if (const auto attacker_item = attacker_state.get_item_for_effect();
-        attacker_item == Item::ChoiceBand
-    ) {
-        attack = std::floor(attack * 1.5);
-    } else if (attacker_item == Item::ChoiceSpecs) {
-        special_attack = std::floor(special_attack * 1.5);
-    }
-
-    // Defense stats
-    const auto attacker_ability = attacker_state.get_ability();
-    const auto defense =
-        defender_state.get_defense(weather, attacker_ability);
-    auto special_defense =
-        defender_state.get_special_defense(weather, attacker_ability);
-
-    if (weather == Weather::SANDSTORM &&
-        defender_state.has_type(PokemonType::ROCK)
-    ) {
-        special_defense = std::floor(special_defense * 1.5);
-    }
-    return BattleStats{
-        .attack = attack,
-        .special_attack = special_attack,
-        .defense = defense,
-        .special_defense = special_defense
-    };
 }
 
 inline void recalculate_chosen_move_damage(
@@ -1383,6 +1375,22 @@ inline int check_for_zero_or_fixed_damage(
     return damage;
 }
 
+inline double get_rollout_power(
+    const PokemonState& attacker_state,
+    const MoveInfo* attacker_move_info
+    ) {
+    double power = attacker_move_info->power;
+    if (attacker_state.get_rollout_power() != 0) {
+        power = attacker_state.get_rollout_power();
+    } else if (attacker_state.get_last_used_move().move != nullptr &&
+        attacker_state.get_last_used_move().move->move ==
+        Move::DefenseCurl
+    ) {
+        power *= 2;
+    }
+    return power;
+}
+
 inline double get_power_based_on_move(
     const PokemonState& attacker_state,
     const MoveInfo* attacker_move_info,
@@ -1395,7 +1403,9 @@ inline double get_power_based_on_move(
     const auto status = attacker_state.get_status();
     const auto attacker_item = attacker_state.get_item_for_effect();
     const int attacker_max_health = attacker_state.max_health;
-    if (attacker_move == Move::Eruption ||
+    if (attacker_move == Move::Rollout) {
+        power = get_rollout_power(attacker_state, attacker_move_info);
+    } else if (attacker_move == Move::Eruption ||
         attacker_move == Move::WaterSpout
     ) {
         power = std::max(

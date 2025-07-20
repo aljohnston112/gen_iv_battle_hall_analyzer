@@ -246,6 +246,8 @@ inline void check_unimplemented_moves(
             move != Move::FakeOut &&
             move != Move::FutureSight && // TODO probably useless
             move != Move::WringOut &&
+            move != Move::Rollout &&
+            move != Move::KnockOff &&
             (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -556,6 +558,15 @@ class BattleState {
                 continue;
             }
 
+            if (attacker_move->move == Move::Rollout &&
+                attacker_state.get_rollout_turns() > 0) {
+                best_move.move = attacker_move;
+                best_move.damage = damage;
+                best_move.times_to_hit = 1;
+                attacker_state.set_chosen_move(std::move(best_move));
+                return attacker_state.get_chosen_move();
+            }
+
             uint8_t times_to_hit =
                 get_times_to_hit(attacker_is_player, attacker_move);
 
@@ -566,7 +577,8 @@ class BattleState {
                 get_move_priority(defender_move);
 
             if (attacker_move_priority > defender_move_priority &&
-                damage >= defender_health
+                damage >= defender_health &&
+                attacker_state.get_rollout_turns() == 0
             ) {
                 attacker_state.set_chosen_move(
                     BestMove{
@@ -578,12 +590,15 @@ class BattleState {
                 return attacker_state.get_chosen_move();
             }
 
+            // TODO rollout
+            const bool passes_priority_check =
+                (attacker_move_priority < defender_move_priority &&
+                    damage_from_defender < attacker_health) ||
+                attacker_move_priority == 0 ||
+                best_move.move == nullptr;
             bool move_must_charge =
                 does_move_have_to_charge(attacker_move, attacker_item, weather);
-            if (((attacker_move_priority < defender_move_priority &&
-                        damage_from_defender < attacker_health) ||
-                    attacker_move_priority == 0 ||
-                    best_move.move == nullptr) &&
+            const bool passes_charge_check =
                 ((!move_must_charge &&
                         !best_move_must_charge &&
                         damage > best_move.damage) ||
@@ -595,8 +610,8 @@ class BattleState {
                                 attacker_faster) ||
                             (damage_from_defender < attacker_health / 2)))) &&
                 !(move_must_charge &&
-                    attacker_ability == Ability::Truant)
-            ) {
+                    attacker_ability == Ability::Truant);
+            if (passes_priority_check && passes_charge_check) {
                 best_move.damage = damage;
                 best_move.move = attacker_move;
                 best_move.times_to_hit = times_to_hit;
@@ -1077,6 +1092,16 @@ class BattleState {
             }
         }
 
+        // Rollout
+        if (attacker_move == Move::Rollout) {
+            if (attacker_state.get_rollout_turns() == 0) {
+                attacker_state.set_rollout_power(
+                    get_rollout_power(attacker_state, attacker_chosen_move.move)
+                );
+                attacker_state.start_rollout();
+            }
+        }
+
         // Weather changing moves
         if (move_has_flag(attacker_move, MoveFlag::CHANGES_WEATHER)) {
             int turns = 5;
@@ -1294,6 +1319,12 @@ class BattleState {
                 }
                 if (attacker_move == Move::FakeOut) {
                     defender_state.set_flinched();
+                }
+                if (attacker_move == Move::KnockOff ||
+                    defender_ability != Ability::StickyHold &&
+                    defender_ability != Ability::Multitype
+                ) {
+                    defender_state.clear_item(true);
                 }
             }
 
