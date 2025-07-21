@@ -1406,14 +1406,11 @@ class BattleState {
 
         const bool apply_effect = defender_ability != Ability::ShieldDust;
 
-        //Flash fire
         if (defender_ability == Ability::FlashFire &&
             attacker_move.move->type == PokemonType::FIRE
         ) {
             defender_state.set_flash_fire();
-        }
-
-        if (defender_ability == Ability::MotorDrive &&
+        } else if (defender_ability == Ability::MotorDrive &&
             attacker_move.move->type == PokemonType::ELECTRIC
         ) {
             defender_state.change_stat_stage(Stat::SPEED, 1, true);
@@ -1517,7 +1514,7 @@ class BattleState {
         }
 
         if (move == Move::BugBite) {
-            if (BERRIES.contains(defender_state.get_item_for_effect()) &&
+            if (BERRIES[static_cast<int>(defender_state.get_item_for_effect())] &&
                 defender_ability != Ability::StickyHold
             ) {
                 attacker_state.eat_berry(defender_state.get_item_for_effect());
@@ -2107,8 +2104,8 @@ public:
         const CustomPokemon& player_pokemon,
         const CustomPokemon& opponent_pokemon
     ):
-        player_state(std::move(player_pokemon), true),
-        opponent_state(std::move(opponent_pokemon), false) {}
+        player_state{player_pokemon, true},
+        opponent_state{opponent_pokemon, false} {}
 
     std::pair<bool, std::vector<const MoveInfo*>> battle() {
         std::vector<const MoveInfo*> player_moves{};
@@ -2233,9 +2230,9 @@ public:
         }
 
         if (player_state.get_health() > 0) {
-            return std::make_pair(true, player_moves);
+            return {true, std::move(player_moves)};
         }
-        return std::make_pair(false, player_moves);
+        return {false, std::move(player_moves)};
     }
 };
 

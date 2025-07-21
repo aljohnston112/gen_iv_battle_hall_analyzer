@@ -225,7 +225,7 @@ static constexpr std::array<bool, NUMBER_OF_ABILITIES> IGNORABLE_ABILITIES = [] 
     return flags;
 }();
 
-static bool ability_is_ignorable(Ability ability) {
+inline bool ability_is_ignorable(Ability ability) {
     return IGNORABLE_ABILITIES.at(static_cast<int>(ability));
 }
 
@@ -238,7 +238,7 @@ static constexpr std::array<bool, NUMBER_OF_ABILITIES> NON_COPYABLE_ABILITIES = 
     return flags;
 }();
 
-static bool ability_is_copyable(Ability ability) {
+inline bool ability_is_copyable(Ability ability) {
     return !NON_COPYABLE_ABILITIES.at(static_cast<int>(ability));
 }
 

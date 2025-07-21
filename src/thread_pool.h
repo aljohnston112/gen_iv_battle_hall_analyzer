@@ -41,16 +41,16 @@ namespace thread_pool {
         >
         void submit(
             std::vector<std::future<PromiseResult>>& futures,
-            std::function<
+            const std::function<
                 void(const ParameterType&, std::promise<PromiseResult>&&)
-            > function,
+            >& function,
             const ParameterType& data
         ) {
-            auto promise = std::promise<PromiseResult>();
+            auto promise = std::promise<PromiseResult>{};
             futures.emplace_back(promise.get_future());
             addTask(
                 [
-                    function = std::move(function),
+                    &function = function,
                     &namedSeries = data,
                     promise = std::move(promise)
                 ] mutable {
@@ -84,7 +84,7 @@ namespace thread_pool {
             }
             for (auto& future : futures) {
                 auto result = future.get();
-                results.emplace_back(result);
+                results.emplace_back(std::move(result));
             }
             return results;
         }

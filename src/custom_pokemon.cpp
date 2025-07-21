@@ -40,13 +40,7 @@ void save_custom_pokemon(
                 accuracy,
                 effect_percent
             ] = *move;
-            output_stream << move_name << ','
-                << static_cast<int>(move_enum) << ','
-                << static_cast<int>(move_type) << ','
-                << static_cast<int>(category) << ','
-                << power << ','
-                << accuracy << ','
-                << effect_percent << '\n';
+            output_stream << static_cast<int>(move_enum) << '\n';
         }
         output_stream << stats.size() << '\n';
         uint8_t i = 0;
@@ -98,35 +92,12 @@ std::vector<CustomPokemon> load_custom_pokemon(
         input_stream >> move_count;
         input_stream.ignore();
         for (size_t i = 0; i < move_count; ++i) {
-            MoveInfo move_info;
             std::getline(input_stream, line);
             std::istringstream move_string_stream(line);
-            std::getline(move_string_stream, move_info.name, ',');
-
             int move_int;
             move_string_stream >> move_int;
             move_string_stream.ignore();
-            move_info.move = static_cast<Move>(move_int);
-
-            int type_int;
-            move_string_stream >> type_int;
-            move_string_stream.ignore();
-            move_info.type = static_cast<PokemonType>(type_int);
-
-            int category_int;
-            move_string_stream >> category_int;
-            move_string_stream.ignore();
-            move_info.category = static_cast<Category>(category_int);
-
-            move_string_stream >> move_info.power;
-            move_string_stream.ignore();
-
-            move_string_stream >> move_info.accuracy;
-            move_string_stream.ignore();
-
-            move_string_stream >> move_info.effect_percent;
-
-            custom_pokemon.moves.emplace_back(all_moves.at(move_int));
+            custom_pokemon.moves.emplace_back(all_moves[move_int]);
         }
 
         size_t stat_count;
@@ -147,7 +118,7 @@ std::vector<CustomPokemon> load_custom_pokemon(
         }
 
         input_stream >> custom_pokemon.pounds;
-        all_custom_pokemon.push_back(std::move(custom_pokemon));
+        all_custom_pokemon.emplace_back(std::move(custom_pokemon));
         input_stream.ignore();
     }
 

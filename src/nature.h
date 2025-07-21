@@ -27,7 +27,7 @@ static const std::unordered_map<std::string, PokemonType> pokemon_type_map{
     {"dark", PokemonType::DARK}
 };
 
-static std::unordered_map<PokemonType, std::string> create_reverse_type_map() {
+inline std::unordered_map<PokemonType, std::string> create_reverse_type_map() {
     std::unordered_map<PokemonType, std::string> reverse_map;
     for (const auto& [str, type] : pokemon_type_map) {
         reverse_map[type] = str;
@@ -38,7 +38,7 @@ static std::unordered_map<PokemonType, std::string> create_reverse_type_map() {
 static const auto TYPE_TO_STRING =
     create_reverse_type_map();
 
-static std::string get_type_name(const PokemonType type) {
+inline std::string get_type_name(const PokemonType type) {
     return TYPE_TO_STRING.at(type);
 }
 

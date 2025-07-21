@@ -25,16 +25,16 @@ constexpr uint bits_for_ability =
 constexpr uint bits_for_level =
     std::bit_width(static_cast<uint>(Ability::Disabled));
 struct CustomPokemonHash {
-    std::size_t operator()(const CustomPokemon& p) const {
-        return (static_cast<int>(p.name) << (bits_for_ability + bits_for_level)) |
-        (static_cast<int>(p.level) << bits_for_ability) |
-            static_cast<int>(p.ability);
+    std::size_t operator()(const CustomPokemon* p) const {
+        return (static_cast<int>(p->name) << (bits_for_ability + bits_for_level)) |
+        (static_cast<int>(p->level) << bits_for_ability) |
+            static_cast<int>(p->ability);
     }
 };
 
 struct CustomPokemonEq {
-    bool operator()(const CustomPokemon& a, const CustomPokemon& b) const {
-        return a.name == b.name && a.ability == b.ability && a.level == b.level;
+    bool operator()(const CustomPokemon* a, const CustomPokemon* b) const {
+        return a->name == b->name && a->ability == b->ability && a->level == b->level;
     }
 };
 

@@ -33,8 +33,8 @@ struct PairHash {
 };
 
 struct BattleEntry {
-    CustomPokemon player;
-    CustomPokemon opponent;
+    const CustomPokemon& player;
+    const CustomPokemon& opponent;
     PokemonType type;
     uint8_t rank;
     uint8_t over_2;
@@ -115,7 +115,7 @@ std::array<
     std::array<
         std::array<
             std::unordered_set<
-                CustomPokemon,
+                const CustomPokemon*,
                 CustomPokemonHash,
                 CustomPokemonEq
             >,
@@ -138,7 +138,7 @@ std::array<
         std::array<
             std::array<
                 std::unordered_set<
-                    CustomPokemon,
+                    const CustomPokemon*,
                     CustomPokemonHash,
                     CustomPokemonEq
                 >,
@@ -168,7 +168,7 @@ std::array<
                         if (over_2 >= lowest_over_2) {
                             type_to_rank_to_over_2_to_hall_pokemon[
                                 type_index
-                            ][rank - 1][over_2].insert(opponent_pokemon);
+                            ][rank - 1][over_2].insert(&opponent_pokemon);
                         }
                     }
                 }
@@ -183,7 +183,7 @@ std::vector<BattleEntry> initialize_battles(
         std::array<
             std::array<
                 std::unordered_set<
-                    CustomPokemon,
+                    const CustomPokemon*,
                     CustomPokemonHash,
                     CustomPokemonEq
                 >,
@@ -216,10 +216,10 @@ std::vector<BattleEntry> initialize_battles(
                         for (const auto& player_pokemon :
                              player_pokemon_nature_variants
                         ) {
-                            battles.push_back(
+                            battles.emplace_back(
                                 BattleEntry{
                                     .player = player_pokemon,
-                                    .opponent = opponent_pokemon,
+                                    .opponent = *opponent_pokemon,
                                     .type = type,
                                     .rank = rank,
                                     .over_2 = over_2
@@ -238,16 +238,16 @@ void do_battle(
     const BattleEntry& battle_entry,
     std::promise<ResultEntry>&& promise
 ) {
-    const auto& [won, moves] =
+    auto& [won, moves] =
         battle(battle_entry.player, battle_entry.opponent);
     promise.set_value(
         ResultEntry{
             .type = battle_entry.type,
             .rank = battle_entry.rank,
             .over_2 = battle_entry.over_2,
-            .opponent = battle_entry.opponent,
+            .opponent = std::move(battle_entry.opponent),
             .won = won,
-            .moves = moves
+            .moves = std::move(moves)
         }
     );
 }

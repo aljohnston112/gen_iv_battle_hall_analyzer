@@ -210,9 +210,8 @@ class PokemonState {
     }
 
     void try_apply_berry(const bool eaten) {
-        const auto item = get_item_for_effect();
-        if (const bool is_berry = BERRIES.contains(item);
-            is_berry
+        if (const auto item = get_item_for_effect();
+            BERRIES[static_cast<int>(item)]
         ) {
             const int current_health = get_health();
             const bool less_than_half_health = current_health <= max_health / 2;
@@ -274,11 +273,11 @@ class PokemonState {
 
 public:
     const bool is_player;
-    const CustomPokemon pokemon;
+    const CustomPokemon& pokemon;
     const uint8_t level;
     const int max_health;
 
-    PokemonState(CustomPokemon pokemon, const bool is_player):
+    PokemonState(const CustomPokemon& pokemon, const bool is_player):
         moves(pokemon.moves),
         types(pokemon.types),
         ability(pokemon.ability),
@@ -296,7 +295,7 @@ public:
         ),
         grounded(item == Item::IronBall),
         is_player(is_player),
-        pokemon(std::move(pokemon)),
+        pokemon(pokemon),
         level(pokemon.level),
         max_health(pokemon.stats[HEALTH_INDEX]) {
         if (ability == Ability::Multitype &&
@@ -817,7 +816,7 @@ public:
         const MoveInfo* this_move,
         const Weather weather
     ) const {
-        if (is_player && other_state.get_item() == Item::QuickClaw) {
+        if (is_player && other_state.get_item_for_effect() == Item::QuickClaw) {
             return false;
         }
         if (get_ability() == Ability::Stall) {
@@ -1378,7 +1377,7 @@ inline int check_for_zero_or_fixed_damage(
 inline double get_rollout_power(
     const PokemonState& attacker_state,
     const MoveInfo* attacker_move_info
-    ) {
+) {
     double power = attacker_move_info->power;
     if (attacker_state.get_rollout_power() != 0) {
         power = attacker_state.get_rollout_power();
@@ -1557,8 +1556,9 @@ inline double apply_item_power_modifiers(
             attacker_move_info->category == Category::SPECIAL)
     ) {
         power = std::floor(power * 1.1);
-    } else if ((POWER_ITEMS[static_cast<int>(attacker_item)] &&
-            ITEM_TO_TYPE.at(attacker_item) == move_type) ||
+    } else if (ITEM_TO_TYPE[static_cast<int>(attacker_item)][
+            static_cast<int>(move_type)
+        ] ||
         (PLATE_ITEMS[static_cast<int>(attacker_item)] &&
             PLATE_ITEM_TYPES.at(attacker_item) == move_type)
     ) {

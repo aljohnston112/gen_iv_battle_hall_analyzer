@@ -188,7 +188,7 @@ std::array<
         std::vector<std::string> cells;
         std::string cell;
         while (std::getline(string_stream, cell, ',')) {
-            cells.push_back(strip_space(cell));
+            cells.emplace_back(strip_space(cell));
         }
         // Make sure all expected data is there
         if (cells.size() < 14) {
@@ -202,8 +202,8 @@ std::array<
         pokemon.moves = std::vector<const MoveInfo*>{};
         for (int i = 3; i <= 6; ++i) {
             if (cells[i] != "-") {
-                pokemon.moves.push_back(
-                    all_move_infos.at(static_cast<int>(MOVE_MAP.at(cells[i])))
+                pokemon.moves.emplace_back(
+                    all_move_infos[static_cast<int>(MOVE_MAP.at(cells[i]))]
                 );
             }
         }
@@ -212,7 +212,7 @@ std::array<
         for (int i = 8; i <= 13; ++i) {
             pokemon.evs[static_cast<Stat>(i - 8)] = (std::stoi(cells[i]));
         }
-        group_to_hall_pokemon[group_number - 1].push_back(std::move(pokemon));
+        group_to_hall_pokemon[group_number - 1].emplace_back(std::move(pokemon));
     }
     return group_to_hall_pokemon;
 }

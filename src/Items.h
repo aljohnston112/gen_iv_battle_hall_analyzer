@@ -155,17 +155,20 @@ static const std::unordered_set CHOICE_ITEMS = {
     Item::ChoiceSpecs,
 };
 
-static const std::unordered_set BERRIES = {
-    Item::ApicotBerry,
-    Item::ChestoBerry,
-    Item::GanlonBerry,
-    Item::LiechiBerry,
-    Item::LumBerry,
-    Item::PersimBerry,
-    Item::PetayaBerry,
-    Item::SalacBerry,
-    Item::SitrusBerry,
-};
+static const std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [] {
+    std::array<bool, static_cast<int>(Item::None) + 1> array{};
+    array.fill(false);
+    array[static_cast<int>(Item::ApicotBerry)] = true;
+    array[static_cast<int>(Item::ChestoBerry)] = true;
+    array[static_cast<int>(Item::GanlonBerry)] = true;
+    array[static_cast<int>(Item::LiechiBerry)] = true;
+    array[static_cast<int>(Item::LumBerry)] = true;
+    array[static_cast<int>(Item::PersimBerry)] = true;
+    array[static_cast<int>(Item::PetayaBerry)] = true;
+    array[static_cast<int>(Item::SalacBerry)] = true;
+    array[static_cast<int>(Item::SitrusBerry)] = true;
+    return array;
+}();
 
 static const std::unordered_set STAT_BERRIES = {
     Item::ApicotBerry,
@@ -242,7 +245,7 @@ static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"", Item::None}
 };
 
-static std::unordered_map<Item, std::string> initialize_item_to_string() {
+inline std::unordered_map<Item, std::string> initialize_item_to_string() {
     std::unordered_map<Item, std::string> map{};
     for (const auto& [item_name, item] : STRING_TO_ITEM) {
         map[item] = item_name;
@@ -254,41 +257,71 @@ static std::unordered_map<Item, std::string> ITEM_TO_STRING =
     initialize_item_to_string();
 
 // 20% boost in power
-static const std::unordered_map<Item, PokemonType> ITEM_TO_TYPE = {
-    {Item::BlackBelt, PokemonType::FIGHTING},
-    {Item::BlackGlasses, PokemonType::DARK},
-    {Item::Charcoal, PokemonType::FIRE},
-    {Item::DragonFang, PokemonType::DRAGON},
-    {Item::HardStone, PokemonType::ROCK},
-    {Item::Magnet, PokemonType::ELECTRIC},
-    {Item::MetalCoat, PokemonType::STEEL},
-    {Item::MiracleSeed, PokemonType::GRASS},
-    {Item::MysticWater, PokemonType::WATER},
-    {Item::NeverMeltIce, PokemonType::ICE},
-    {Item::PoisonBarb, PokemonType::POISON},
-    {Item::SharpBeak, PokemonType::FLYING},
-    {Item::SilkScarf, PokemonType::NORMAL},
-    {Item::SilverPowder, PokemonType::BUG},
-    {Item::SoftSand, PokemonType::GROUND},
-    {Item::SpellTag, PokemonType::GHOST},
-    {Item::TwistedSpoon, PokemonType::PSYCHIC},
-};
-
-static std::array<
-    bool,
+static const std::array<
+    std::array<bool, static_cast<int>(PokemonType::COUNT)>,
     static_cast<int>(Item::None) + 1
-> make_power_items() {
-    std::array<bool, static_cast<int>(Item::None) + 1> array{};
-    array.fill(false);
-    for (const auto& item : ITEM_TO_TYPE | std::views::keys) {
-        array[static_cast<int>(item)] = true;
+> ITEM_TO_TYPE = [] {
+    std::array<
+        std::array<bool, static_cast<int>(PokemonType::COUNT)>,
+        static_cast<int>(Item::None) + 1
+    > flags{};
+    for (int i = 0; i < flags.size(); i++) {
+        flags[i].fill(false);
     }
-    return array;
-}
 
-static const auto POWER_ITEMS =
-    make_power_items();
-
+    flags[static_cast<int>(Item::BlackBelt)][
+        static_cast<int>(PokemonType::FIGHTING)
+    ] = true;
+    flags[static_cast<int>(Item::BlackGlasses)][
+        static_cast<int>(PokemonType::DARK)
+    ] = true;
+    flags[static_cast<int>(Item::Charcoal)][
+        static_cast<int>(PokemonType::FIRE)
+    ] = true;
+    flags[static_cast<int>(Item::DragonFang)][
+        static_cast<int>(PokemonType::DRAGON)
+    ] = true;
+    flags[static_cast<int>(Item::HardStone)][
+        static_cast<int>(PokemonType::ROCK)
+    ] = true;
+    flags[static_cast<int>(Item::Magnet)][
+        static_cast<int>(PokemonType::ELECTRIC)
+    ] = true;
+    flags[static_cast<int>(Item::MetalCoat)][
+        static_cast<int>(PokemonType::STEEL)
+    ] = true;
+    flags[static_cast<int>(Item::MiracleSeed)][
+        static_cast<int>(PokemonType::GRASS)
+    ] = true;
+    flags[static_cast<int>(Item::MysticWater)][
+        static_cast<int>(PokemonType::WATER)
+    ] = true;
+    flags[static_cast<int>(Item::NeverMeltIce)][
+        static_cast<int>(PokemonType::ICE)
+    ] = true;
+    flags[static_cast<int>(Item::PoisonBarb)][
+        static_cast<int>(PokemonType::POISON)
+    ] = true;
+    flags[static_cast<int>(Item::SharpBeak)][
+        static_cast<int>(PokemonType::FLYING)
+    ] = true;
+    flags[static_cast<int>(Item::SilkScarf)][
+        static_cast<int>(PokemonType::NORMAL)
+    ] = true;
+    flags[static_cast<int>(Item::SilverPowder)][
+        static_cast<int>(PokemonType::BUG)
+    ] = true;
+    flags[static_cast<int>(Item::SoftSand)][
+        static_cast<int>(PokemonType::GROUND)
+    ] = true;
+    flags[static_cast<int>(Item::SpellTag)][
+        static_cast<int>(PokemonType::GHOST)
+    ] = true;
+    flags[static_cast<int>(Item::TwistedSpoon)][
+        static_cast<int>(PokemonType::PSYCHIC)
+    ] = true;
+    return flags;
+}();
 
 /*
     BigRoot, TODO 30% more HP from Leech Seed, Ingrain and Aqua Ring

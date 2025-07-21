@@ -12,7 +12,7 @@ constexpr bool SKIP_RANKS = false;
 constexpr bool ALL_MOVES = false;
 constexpr bool USE_HIGHEST_RANK_FOR_WALLS = true;
 
-static std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {
+inline std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {
     static const std::unordered_map<PokemonType, int> type_to_rank_to_skip = {
         {PokemonType::DARK, 0},
         {PokemonType::WATER, 1},
@@ -42,7 +42,7 @@ static std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {
     return out;
 }
 
-static std::vector<
+inline std::vector<
     std::unordered_map<std::string, std::vector<CustomPokemon>>
 > get_pokemon_forms(
     const std::unordered_map<std::string, SerebiiPokemon>& all_serebii_pokemon

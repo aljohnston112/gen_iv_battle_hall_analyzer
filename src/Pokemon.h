@@ -1021,7 +1021,7 @@ static const std::unordered_map<std::string, Pokemon> STRING_TO_POKEMON = {
     {"Zubat", Pokemon::Zubat},
 };
 
-static std::unordered_map<Pokemon, std::string> create_reverse_map() {
+inline std::unordered_map<Pokemon, std::string> create_reverse_map() {
     std::unordered_map<Pokemon, std::string> reverse_map;
     for (const auto& [str, pokemon] : STRING_TO_POKEMON) {
         reverse_map[pokemon] = str;
@@ -1032,7 +1032,7 @@ static std::unordered_map<Pokemon, std::string> create_reverse_map() {
 static const auto POKEMON_TO_STRING =
     create_reverse_map();
 
-static std::string get_pokemon_name(const Pokemon p) {
+inline std::string get_pokemon_name(const Pokemon p) {
     return POKEMON_TO_STRING.at(p);
 }
 
