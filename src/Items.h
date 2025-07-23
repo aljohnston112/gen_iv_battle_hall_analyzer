@@ -107,6 +107,50 @@ enum class Item {
     None
 };
 
+static const std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [] {
+    std::array<bool, static_cast<int>(Item::None) + 1> array{};
+    array.fill(false);
+    array[static_cast<int>(Item::ApicotBerry)] = true;
+    array[static_cast<int>(Item::ChestoBerry)] = true;
+    array[static_cast<int>(Item::GanlonBerry)] = true;
+    array[static_cast<int>(Item::LiechiBerry)] = true;
+    array[static_cast<int>(Item::LumBerry)] = true;
+    array[static_cast<int>(Item::PersimBerry)] = true;
+    array[static_cast<int>(Item::PetayaBerry)] = true;
+    array[static_cast<int>(Item::SalacBerry)] = true;
+    array[static_cast<int>(Item::SitrusBerry)] = true;
+    return array;
+}();
+
+static const std::unordered_set STAT_BERRIES = {
+    Item::ApicotBerry,
+    Item::GanlonBerry,
+    Item::LiechiBerry,
+    Item::PetayaBerry,
+    Item::SalacBerry,
+};
+
+static const std::array<
+    std::pair<int16_t, PokemonType>,
+    static_cast<int>(Item::None) + 1
+> NATURAL_GIFT_POWER = [] {
+    std::array<
+        std::pair<int16_t, PokemonType>,
+        static_cast<int>(Item::None) + 1
+    > array{};
+    array.fill({0, PokemonType::COUNT});
+    array[static_cast<int>(Item::ApicotBerry)] = {80, PokemonType::GROUND};
+    array[static_cast<int>(Item::ChestoBerry)] = {60, PokemonType::WATER};
+    array[static_cast<int>(Item::GanlonBerry)] = {80, PokemonType::ICE};
+    array[static_cast<int>(Item::LiechiBerry)] = {80, PokemonType::GRASS};
+    array[static_cast<int>(Item::LumBerry)] = {60, PokemonType::FLYING};
+    array[static_cast<int>(Item::PersimBerry)] = {60, PokemonType::GROUND};
+    array[static_cast<int>(Item::PetayaBerry)] = {80, PokemonType::POISON};
+    array[static_cast<int>(Item::SalacBerry)] = {80, PokemonType::FIGHTING};
+    array[static_cast<int>(Item::SitrusBerry)] = {60, PokemonType::PSYCHIC};
+    return array;
+}();
+
 static constexpr std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS
     = [] {
         std::array<bool, static_cast<int>(Item::None) + 1> array{};
@@ -130,52 +174,35 @@ static constexpr std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS
         return array;
     }();
 
-static const std::unordered_map<Item, PokemonType> PLATE_ITEM_TYPES = {
-    {Item::FistPlate, PokemonType::FIGHTING},
-    {Item::SkyPlate, PokemonType::FLYING},
-    {Item::ToxicPlate, PokemonType::POISON},
-    {Item::EarthPlate, PokemonType::GROUND},
-    {Item::StonePlate, PokemonType::ROCK},
-    {Item::InsectPlate, PokemonType::BUG},
-    {Item::SpookyPlate, PokemonType::GHOST},
-    {Item::IronPlate, PokemonType::STEEL},
-    {Item::FlamePlate, PokemonType::FIRE},
-    {Item::SplashPlate, PokemonType::WATER},
-    {Item::MeadowPlate, PokemonType::GRASS},
-    {Item::ZapPlate, PokemonType::ELECTRIC},
-    {Item::MindPlate, PokemonType::PSYCHIC},
-    {Item::IciclePlate, PokemonType::ICE},
-    {Item::DracoPlate, PokemonType::DRAGON},
-    {Item::DreadPlate, PokemonType::DARK}
-};
+static constexpr std::array<
+    PokemonType,
+static_cast<int>(Item::None) + 1
+> PLATE_ITEM_TYPES = [] {
+    std::array<PokemonType, static_cast<int>(Item::None) + 1> array{};
+    array.fill(PokemonType::NORMAL);
+    array[static_cast<int>(Item::FistPlate)] = PokemonType::FIGHTING;
+    array[static_cast<int>(Item::SkyPlate)] = PokemonType::FLYING;
+    array[static_cast<int>(Item::ToxicPlate)] = PokemonType::POISON;
+    array[static_cast<int>(Item::EarthPlate)] = PokemonType::GROUND;
+    array[static_cast<int>(Item::StonePlate)] = PokemonType::ROCK;
+    array[static_cast<int>(Item::InsectPlate)] = PokemonType::BUG;
+    array[static_cast<int>(Item::SpookyPlate)] = PokemonType::GHOST;
+    array[static_cast<int>(Item::IronPlate)] = PokemonType::STEEL;
+    array[static_cast<int>(Item::FlamePlate)] = PokemonType::FIRE;
+    array[static_cast<int>(Item::SplashPlate)] = PokemonType::WATER;
+    array[static_cast<int>(Item::MeadowPlate)] = PokemonType::GRASS;
+    array[static_cast<int>(Item::ZapPlate)] = PokemonType::ELECTRIC;
+    array[static_cast<int>(Item::MindPlate)] = PokemonType::PSYCHIC;
+    array[static_cast<int>(Item::IciclePlate)] = PokemonType::ICE;
+    array[static_cast<int>(Item::DracoPlate)] = PokemonType::DRAGON;
+    array[static_cast<int>(Item::DreadPlate)] = PokemonType::DARK;
+    return array;
+}();
 
 static const std::unordered_set CHOICE_ITEMS = {
     Item::ChoiceBand,
     Item::ChoiceScarf,
     Item::ChoiceSpecs,
-};
-
-static const std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [] {
-    std::array<bool, static_cast<int>(Item::None) + 1> array{};
-    array.fill(false);
-    array[static_cast<int>(Item::ApicotBerry)] = true;
-    array[static_cast<int>(Item::ChestoBerry)] = true;
-    array[static_cast<int>(Item::GanlonBerry)] = true;
-    array[static_cast<int>(Item::LiechiBerry)] = true;
-    array[static_cast<int>(Item::LumBerry)] = true;
-    array[static_cast<int>(Item::PersimBerry)] = true;
-    array[static_cast<int>(Item::PetayaBerry)] = true;
-    array[static_cast<int>(Item::SalacBerry)] = true;
-    array[static_cast<int>(Item::SitrusBerry)] = true;
-    return array;
-}();
-
-static const std::unordered_set STAT_BERRIES = {
-    Item::ApicotBerry,
-    Item::GanlonBerry,
-    Item::LiechiBerry,
-    Item::PetayaBerry,
-    Item::SalacBerry,
 };
 
 static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
@@ -265,8 +292,8 @@ static const std::array<
         std::array<bool, static_cast<int>(PokemonType::COUNT)>,
         static_cast<int>(Item::None) + 1
     > flags{};
-    for (int i = 0; i < flags.size(); i++) {
-        flags[i].fill(false);
+    for (auto& flag : flags) {
+        flag.fill(false);
     }
 
     flags[static_cast<int>(Item::BlackBelt)][

@@ -553,8 +553,8 @@ static constexpr std::array<
     static_cast<int>(Move::Count)
 > MOVE_FLAGS = [] {
     std::array<MoveFlagSet, static_cast<int>(Move::Count)> flags{};
-    for (int i = 0; i < flags.size(); i++) {
-        flags[i].fill(false);
+    for (auto& flag : flags) {
+        flag.fill(false);
     }
 
     flags[static_cast<int>(Move::BulletPunch)][
@@ -4227,9 +4227,9 @@ inline bool move_has_flag(const Move move, const MoveFlag move_flag) {
         static_cast<size_t>(move_flag)];
 }
 
-static constexpr std::array<int, static_cast<int>(Move::Count)> MOVE_PRIORITIES
+static constexpr std::array<int8_t, static_cast<int>(Move::Count)> MOVE_PRIORITIES
     = [] {
-        std::array<int, static_cast<int>(Move::Count)> array{};
+        std::array<int8_t, static_cast<int>(Move::Count)> array{};
         array[static_cast<int>(Move::HelpingHand)] = 5;
 
         array[static_cast<int>(Move::MagicCoat)] = 4;
@@ -4304,7 +4304,7 @@ struct MoveInfo {
     Move move;
     PokemonType type;
     Category category;
-    int power;
+    int16_t power;
     int accuracy;
     int effect_percent;
 
@@ -4320,7 +4320,7 @@ struct std::hash<MoveInfo> {
     }
 };
 
-inline int get_move_priority(const MoveInfo* move_info) {
+inline int8_t get_move_priority(const MoveInfo* move_info) {
     if (move_info == nullptr) {
         return 0;
     }

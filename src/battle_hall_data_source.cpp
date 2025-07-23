@@ -18,7 +18,8 @@ std::string strip_space(const std::string& string) {
     auto end = string.end();
     do {
         --end;
-    } while (std::distance(start, end) > 0 && std::isspace(*end));
+    }
+    while (std::distance(start, end) > 0 && std::isspace(*end));
 
     return {start, end + 1};
 }
@@ -212,7 +213,9 @@ std::array<
         for (int i = 8; i <= 13; ++i) {
             pokemon.evs[static_cast<Stat>(i - 8)] = (std::stoi(cells[i]));
         }
-        group_to_hall_pokemon[group_number - 1].emplace_back(std::move(pokemon));
+        group_to_hall_pokemon[group_number - 1].emplace_back(
+            std::move(pokemon)
+        );
     }
     return group_to_hall_pokemon;
 }
@@ -452,10 +455,12 @@ void write_all_hall_pokemon_as_custom(
                 }
             }
         }
-        for (int j = 0; j < MAX_RANK; j++) {
-            const auto& rank = j + 1;
+        for (const auto& ranks =
+                 GROUP_TO_RANKS.at(group_number);
+             const uint8_t rank : ranks
+        ) {
             const auto& types_past_2_map =
-                rank_to_over_2_to_custom[j];
+                rank_to_over_2_to_custom[rank - 1];
             for (int types_over_2 = 0;
                  types_over_2 < NUMBER_OF_TYPES;
                  types_over_2++

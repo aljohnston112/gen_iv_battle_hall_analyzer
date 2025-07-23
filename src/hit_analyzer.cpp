@@ -72,22 +72,22 @@ struct ResultEntry {
     PokemonType type;
     uint8_t rank;
     uint8_t over_2;
-    CustomPokemon opponent;
+    const CustomPokemon* opponent;
     bool won;
     std::vector<const MoveInfo*> moves;
 };
 
 struct ResultEntryHash {
     std::size_t operator()(const ResultEntry& entry) const {
-        return std::hash<int>{}(static_cast<int>(entry.opponent.name)) ^
-            (std::hash<int>{}(static_cast<int>(entry.opponent.ability)) << 1);
+        return std::hash<int>{}(static_cast<int>(entry.opponent->name)) ^
+            (std::hash<int>{}(static_cast<int>(entry.opponent->ability)) << 1);
     }
 };
 
 struct ResultEntryEq {
     bool operator()(const ResultEntry& a, const ResultEntry& b) const {
-        return a.opponent.name == b.opponent.name &&
-            a.opponent.ability == b.opponent.ability;
+        return a.opponent->name == b.opponent->name &&
+            a.opponent->ability == b.opponent->ability;
     }
 };
 
@@ -238,14 +238,14 @@ void do_battle(
     const BattleEntry& battle_entry,
     std::promise<ResultEntry>&& promise
 ) {
-    auto& [won, moves] =
+    auto [won, moves] =
         battle(battle_entry.player, battle_entry.opponent);
     promise.set_value(
         ResultEntry{
             .type = battle_entry.type,
             .rank = battle_entry.rank,
             .over_2 = battle_entry.over_2,
-            .opponent = std::move(battle_entry.opponent),
+            .opponent = &battle_entry.opponent,
             .won = won,
             .moves = std::move(moves)
         }
@@ -420,7 +420,10 @@ void print_walls(
         std::array<
             std::array<
                 std::vector<
-                    std::pair<CustomPokemon, std::vector<const MoveInfo*>>
+                    std::pair<
+                        const CustomPokemon*,
+                        std::vector<const MoveInfo*>
+                    >
                 >, NUMBER_OF_TYPES>,
             MAX_RANK
         >,
@@ -437,45 +440,51 @@ void print_walls(
     ) {
         type_to_rank_to_over_2_to_losses[
             static_cast<int>(type)
-        ][rank - 1][over_2].push_back({opponent, moves});
+        ][rank - 1][over_2].emplace_back(opponent, moves);
     }
 
     if (USE_HIGHEST_RANK_FOR_WALLS) {
         for (uint8_t over_2 = 0; over_2 < NUMBER_OF_TYPES; over_2++) {
             const auto& [type, rank] =
                 over_2_to_rank_and_type_assignment[over_2];
-            const auto& over_2_to_losses =
-                type_to_rank_to_over_2_to_losses[
-                    static_cast<int>(type)
-                ][rank == -1 ? 0 : rank];
-            for (int i = 0; i < NUMBER_OF_TYPES; i++) {
-                if (const auto& losses = over_2_to_losses[i];
-                    !losses.empty()
-                ) {
-                    for (const auto& [opponent, moves] : losses) {
-                        std::cout <<
-                            std::format(
-                                "Type: {}, Rank: {:02}, Over 2: {:02}, {}, "
-                                "Level: {}, Ability: {}, ",
-                                TYPE_TO_STRING.at(type),
-                                rank + 1,
-                                over_2,
-                                get_pokemon_name(
-                                    opponent.name
-                                ),
-                                opponent.level,
-                                ABILITY_TO_STRING.at(opponent.ability)
-                            );
-                        for (const auto& move : moves) {
+            if (rank != 10) {
+                const auto& over_2_to_losses =
+                    type_to_rank_to_over_2_to_losses[
+                        static_cast<int>(type)
+                    ][rank == -1 ? 0 : rank];
+                for (int i = 0; i < NUMBER_OF_TYPES; i++) {
+                    if (const auto& losses = over_2_to_losses[i];
+                        !losses.empty()
+                    ) {
+                        for (const auto& [
+                                 opponent,
+                                 moves
+                             ] : losses
+                        ) {
                             std::cout <<
                                 std::format(
-                                    "Move: {}, ",
-                                    move->name
+                                    "Type: {}, Rank: {:02}, Over 2: {:02}, {}, "
+                                    "Level: {}, Ability: {}, ",
+                                    TYPE_TO_STRING.at(type),
+                                    rank + 1,
+                                    over_2,
+                                    get_pokemon_name(
+                                        opponent->name
+                                    ),
+                                    opponent->level,
+                                    ABILITY_TO_STRING.at(opponent->ability)
                                 );
+                            for (const auto& move : moves) {
+                                std::cout <<
+                                    std::format(
+                                        "Move: {}, ",
+                                        move->name
+                                    );
+                            }
+                            printf("\n");
                         }
-                        printf("\n");
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -505,10 +514,10 @@ void print_walls(
                         rank,
                         over_2,
                         get_pokemon_name(
-                            opponent.name
+                            opponent->name
                         ),
-                        opponent.level,
-                        ABILITY_TO_STRING.at(opponent.ability)
+                        opponent->level,
+                        ABILITY_TO_STRING.at(opponent->ability)
                     );
                 for (const auto& move : moves) {
                     std::cout <<
@@ -577,8 +586,9 @@ std::vector<
 }
 
 void print_streaks(
-    std::vector<std::pair<PokemonType, std::array<int, NUMBER_OF_TYPES>>>
-    ordered_type_and_over_2_to_streak_pairs) {
+    const std::vector<std::pair<PokemonType, std::array<int, NUMBER_OF_TYPES>>>&
+    ordered_type_and_over_2_to_streak_pairs
+) {
     for (const auto& [type, streaks] :
          ordered_type_and_over_2_to_streak_pairs
     ) {
@@ -624,18 +634,11 @@ std::pair<
         NUMBER_OF_TYPES
     >
 > calculate_over_2_assignments(
-    const std::array<
-        std::array<int, NUMBER_OF_TYPES>,
-        NUMBER_OF_TYPES
-    >& type_to_over_2_to_streak,
+    const std::vector<
+        std::pair<PokemonType, std::array<int, NUMBER_OF_TYPES>>
+    >& ordered_type_and_over_2_to_streak_pairs,
     const std::array<int, NUMBER_OF_TYPES>& type_to_rank_to_skip
 ) {
-    const auto ordered_type_and_over_2_to_streak_pairs =
-        get_ordered_type_and_over_2_to_streak_pairs(
-            type_to_over_2_to_streak
-        );
-    print_streaks(ordered_type_and_over_2_to_streak_pairs);
-
     // libhungarian requires a C style array
     const auto number_of_rows =
         static_cast<uint8_t>(ordered_type_and_over_2_to_streak_pairs.size());
@@ -688,17 +691,13 @@ std::pair<
     return {total_streak, over_2_to_type_and_rank};
 }
 
-void calculate_and_print_max_streak(
-    const uint16_t total_streak,
+void print_max_streaks(
     const std::array<
         std::pair<PokemonType, int>,
         NUMBER_OF_TYPES
     >& type_to_over_2_assignment,
     const std::array<int, NUMBER_OF_TYPES>& lowest_over_2_for_types
 ) {
-    // Print total streak
-    std::cout << "\nTotal streak: " << total_streak << "\n";
-
     // Print ranks beaten in the order they should be challenged
     int over_2 = 0;
     for (const auto& [type, rank] :
@@ -766,21 +765,34 @@ void analyze(
     );
     print_used_moves(used_moves);
 
+    const auto ordered_type_and_over_2_to_streak_pairs =
+        get_ordered_type_and_over_2_to_streak_pairs(
+            type_to_over_2_to_streak
+        );
+    if (FULL_PRINT) {
+        print_streaks(ordered_type_and_over_2_to_streak_pairs);
+    }
     const auto [
         total_streak,
         over_2_to_rank_and_type_assignment
     ] = calculate_over_2_assignments(
-        type_to_over_2_to_streak,
+        ordered_type_and_over_2_to_streak_pairs,
         type_to_rank_to_skip
     );
-    print_walls(
-        lowest_over_2_for_types,
-        first_losses,
-        over_2_to_rank_and_type_assignment
-    );
-    calculate_and_print_max_streak(
-        total_streak,
-        over_2_to_rank_and_type_assignment,
-        lowest_over_2_for_types
-    );
+    if (FULL_PRINT) {
+        print_walls(
+            lowest_over_2_for_types,
+            first_losses,
+            over_2_to_rank_and_type_assignment
+        );
+    }
+    std::cout
+        << POKEMON_TO_STRING.at(player_pokemon_forms.at("all")[0].name)
+        << "'s total streak: " << total_streak << "\n";
+    if (FULL_PRINT) {
+        print_max_streaks(
+            over_2_to_rank_and_type_assignment,
+            lowest_over_2_for_types
+        );
+    }
 }

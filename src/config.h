@@ -6,11 +6,14 @@
 #include "battle_hall_data_source.h"
 #include "serebii_pokemon_data_source.h"
 
-constexpr bool MULTI_THREADED = true;
+constexpr bool MULTI_THREADED = false;
 constexpr uint8_t LEVEL = 30;
 constexpr bool SKIP_RANKS = false;
 constexpr bool ALL_MOVES = false;
 constexpr bool USE_HIGHEST_RANK_FOR_WALLS = true;
+constexpr bool ANALYZE_ALL = true;
+constexpr bool FULL_PRINT = false;
+
 
 inline std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {
     static const std::unordered_map<PokemonType, int> type_to_rank_to_skip = {
@@ -51,8 +54,7 @@ inline std::vector<
         std::string,
         std::vector<CustomPokemon>
     >> pokemon_forms{};
-    constexpr bool all = false;
-    if (all) {
+    if (ANALYZE_ALL) {
         for (const auto& serebii_pokemon : all_serebii_pokemon |
              std::views::values
         ) {
