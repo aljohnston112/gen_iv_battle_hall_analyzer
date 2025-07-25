@@ -38,6 +38,7 @@ void save_custom_pokemon(
                 category,
                 power,
                 accuracy,
+                power_points,
                 effect_percent
             ] = *move;
             output_stream << static_cast<int>(move_enum) << '\n';

@@ -4306,6 +4306,7 @@ struct MoveInfo {
     Category category;
     int16_t power;
     int accuracy;
+    int power_points;
     int effect_percent;
 
     bool operator==(const MoveInfo& other) const {

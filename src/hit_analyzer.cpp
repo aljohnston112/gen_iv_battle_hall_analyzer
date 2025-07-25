@@ -178,7 +178,10 @@ std::array<
     return type_to_rank_to_over_2_to_hall_pokemon;
 }
 
-std::vector<BattleEntry> initialize_battles(
+std::unordered_map<
+    Pokemon,
+    std::vector<BattleEntry>
+> initialize_battles(
     const std::array<
         std::array<
             std::array<
@@ -198,7 +201,10 @@ std::vector<BattleEntry> initialize_battles(
         std::vector<CustomPokemon>
     >& player_pokemon_forms
 ) {
-    std::vector<BattleEntry> battles{};
+    std::unordered_map<
+        Pokemon,
+        std::vector<BattleEntry>
+    > battles{};
     for (uint8_t type_index = 0; type_index < NUMBER_OF_TYPES; type_index++) {
         const auto type = static_cast<PokemonType>(type_index);
         const auto& rank_to_over_2_to_hall_pokemon =
@@ -216,7 +222,7 @@ std::vector<BattleEntry> initialize_battles(
                         for (const auto& player_pokemon :
                              player_pokemon_nature_variants
                         ) {
-                            battles.emplace_back(
+                            battles[player_pokemon.name].emplace_back(
                                 BattleEntry{
                                     .player = player_pokemon,
                                     .opponent = *opponent_pokemon,
@@ -253,151 +259,200 @@ void do_battle(
 }
 
 std::pair<
-    std::array<
+    std::unordered_map<
+        Pokemon,
         std::array<
             std::array<
-                std::unordered_set<
-                    ResultEntry,
-                    ResultEntryHash,
-                    ResultEntryEq
+                std::array<
+                    std::unordered_set<
+                        ResultEntry,
+                        ResultEntryHash,
+                        ResultEntryEq
+                    >,
+                    NUMBER_OF_TYPES
                 >,
-                NUMBER_OF_TYPES
+                MAX_RANK
             >,
-            MAX_RANK
-        >,
-        NUMBER_OF_TYPES
+            NUMBER_OF_TYPES
+        >
     >,
-    std::unordered_map<const MoveInfo*, int>
+    std::unordered_map<
+        Pokemon,
+        std::unordered_map<const MoveInfo*, int>
+    >
 > simulate_battles(
-    const std::vector<BattleEntry>& battles
+    const std::unordered_map<
+        Pokemon,
+        std::vector<BattleEntry>
+    >& form_to_battles
 ) {
-    std::array<
+    std::unordered_map<
+        Pokemon,
         std::array<
             std::array<
-                std::unordered_set<
-                    ResultEntry,
-                    ResultEntryHash,
-                    ResultEntryEq
+                std::array<
+                    std::unordered_set<
+                        ResultEntry,
+                        ResultEntryHash,
+                        ResultEntryEq
+                    >,
+                    NUMBER_OF_TYPES
                 >,
-                NUMBER_OF_TYPES
+                MAX_RANK
             >,
-            MAX_RANK
-        >,
-        NUMBER_OF_TYPES
-    > type_to_rank_to_over_2_to_losses{};
-    std::unordered_map<const MoveInfo*, int> used_moves{};
-    const auto battle_result_entries =
-        thread_pool::ThreadPool::getCPUWorkInstance()->
-        createAndRunTasks<ResultEntry, std::vector<BattleEntry>, BattleEntry>(
-            do_battle,
-            battles
-        );
-    for (auto& battle_result_entry : battle_result_entries) {
-        const auto& [
-            type,
-            rank,
-            over_2,
-            opponent,
-            won,
-            moves
-        ] = battle_result_entry;
-        const auto type_index = static_cast<uint8_t>(type);
-        if (!won) {
-            type_to_rank_to_over_2_to_losses[
-                type_index
-            ][rank - 1][over_2].insert(battle_result_entry);
-        } else {
-            for (const auto& move : moves) {
-                if (used_moves.contains(move)) {
-                    used_moves[move]++;
-                } else {
-                    used_moves[move] = 1;
+            NUMBER_OF_TYPES
+        >
+    > form_to_type_to_rank_to_over_2_to_losses{};
+    std::unordered_map<
+        Pokemon,
+        std::unordered_map<const MoveInfo*, int>
+    > used_moves{};
+    for (const auto& [form, battles] :
+         form_to_battles
+    ) {
+        const auto battle_result_entries =
+            thread_pool::ThreadPool::getCPUWorkInstance()->
+            createAndRunTasks<ResultEntry, std::vector<BattleEntry>,
+                              BattleEntry>(
+                do_battle,
+                battles
+            );
+        for (auto& battle_result_entry : battle_result_entries) {
+            const auto& [
+                type,
+                rank,
+                over_2,
+                opponent,
+                won,
+                moves
+            ] = battle_result_entry;
+            const auto type_index = static_cast<uint8_t>(type);
+            if (!won) {
+                form_to_type_to_rank_to_over_2_to_losses[form][
+                    type_index
+                ][rank - 1][over_2].insert(battle_result_entry);
+            } else {
+                for (const auto& move : moves) {
+                    if (used_moves[form].contains(move)) {
+                        used_moves[form][move]++;
+                    } else {
+                        used_moves[form][move] = 1;
+                    }
                 }
             }
         }
     }
-    return {type_to_rank_to_over_2_to_losses, used_moves};
+    return {form_to_type_to_rank_to_over_2_to_losses, used_moves};
 }
 
 std::pair<
-    std::vector<ResultEntry>,
-    std::array<
-        std::array<int, NUMBER_OF_TYPES>,
-        NUMBER_OF_TYPES
+    std::unordered_map<Pokemon, std::vector<ResultEntry>>,
+    std::unordered_map<
+        Pokemon,
+        std::array<
+            std::array<int, NUMBER_OF_TYPES>,
+            NUMBER_OF_TYPES
+        >
     >
 > get_battle_results(
-    const std::array<
+    const std::unordered_map<
+        Pokemon,
         std::array<
             std::array<
-                std::unordered_set<
-                    ResultEntry,
-                    ResultEntryHash,
-                    ResultEntryEq
+                std::array<
+                    std::unordered_set<
+                        ResultEntry,
+                        ResultEntryHash,
+                        ResultEntryEq
+                    >,
+                    NUMBER_OF_TYPES
                 >,
-                NUMBER_OF_TYPES
+                MAX_RANK
             >,
-            MAX_RANK
-        >,
-        NUMBER_OF_TYPES
-    >& type_to_rank_to_over_2_to_losses,
+            NUMBER_OF_TYPES
+        >
+    >& form_to_type_to_rank_to_over_2_to_losses,
     const std::array<int, NUMBER_OF_TYPES>& lowest_over_2_for_types
 ) {
-    std::vector<ResultEntry> first_losses;
-    std::array<
-        std::array<int, NUMBER_OF_TYPES>,
-        NUMBER_OF_TYPES
+    std::unordered_map<Pokemon, std::vector<ResultEntry>> form_to_first_losses;
+    std::unordered_map<
+        Pokemon,
+        std::array<
+            std::array<int, NUMBER_OF_TYPES>,
+            NUMBER_OF_TYPES
+        >
     > type_to_over_2_to_streak{};
-    for (uint8_t type_index = 0; type_index < NUMBER_OF_TYPES; type_index++) {
-        const auto& rank_to_over_2_to_losses =
-            type_to_rank_to_over_2_to_losses[type_index];
-        auto& over_2_to_streaks =
-            type_to_over_2_to_streak[type_index];
-        over_2_to_streaks.fill(-1);
-        auto lowest_over_2 = lowest_over_2_for_types[type_index];
-        lowest_over_2 = std::max(0, lowest_over_2);
-        for (int rank = 1; rank <= 10; rank++) {
-            const auto& over_2_to_losses =
-                rank_to_over_2_to_losses.at(rank - 1);
-            for (int over_2 = lowest_over_2;
-                 over_2 < NUMBER_OF_TYPES;
-                 over_2++
-            ) {
-                const auto& losses =
-                    over_2_to_losses.at(over_2);
-                for (const auto& loss : losses) {
-                    first_losses.emplace_back(loss);
-                }
-                if (!losses.empty()) {
-                    break;
-                }
-                if (over_2 > lowest_over_2 || lowest_over_2 == 0) {
-                    over_2_to_streaks[over_2] =
-                        std::max(over_2_to_streaks[over_2], rank);
-                }
-            }
-        }
-    }
 
-    std::ranges::sort(
-        first_losses,
-        [](const ResultEntry& a, const ResultEntry& b) {
-            if (a.type != b.type) {
-                return a.type < b.type;
+    for (const auto& [
+             form,
+             type_to_rank_to_over_2_to_losses
+         ] : form_to_type_to_rank_to_over_2_to_losses
+    ) {
+        for (uint8_t type_index = 0;
+             type_index < NUMBER_OF_TYPES;
+             type_index++
+        ) {
+            const auto& rank_to_over_2_to_losses =
+                type_to_rank_to_over_2_to_losses[type_index];
+            auto& over_2_to_streaks =
+                type_to_over_2_to_streak[form][type_index];
+            over_2_to_streaks.fill(-1);
+            auto lowest_over_2 = lowest_over_2_for_types[type_index];
+            lowest_over_2 = std::max(0, lowest_over_2);
+            for (int rank = 1; rank <= 10; rank++) {
+                const auto& over_2_to_losses =
+                    rank_to_over_2_to_losses.at(rank - 1);
+                for (int over_2 = lowest_over_2;
+                     over_2 < NUMBER_OF_TYPES;
+                     over_2++
+                ) {
+                    const auto& losses =
+                        over_2_to_losses.at(over_2);
+                    for (const auto& loss : losses) {
+                        form_to_first_losses[form].emplace_back(loss);
+                    }
+                    if (!losses.empty()) {
+                        break;
+                    }
+                    if (over_2 > lowest_over_2 || lowest_over_2 == 0) {
+                        over_2_to_streaks[over_2] =
+                            std::max(over_2_to_streaks[over_2], rank);
+                    }
+                }
             }
-            if (a.rank != b.rank) {
-                return a.rank < b.rank;
-            }
-            return a.over_2 < b.over_2;
         }
-    );
-    return {first_losses, type_to_over_2_to_streak};
+
+        std::ranges::sort(
+            form_to_first_losses[form],
+            [](const ResultEntry& a, const ResultEntry& b) {
+                if (a.type != b.type) {
+                    return a.type < b.type;
+                }
+                if (a.rank != b.rank) {
+                    return a.rank < b.rank;
+                }
+                return a.over_2 < b.over_2;
+            }
+        );
+    }
+    return {form_to_first_losses, type_to_over_2_to_streak};
 }
 
 void print_used_moves(
     const std::unordered_map<const MoveInfo*, int>& used_moves
 ) {
+    std::vector<std::pair<const MoveInfo*, int>> sorted_moves(
+        used_moves.begin(), used_moves.end()
+    );
+    std::ranges::sort(
+        sorted_moves,
+        [](const auto& a, const auto& b) {
+            return a.second > b.second; // max to min
+        }
+    );
+
     printf("Moves used: ");
-    for (const auto& [move_info, times_used] : used_moves) {
+    for (const auto& [move_info, times_used] : sorted_moves) {
         std::cout
             << std::format(
                 "{}: {}, ",
@@ -753,46 +808,51 @@ void analyze(
             player_pokemon_forms
         );
     const auto [
-        type_to_rank_to_over_2_to_losses,
-        used_moves
+        form_to_type_to_rank_to_over_2_to_losses,
+        form_to_used_moves
     ] = simulate_battles(battles);
     const auto [
-        first_losses,
+        form_to_first_losses,
         type_to_over_2_to_streak
     ] = get_battle_results(
-        type_to_rank_to_over_2_to_losses,
+        form_to_type_to_rank_to_over_2_to_losses,
         lowest_over_2_for_types
     );
-    print_used_moves(used_moves);
 
-    const auto ordered_type_and_over_2_to_streak_pairs =
-        get_ordered_type_and_over_2_to_streak_pairs(
-            type_to_over_2_to_streak
-        );
-    if (FULL_PRINT) {
-        print_streaks(ordered_type_and_over_2_to_streak_pairs);
-    }
-    const auto [
-        total_streak,
-        over_2_to_rank_and_type_assignment
-    ] = calculate_over_2_assignments(
-        ordered_type_and_over_2_to_streak_pairs,
-        type_to_rank_to_skip
-    );
-    if (FULL_PRINT) {
-        print_walls(
-            lowest_over_2_for_types,
-            first_losses,
+    for (const auto& form :
+         form_to_type_to_rank_to_over_2_to_losses | std::views::keys
+    ) {
+        print_used_moves(form_to_used_moves.at(form));
+
+        const auto ordered_type_and_over_2_to_streak_pairs =
+            get_ordered_type_and_over_2_to_streak_pairs(
+                type_to_over_2_to_streak.at(form)
+            );
+        if (FULL_PRINT) {
+            print_streaks(ordered_type_and_over_2_to_streak_pairs);
+        }
+        const auto [
+            total_streak,
             over_2_to_rank_and_type_assignment
+        ] = calculate_over_2_assignments(
+            ordered_type_and_over_2_to_streak_pairs,
+            type_to_rank_to_skip
         );
-    }
-    std::cout
-        << POKEMON_TO_STRING.at(player_pokemon_forms.at("all")[0].name)
-        << "'s total streak: " << total_streak << "\n";
-    if (FULL_PRINT) {
-        print_max_streaks(
-            over_2_to_rank_and_type_assignment,
-            lowest_over_2_for_types
-        );
+        if (FULL_PRINT) {
+            print_walls(
+                lowest_over_2_for_types,
+                form_to_first_losses.at(form),
+                over_2_to_rank_and_type_assignment
+            );
+        }
+        std::cout
+            << POKEMON_TO_STRING.at(form)
+            << "'s total streak: " << total_streak << "\n";
+        if (FULL_PRINT) {
+            print_max_streaks(
+                over_2_to_rank_and_type_assignment,
+                lowest_over_2_for_types
+            );
+        }
     }
 }

@@ -7,7 +7,7 @@
 #include "config.h"
 #include "nature.h"
 
-std::string extract_left_string(const std::string& line) {
+static std::string extract_left_string(const std::string& line) {
     const auto first = line.find('"') + 1;
     const auto colon_i = line.find(':') - 1;
     return line.substr(first, colon_i - first);
@@ -53,6 +53,8 @@ MoveInfo parse_move(
         } else if (line.find("category") != std::string::npos) {
             move_info.category =
                 move_category_map.at(extract_right_string(line));
+        } else if (line.find("power_points") != std::string::npos) {
+            move_info.power_points = extract_right_int(line);
         } else if (line.find("power") != std::string::npos) {
             move_info.power =
                 extract_right_int(line);
@@ -60,8 +62,8 @@ MoveInfo parse_move(
             move_info.accuracy =
                 extract_right_int(line);
         } else if (line.find("effect_percent") != std::string::npos) {
-            move_info.
-                effect_percent = extract_right_int(line);
+            move_info.effect_percent =
+                extract_right_int(line);
         }
     }
     return move_info;

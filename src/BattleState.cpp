@@ -237,7 +237,7 @@ inline void check_unimplemented_moves(
             move != Move::BrickBreak &&
             move != Move::Revenge &&
             move != Move::LastResort &&
-            move != Move::BugBite &&
+            move != Move::Pluck &&
             move != Move::Payback &&
             move != Move::Endeavor &&
             move != Move::LowKick &&
@@ -246,6 +246,7 @@ inline void check_unimplemented_moves(
             move != Move::FakeOut &&
             move != Move::FutureSight && // TODO probably useless
             move != Move::Bide && // TODO also probably useless
+            move != Move::Snore && // TODO ignored for now
             move != Move::WringOut &&
             move != Move::Rollout &&
             move != Move::KnockOff &&
@@ -260,6 +261,19 @@ inline void check_unimplemented_moves(
             move != Move::Punishment &&
             move != Move::Judgment &&
             move != Move::TripleKick &&
+            move != Move::Flail &&
+            move != Move::IceBall &&
+            move != Move::Fling &&
+            move != Move::Thief &&
+            move != Move::SecretPower &&
+            move != Move::Explosion &&
+            move != Move::Selfdestruct &&
+            move != Move::FalseSwipe &&
+            move != Move::Feint &&
+            move != Move::NaturalGift &&
+            move != Move::Pursuit &&
+            move != Move::WakeUpSlap &&
+            move != Move::Magnitude &&
             (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -428,7 +442,8 @@ class BattleState {
         bool attacker_is_player,
         const bool chosen_move_only,
         const Weather weather,
-        bool is_mid_turn
+        bool is_mid_turn,
+        bool checking_future
     ) {
         PokemonState& attacker_state =
             attacker_is_player ? player_state : opponent_state;
@@ -485,15 +500,16 @@ class BattleState {
 
         uint damage_from_defender;
         if (attacker_is_player) {
-            // Since attacker's move is calculated first,
-            // we should predict what the defender's next move is
+            // Since player's move is calculated first,
+            // we should predict what the opponent's next move is
             auto backup = defender_state.get_chosen_move();
             damage_from_defender =
                 choose_move_against_defender(
                     !attacker_is_player,
                     false,
                     weather,
-                    is_mid_turn
+                    is_mid_turn,
+                    true
                 ).damage;
             defender_state.set_chosen_move(std::move(backup));
         } else {
@@ -542,13 +558,14 @@ class BattleState {
                 defender_state.get_field_location() !=
                 FieldLocation::ON_FIELD
             ) ||
-            (defender_ability == Ability::WonderGuard);
-        const auto is_choiced = CHOICE_ITEMS.contains(attacker_item);
+            defender_ability == Ability::WonderGuard;
+        const auto has_choice_item = CHOICE_ITEMS.contains(attacker_item);
         auto attackers_last_used_move = attacker_state.get_last_used_move();
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
-            if (is_choiced &&
+            if (has_choice_item &&
+                attacker_state.is_choiced() &&
                 attackers_last_used_move.move != nullptr &&
                 attackers_last_used_move.move->move != attacker_move->move
             ) {
@@ -562,7 +579,6 @@ class BattleState {
             ) {
                 continue;
             }
-
             uint16_t damage = 0;
             if (attacker_move->move == Move::WeatherBall) {
                 weather_ball = attacker_move;
@@ -595,7 +611,8 @@ class BattleState {
                 continue;
             }
 
-            if (attacker_move->move == Move::Rollout &&
+            if ((attacker_move->move == Move::Rollout ||
+                    attacker_move->move == Move::IceBall) &&
                 attacker_state.get_rollout_turns() > 0) {
                 best_move.move = attacker_move;
                 best_move.damage = damage;
@@ -607,7 +624,9 @@ class BattleState {
             uint8_t times_to_hit =
                 get_times_to_hit(attacker_is_player, attacker_move);
 
-            if (is_choiced) {
+            if (has_choice_item &&
+                attacker_state.is_choiced()
+            ) {
                 best_move.move = attacker_move;
                 best_move.damage = damage;
                 best_move.times_to_hit = times_to_hit;
@@ -634,11 +653,11 @@ class BattleState {
                 return attacker_state.get_chosen_move();
             }
 
-            // TODO rollout
+            // TODO rollout and ice ball
             const bool passes_priority_check =
                 (attacker_move_priority < defender_move_priority &&
                     damage_from_defender < attacker_health) ||
-                attacker_move_priority == 0 ||
+                attacker_move_priority >= 0 ||
                 best_move.move == nullptr;
             bool move_must_charge =
                 does_move_have_to_charge(attacker_move, attacker_item, weather);
@@ -652,9 +671,11 @@ class BattleState {
                         damage > best_move.damage * 2 &&
                         ((damage_from_defender < attacker_health &&
                                 attacker_faster) ||
-                            (damage_from_defender < attacker_health / 2)))) &&
+                            (damage_from_defender < attacker_health / 2) ||
+                            best_move.damage == 0))) &&
                 !(move_must_charge &&
                     attacker_ability == Ability::Truant);
+
             if ((passes_priority_check && passes_charge_check)) {
                 best_move.damage = damage;
                 best_move.move = attacker_move;
@@ -674,8 +695,37 @@ class BattleState {
                     attacker_move->move == Move::Counter ||
                     attacker_move->move == Move::MirrorCoat ||
                     attacker_move->move == Move::MetalBurst ||
-                    (attacker_move->type == PokemonType::GHOST &&
-                        defender_state.has_type(PokemonType::NORMAL)) ||
+                    attacker_move->move == Move::Fling ||
+                    (get_effectiveness(
+                        defender_state.get_types(),
+                        attacker_move->type
+                    ) == 0) ||
+                    (attacker_move->type == PokemonType::GROUND &&
+                        (defender_state.get_ability() == Ability::Levitate ||
+                            defender_state.has_type(PokemonType::FLYING))) ||
+                    // TODO these might go off after a second run through the pokemon
+                    // ((attacker_move->move == Move::HiddenPower ||
+                    //         attacker_move->move == Move::PoisonSting) &&
+                    //     damage == 0) ||
+                    (attacker_move->type == PokemonType::WATER &&
+                        (defender_ability == Ability::WaterAbsorb ||
+                            defender_ability == Ability::DrySkin)) ||
+                    (attacker_move->type == PokemonType::ELECTRIC &&
+                        (defender_ability == Ability::VoltAbsorb ||
+                            defender_ability == Ability::MotorDrive)) ||
+                    (attacker_move->type == PokemonType::FIRE &&
+                        defender_ability == Ability::FlashFire) ||
+                    (attacker_move->type == PokemonType::NORMAL &&
+                        defender_state.has_type(PokemonType::GHOST)) ||
+                    (attacker_move->move == Move::NaturalGift &&
+                        !BERRIES.at(static_cast<int>(attacker_item))) ||
+                    (attacker_move->move == Move::HiddenPower) ||
+                    (attacker_move->move == Move::Endeavor &&
+                        opponent_state.get_health() <=
+                        player_state.get_health()
+                    ) ||
+                    (attacker_move->move == Move::FalseSwipe &&
+                        defender_health == 1) ||
                     unable_to_hit_defender
                 ) {
                     best_move = {
@@ -714,8 +764,40 @@ class BattleState {
         if (damage_to_defender != 0) {
             hits_to_defender = defender_health / damage_to_defender;
         } else if (((attacker_pokemon.name == Pokemon::Wobbuffet ||
-                    attacker_pokemon.name == Pokemon::Wynaut) &&
-                defender_move == nullptr) ||
+                attacker_pokemon.name == Pokemon::Wynaut)) ||
+            ((attacker_pokemon.name == Pokemon::Zigzagoon ||
+                    attacker_pokemon.name == Pokemon::Furret ||
+                    attacker_pokemon.name == Pokemon::Riolu ||
+                    attacker_pokemon.name == Pokemon::Tyrogue ||
+                    attacker_pokemon.name == Pokemon::Machop ||
+                    attacker_pokemon.name == Pokemon::Machamp ||
+                    attacker_pokemon.name == Pokemon::Lucario ||
+                    attacker_pokemon.name == Pokemon::Hippopotas ||
+                    attacker_pokemon.name == Pokemon::Trapinch ||
+                    attacker_pokemon.name == Pokemon::Diglett ||
+                    attacker_pokemon.name == Pokemon::Cubone ||
+                    attacker_pokemon.name == Pokemon::Sandshrew ||
+                    attacker_pokemon.name == Pokemon::Phanpy ||
+                    attacker_pokemon.name == Pokemon::Marowak ||
+                    attacker_pokemon.name == Pokemon::Dugtrio ||
+                    attacker_pokemon.name == Pokemon::Donphan ||
+                    attacker_pokemon.name == Pokemon::Hippowdon) &&
+                defender_state.has_type(PokemonType::GHOST) &&
+                defender_ability == Ability::Levitate) ||
+            ((attacker_pokemon.name == Pokemon::Castform ||
+                    attacker_pokemon.name == Pokemon::Umbreon) &&
+                defender_state.has_type(PokemonType::GHOST)) ||
+            ((attacker_pokemon.name == Pokemon::Barboach ||
+                    attacker_pokemon.name == Pokemon::Wooper ||
+                    attacker_pokemon.name == Pokemon::Marshtomp ||
+                    attacker_pokemon.name == Pokemon::Quagsire ||
+                    attacker_pokemon.name == Pokemon::Swampert) &&
+                (defender_state.has_type(PokemonType::FLYING) &&
+                    defender_ability == Ability::WaterAbsorb)) ||
+            (attacker_state.get_ability() == Ability::Normalize &&
+                defender_state.has_type(PokemonType::GHOST)) ||
+            (attacker_state.pokemon.name == Pokemon::Unown &&
+                best_move.move->move == Move::HiddenPower) ||
             unable_to_hit_defender
         ) {
             hits_to_defender = std::numeric_limits<uint>::max();
@@ -724,8 +806,17 @@ class BattleState {
         }
 
         // Check if it is better to use a status move
-        if (!is_choiced) {
+        if (!has_choice_item) {
             for (const auto& move : attacker_pokemon.moves) {
+                if (should_skip_move(
+                        attacker_state,
+                        move,
+                        defender_chosen_move
+                    )
+                ) {
+                    continue;
+                }
+                // TODO foresight
                 if (move_has_flag(
                         move->move,
                         MoveFlag::BOOSTS_ATTACKER_STAT)
@@ -797,6 +888,14 @@ class BattleState {
         const auto defenders_last_used_move =
             defender_state.get_last_used_move();
         for (const auto& move : attacker_pokemon.moves) {
+            if (should_skip_move(
+                    attacker_state,
+                    move,
+                    defender_chosen_move
+                )
+            ) {
+                continue;
+            }
             if (move_has_flag(
                     move->move,
                     MoveFlag::HEALS_ATTACKER
@@ -871,43 +970,78 @@ class BattleState {
 
         // Weather
         for (const auto& move : attacker_pokemon.moves) {
+            if (should_skip_move(
+                    attacker_state,
+                    move,
+                    defender_chosen_move
+                )
+            ) {
+                continue;
+            }
             if (move_has_flag(
                     move->move,
                     MoveFlag::CHANGES_WEATHER
                 )
             ) {
                 if (best_move.damage > 0) {
+                    uint damage_to_attacker = 0;
+                    if (defender_move != nullptr) {
+                        if (defender_move->move != Move::TripleKick) {
+                            damage_to_attacker =
+                                defender_chosen_move.damage *
+                                best_move.times_to_hit;
+                        } else {
+                            for (int i = 0; i < 3; i++) {
+                                MoveInfo temp =
+                                    *defender_move;
+                                temp.power = (i + 1) * 10;
+                                damage_to_attacker +=
+                                    defender_state.
+                                    get_damage_of_attacker_move(
+                                        defender_state.get_item_for_effect(
+                                        ),
+                                        &temp,
+                                        defender_state,
+                                        weather,
+                                        is_mid_turn
+                                    );
+                            }
+                        }
+                    }
+
                     if (move->move == Move::SunnyDay &&
                         weather != Weather::SUN
                     ) {
+                        if (best_fire_move.damage > 0) {
+                            const auto hits_to_ko_if_fire =
+                                defender_health / best_fire_move.damage;
+                            if (hits_to_ko_if_fire > hits_to_defender + 1) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                                best_move.times_to_hit = 1;
+                            }
+                        }
+
+                        if (best_move.move->move == Move::SolarBeam) {
+                            if (hits_to_defender > 1) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                                best_move.times_to_hit = 1;
+                            }
+                        }
+
                         if (defender_chosen_move.damage > 0) {
                             const auto hits_taken =
-                                attacker_health / defender_chosen_move.damage;
-                            if (hits_taken > hits_to_defender + 1 &&
-                                best_fire_move.damage > 0
-                            ) {
-                                const auto hits_to_ko_if_fire =
-                                    defender_health / best_fire_move.damage;
-                                if (hits_to_ko_if_fire > hits_to_defender + 1) {
-                                    best_move.move = move;
-                                    best_move.damage = 0;
-                                }
-
-                                if (best_move.move->move == Move::SolarBeam) {
-                                    if (hits_to_defender > 1) {
-                                        best_move.move = move;
-                                        best_move.damage = 0;
-                                    }
-                                }
-                            }
+                                attacker_health / damage_to_attacker;
                             if (hits_taken > 3 &&
-                                defender_move->type ==
-                                PokemonType::WATER
+                                defender_move->type == PokemonType::WATER
                             ) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.times_to_hit = 1;
                             }
                         }
+
                         if (weather_ball != nullptr) {
                             const int damage =
                                 attacker_state.get_weather_ball_damage(
@@ -918,14 +1052,37 @@ class BattleState {
                                 );
                             const auto new_hits_to_KO =
                                 defender_health / damage;
-                            if (new_hits_to_KO > hits_to_defender) {
+                            if (new_hits_to_KO > hits_to_defender + 1) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.times_to_hit = 1;
                             }
                         }
                     } else if (move->move == Move::RainDance &&
                         weather != Weather::RAIN
                     ) {
+                        if (best_water_move.damage > 0) {
+                            const auto hits_to_ko_if_water =
+                                defender_health / best_water_move.damage;
+                            if (hits_to_ko_if_water > hits_to_defender + 1) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                                best_move.times_to_hit = 1;
+                            }
+                        }
+
+                        if (defender_chosen_move.damage > 0) {
+                            const auto hits_taken =
+                                attacker_health / damage_to_attacker;
+                            if (hits_taken > 3 &&
+                                defender_move->type == PokemonType::FIRE
+                            ) {
+                                best_move.move = move;
+                                best_move.damage = 0;
+                                best_move.times_to_hit = 1;
+                            }
+                        }
+
                         if (weather_ball != nullptr) {
                             const int damage =
                                 attacker_state.get_weather_ball_damage(
@@ -936,56 +1093,10 @@ class BattleState {
                                 );
                             const auto new_hits_to_KO =
                                 defender_health / damage;
-                            if (new_hits_to_KO > hits_to_defender) {
+                            if (new_hits_to_KO > hits_to_defender + 1) {
                                 best_move.move = move;
                                 best_move.damage = 0;
-                            }
-                        }
-                        if (defender_chosen_move.damage > 0) {
-                            uint damage_to_attacker = 0;
-                            if (defender_move->move !=
-                                Move::TripleKick
-                            ) {
-                                damage_to_attacker =
-                                    defender_chosen_move.damage *
-                                    best_move.times_to_hit;
-                            } else {
-                                for (int i = 0; i < 3; i++) {
-                                    MoveInfo temp =
-                                        *defender_move;
-                                    temp.power = (i + 1) * 10;
-                                    damage_to_attacker +=
-                                        defender_state.
-                                        get_damage_of_attacker_move(
-                                            defender_state.get_item_for_effect(
-                                            ),
-                                            &temp,
-                                            defender_state,
-                                            weather,
-                                            is_mid_turn
-                                        );
-                                }
-                            }
-                            const auto hits_taken =
-                                attacker_health / damage_to_attacker;
-                            if (hits_taken > hits_to_defender + 1 &&
-                                best_water_move.damage > 0
-                            ) {
-                                const auto hits_to_ko_if_water =
-                                    defender_health /
-                                    best_water_move.damage;
-                                if (hits_to_ko_if_water > hits_to_defender +
-                                    1) {
-                                    best_move.move = move;
-                                    best_move.damage = 0;
-                                }
-                            }
-                            if (hits_taken > 3 &&
-                                defender_move->type ==
-                                PokemonType::WATER
-                            ) {
-                                best_move.move = move;
-                                best_move.damage = 0;
+                                best_move.times_to_hit = 1;
                             }
                         }
                     } else if (move->move == Move::Hail &&
@@ -1005,6 +1116,7 @@ class BattleState {
                             ) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.times_to_hit = 1;
                             }
                         }
                     } else if (move->move == Move::Sandstorm &&
@@ -1024,6 +1136,7 @@ class BattleState {
                             ) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.times_to_hit = 1;
                             }
                         }
                         if (defender_chosen_move.damage > 0) {
@@ -1035,6 +1148,7 @@ class BattleState {
                             ) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.times_to_hit = 1;
                             }
                         }
                     }
@@ -1042,15 +1156,19 @@ class BattleState {
             }
         }
 
-        if (CHOICE_ITEMS.contains(attacker_item) &&
-            !is_choiced &&
-            best_move.move != nullptr
+        if (has_choice_item &&
+            !attacker_state.is_choiced() &&
+            best_move.move != nullptr &&
+            !checking_future
         ) {
             attacker_state.set_is_choiced();
             attacker_state.set_chosen_move(std::move(best_move));
             return attacker_state.get_chosen_move();
         }
-        if (is_choiced && attackers_last_used_move.move != nullptr) {
+        if (has_choice_item &&
+            attacker_state.is_choiced() &&
+            attackers_last_used_move.move != nullptr
+        ) {
             assert(attackers_last_used_move.move->move == best_move.move->move);
             attacker_state.set_chosen_move(std::move(best_move));
             return attacker_state.get_chosen_move();
@@ -1096,8 +1214,8 @@ class BattleState {
         if ((attacker_move == Move::FakeOut && !is_first_turn()) ||
 
             (attacker_move == Move::SuckerPunch &&
-                defender_chosen_move.move != nullptr &&
-                defender_chosen_move.move->category == Category::STATUS) ||
+                (defender_chosen_move.move == nullptr ||
+                    defender_chosen_move.move->category == Category::STATUS)) ||
 
             (defender_ability == Ability::Damp &&
                 (attacker_move == Move::Selfdestruct ||
@@ -1106,7 +1224,13 @@ class BattleState {
             (defender_ability == Ability::Soundproof &&
                 move_has_flag(attacker_move, MoveFlag::IS_SOUND_BASED)) ||
 
-            (attacker_move == Move::FocusPunch && attacker_state.was_hit())
+            (attacker_move == Move::FocusPunch && attacker_state.was_hit()) ||
+
+            (attacker_move == Move::Feint &&
+                (defender_chosen_move.move == nullptr ||
+                    (defender_chosen_move.move->move == Move::Protect ||
+                        defender_chosen_move.move->move == Move::Detect))
+            )
         ) {
             attacker_state.update_last_used_move(true);
             return;
@@ -1144,8 +1268,10 @@ class BattleState {
             }
         }
 
-        // Rollout
-        if (attacker_move == Move::Rollout) {
+        // Rollout and Ice Ball
+        if (attacker_move == Move::Rollout ||
+            attacker_move == Move::IceBall
+        ) {
             if (attacker_state.get_rollout_turns() == 0) {
                 attacker_state.set_rollout_power(
                     get_rollout_power(
@@ -1214,14 +1340,13 @@ class BattleState {
         if (attacker_move == Move::BrickBreak) {
             defender_state.break_reflect();
             defender_state.break_light_screen();
-            choose_move_against_defender(
-                attacker_state.is_player,
-                true,
+            recalculate_chosen_move_damage(
+                attacker_state,
+                defender_state,
+                attacker_chosen_move,
                 weather,
                 is_mid_turn
             );
-            attacker_chosen_move = attacker_state.get_chosen_move();
-            attacker_move = attacker_chosen_move.move->move;
         }
 
         // Off field move
@@ -1268,9 +1393,10 @@ class BattleState {
 
         if (field_location != FieldLocation::ON_FIELD && !is_mid_turn) {
             // Defender attack may miss or do double damage
-            choose_move_against_defender(
-                defender_state.is_player,
-                true,
+            recalculate_chosen_move_damage(
+                defender_state,
+                attacker_state,
+                defender_chosen_move,
                 weather,
                 is_mid_turn
             );
@@ -1280,19 +1406,19 @@ class BattleState {
             attacker_chosen_move.move->move == Move::Transform
         ) {
             attacker_state.transform(defender_state);
-            attacker_state.update_last_used_move(true);
+            attacker_state.update_last_used_move(false);
             return;
         }
 
-        // TODO this may be redundant
         if (attacker_state.was_hit() &&
             (attacker_move == Move::Avalanche ||
                 attacker_move == Move::Payback ||
                 attacker_move == Move::Revenge)
         ) {
-            choose_move_against_defender(
-                attacker_is_player,
-                true,
+            recalculate_chosen_move_damage(
+                attacker_state,
+                defender_state,
+                attacker_chosen_move,
                 weather,
                 is_mid_turn
             );
@@ -1314,8 +1440,9 @@ class BattleState {
 
         // Do the damage
         if (field_location == FieldLocation::ON_FIELD &&
-            move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
-            !defender_state.is_protected()
+            (move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
+                !defender_state.is_protected() ||
+                attacker_move == Move::Feint)
         ) {
             // Apply the damage
             if ((defender_ability == Ability::VoltAbsorb &&
@@ -1356,12 +1483,7 @@ class BattleState {
                                 is_mid_turn
                             );
                             attacker_chosen_move.damage +=
-                                choose_move_against_defender(
-                                    attacker_is_player,
-                                    true,
-                                    weather,
-                                    is_mid_turn
-                                ).damage;
+                                attacker_state.get_chosen_move().damage;
                             attacker_chosen_move.move = backup;
                         }
                     }
@@ -1379,6 +1501,16 @@ class BattleState {
                     defender_ability != Ability::StickyHold &&
                     defender_ability != Ability::Multitype
                 ) {
+                    if (defender_state.get_item() == Item::StickyBarb) {
+                        attacker_state.try_set_item(Item::StickyBarb);
+                    }
+                    defender_state.clear_item(true);
+                }
+                if (attacker_move == Move::Thief &&
+                    defender_ability != Ability::StickyHold &&
+                    defender_ability != Ability::Multitype &&
+                    attacker_state.try_set_item(defender_state.get_item())
+                ) {
                     defender_state.clear_item(true);
                 }
             }
@@ -1391,6 +1523,10 @@ class BattleState {
                     } else {
                         defender_state.set_trapped_counter(5);
                     }
+                }
+                if (attacker_move == Move::WakeUpSlap &&
+                    defender_state.get_status() == Status::SLEEP) {
+                    defender_state.clear_status();
                 }
 
                 if (defender_chosen_move.move != nullptr) {
@@ -1424,9 +1560,10 @@ class BattleState {
                         }
                     } else {
                         // Several moves do more damage after getting hit
-                        choose_move_against_defender(
-                            !defender_state.is_player,
-                            true,
+                        recalculate_chosen_move_damage(
+                            defender_state,
+                            attacker_state,
+                            defender_chosen_move,
                             weather,
                             is_mid_turn
                         );
@@ -1572,13 +1709,17 @@ class BattleState {
             }
         }
 
-        if (move == Move::BugBite) {
+        if (move == Move::BugBite || move == Move::Pluck) {
             if (BERRIES[
                     static_cast<int>(defender_state.get_item_for_effect())
                 ] &&
                 defender_ability != Ability::StickyHold
             ) {
-                attacker_state.eat_berry(defender_state.get_item_for_effect());
+                if (attacker_ability != Ability::Klutz) {
+                    attacker_state.eat_berry(
+                        defender_state.get_item_for_effect()
+                    );
+                }
                 defender_state.clear_item();
             }
         }
@@ -2185,13 +2326,16 @@ public:
                 true,
                 false,
                 get_weather(),
-                is_mid_turn()
+                is_mid_turn(),
+                false
             );
+
             BestMove opponent_move = choose_move_against_defender(
                 false,
                 false,
                 get_weather(),
-                is_mid_turn()
+                is_mid_turn(),
+                false
             );
 
             check_unimplemented_moves(player_move, opponent_move);
@@ -2209,7 +2353,12 @@ public:
                     get_weather(),
                     is_mid_turn()
                 );
-                player_moves.push_back(player_move.move);
+                if (opponent_state.get_field_location() ==
+                    FieldLocation::ON_FIELD ||
+                    player_state.get_last_used_move().damage > 0
+                ) {
+                    player_moves.push_back(player_move.move);
+                }
                 apply_post_move_effects(
                     player_state,
                     player_move,
@@ -2255,7 +2404,12 @@ public:
                         get_weather(),
                         is_mid_turn()
                     );
-                    player_moves.push_back(player_move.move);
+                    if (opponent_state.get_field_location() ==
+                        FieldLocation::ON_FIELD ||
+                        player_state.get_last_used_move().damage > 0
+                    ) {
+                        player_moves.push_back(player_move.move);
+                    }
                     apply_post_move_effects(
                         player_state,
                         player_move,

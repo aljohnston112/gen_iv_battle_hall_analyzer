@@ -24,7 +24,7 @@ std::string strip_space(const std::string& string) {
     return {start, end + 1};
 }
 
-std::string replace_gender_symbols(const std::string& pokemon_name) {
+static std::string replace_gender_symbols(const std::string& pokemon_name) {
     std::string result = pokemon_name;
     size_t i;
     while ((i = result.find("♀")) != std::string::npos) {

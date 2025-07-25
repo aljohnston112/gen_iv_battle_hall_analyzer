@@ -58,13 +58,39 @@ inline std::vector<
         for (const auto& serebii_pokemon : all_serebii_pokemon |
              std::views::values
         ) {
-            pokemon_forms.push_back(
-                convert_serebii_to_custom(
-                    serebii_pokemon,
-                    true,
-                    false
-                )
-            );
+            static std::unordered_set<std::string> skip_names = {
+                "Arceus", "Darkrai", "Manaphy", "Cresselia",
+                "Azelf", "Rotom", "Mamoswine", "Leafeon",
+                "Rhyperior","Togekiss", "Mantyke", "Finneon",
+                "Croagunk", "Drapion", "Lickilicky", "Gabite",
+                "Gible", "Bonsly", "Bronzong", "Bronzor",
+                "Skuntank", "Honchkrow", "Mismagius", "Gastrodon",
+                "Cherrim", "Floatzel", "Buizel", "Combee",
+                "Wormadam", "Burmy", "Shieldon", "Budew",
+                "Luxray", "Munchlax", "Luxio", "Shinx",
+                "Bibarel", "Bidoof", "Prinplup", "Monferno",
+                "Carnivine", "Shellos", "Torterra", "Chingling",
+                "Grotle", "Deoxys", "Jirachi", "Rayquaza",
+                "Kyogre", "Registeel", "Froslass", "Regirock",
+                "Metagross", "Turtwig", "Salamence", "Gorebyss",
+                "Huntail", "Walrein", "Glalie", "Happiny",
+                "Wynaut", "Absol", "Dusclops", "Banette",
+                "Feebas", "Armaldo", "Anorith", "Lileep",
+                "Baltoy", "Crawdaunt", "Whiscash", "Barboach",
+                "Solrock", "Lunatone", "Seviper", "Zangoose",
+                "Swablu", "Cacturne", "Empoleon", "Vibrava",
+                "Grumpig", "Bagon", "Spoink" , "Camerupt",
+                "Wailord"
+            };
+            if (!skip_names.contains(serebii_pokemon.name)) {
+                pokemon_forms.push_back(
+                    convert_serebii_to_custom(
+                        serebii_pokemon,
+                        true,
+                        false
+                    )
+                );
+            }
         }
     } else {
         pokemon_forms.push_back(
