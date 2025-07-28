@@ -568,14 +568,24 @@ std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> get_stats_for_serebii(
     }
     std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats{};
     for (const auto& [stat, value] : base_stats) {
-        stats[static_cast<int>(stat)] = get_stat(
-            LEVEL,
-            stat,
-            value,
-            0,
-            0,
-            NATURE_MAP.at(NatureEnum::HARDY)
-        );
+        if (stat == Stat::HEALTH &&
+            serebii_pokemon.name != "Wormadam" &&
+            serebii_pokemon.name != "Deoxys" &&
+            serebii_pokemon.name != "Shaymin" &&
+            serebii_pokemon.name != "Giratina" &&
+            STRING_TO_POKEMON.at(serebii_pokemon.name) == Pokemon::Shedinja
+        ) {
+            stats[static_cast<int>(stat)] = 1;
+        } else {
+            stats[static_cast<int>(stat)] = get_stat(
+                LEVEL,
+                stat,
+                value,
+                0,
+                0,
+                NATURE_MAP.at(NatureEnum::HARDY)
+            );
+        }
     }
     return stats;
 }

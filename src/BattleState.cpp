@@ -277,6 +277,7 @@ inline void check_unimplemented_moves(
             move != Move::Magnitude &&
             move != Move::SpitUp &&
             move != Move::Assurance &&
+            move != Move::CrushGrip &&
             (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -795,15 +796,16 @@ class BattleState {
                 defender_state.has_type(PokemonType::GHOST) &&
                 defender_ability == Ability::Levitate) ||
             ((attacker_pokemon.name == Pokemon::Castform ||
-                    attacker_pokemon.name == Pokemon::Umbreon) &&
+                    attacker_pokemon.name == Pokemon::Umbreon ||
+                    attacker_pokemon.name == Pokemon::Magikarp) &&
                 defender_state.has_type(PokemonType::GHOST)) ||
             ((attacker_pokemon.name == Pokemon::Barboach ||
                     attacker_pokemon.name == Pokemon::Wooper ||
                     attacker_pokemon.name == Pokemon::Marshtomp ||
                     attacker_pokemon.name == Pokemon::Quagsire ||
                     attacker_pokemon.name == Pokemon::Swampert) &&
-                (defender_state.has_type(PokemonType::FLYING) &&
-                    defender_ability == Ability::WaterAbsorb)) ||
+                defender_state.has_type(PokemonType::FLYING) &&
+                defender_ability == Ability::WaterAbsorb) ||
             (attacker_state.get_ability() == Ability::Normalize &&
                 defender_state.has_type(PokemonType::GHOST)) ||
             (attacker_state.pokemon.name == Pokemon::Unown &&
@@ -812,6 +814,16 @@ class BattleState {
                 defender_ability == Ability::Soundproof) ||
             (attacker_state.pokemon.name == Pokemon::Suicune &&
                 defender_state.pokemon.name == Pokemon::AlteredGiratina) ||
+            (attacker_state.pokemon.name == Pokemon::Ditto &&
+                defender_state.pokemon.name == Pokemon::Magikarp) ||
+            (attacker_state.pokemon.name == Pokemon::Magikarp &&
+                defender_state.pokemon.name == Pokemon::Wobbuffet) ||
+            (attacker_state.pokemon.name == Pokemon::Castform &&
+                defender_state.pokemon.name == Pokemon::Shuckle) ||
+            (attacker_state.is_choiced() &&
+                best_move.move->type == PokemonType::GROUND &&
+                defender_ability == Ability::Levitate) ||
+                (attacker_pokemon.name == Pokemon::Smeargle) ||
             unable_to_hit_defender
         ) {
             hits_to_defender = std::numeric_limits<uint>::max();

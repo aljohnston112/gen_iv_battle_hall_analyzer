@@ -822,7 +822,9 @@ void analyze(
     for (const auto& form :
          form_to_type_to_rank_to_over_2_to_losses | std::views::keys
     ) {
-        print_used_moves(form_to_used_moves.at(form));
+        if (FULL_PRINT && form_to_used_moves.contains(form)) {
+            print_used_moves(form_to_used_moves.at(form));
+        }
 
         const auto ordered_type_and_over_2_to_streak_pairs =
             get_ordered_type_and_over_2_to_streak_pairs(
@@ -844,10 +846,11 @@ void analyze(
                 form_to_first_losses.at(form),
                 over_2_to_rank_and_type_assignment
             );
+            std::cout
+                << POKEMON_TO_STRING.at(form)
+                << "'s total streak: " << total_streak << "\n";
         }
-        std::cout
-            << POKEMON_TO_STRING.at(form)
-            << "'s total streak: " << total_streak << "\n";
+
         if (FULL_PRINT) {
             print_max_streaks(
                 over_2_to_rank_and_type_assignment,

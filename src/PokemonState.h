@@ -2176,7 +2176,10 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
                 attacker_move_info->move == Move::Flail ||
                 attacker_move_info->move == Move::Eruption ||
                 attacker_move_info->move == Move::WaterSpout ||
-                attacker_move_info->move == Move::GrassKnot) &&
+                attacker_move_info->move == Move::GrassKnot ||
+                attacker_move_info->move == Move::Avalanche ||
+                attacker_move_info->move == Move::Uproar ||
+                attacker_move_info->move == Move::KnockOff) &&
             effectiveness > 0)
     ) {
         damage = std::max(static_cast<int16_t>(1), damage);

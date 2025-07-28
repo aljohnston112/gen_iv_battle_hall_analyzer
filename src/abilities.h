@@ -147,7 +147,7 @@ enum class Ability {
     Static,
     Steadfast,
     Stench,
-    StickyHold, // TODO Covet, Thief, Knock Off, Trick, Switcheroo
+    StickyHold, // TODO Trick, Switcheroo
     StormDrain,
     Sturdy,
     SuctionCups,
