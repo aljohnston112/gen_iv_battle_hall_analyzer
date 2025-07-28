@@ -112,6 +112,7 @@ class PokemonState {
     int trapped_counter = 0;
     bool flinched = false;
     bool was_hit_ = false;
+    bool took_damage_ = false;
 
     bool charging = false;
     bool recharging = false;
@@ -413,6 +414,7 @@ public:
     void apply_damage(const uint16_t damage) {
         current_stats[HEALTH_INDEX] =
             static_cast<int16_t>(current_stats[HEALTH_INDEX] - damage);
+        took_damage_ = true;
         if (current_stats[HEALTH_INDEX] > 0) {
             try_apply_berry(false);
         }
@@ -678,6 +680,10 @@ public:
         was_hit_ = true;
     }
 
+    [[nodiscard]] bool took_damage() const {
+        return took_damage_;
+    }
+
     [[nodiscard]] bool is_charging() const {
         return charging;
     }
@@ -836,7 +842,10 @@ public:
         this->chosen_move = best_move;
     }
 
-    void update_last_used_move(const bool move_failed) {
+    void update_last_used_move(
+        const bool move_failed,
+        Ability defender_ability
+    ) {
         if (!move_failed) {
             last_used_move = BestMove{
                 .move = chosen_move.move,
@@ -855,6 +864,9 @@ public:
             assert(power_points[static_cast<int>(chosen_move.move->move)] > 0);
             if (field_location == FieldLocation::ON_FIELD) {
                 power_points[static_cast<int>(chosen_move.move->move)]--;
+                if (defender_ability == Ability::Pressure) {
+                    power_points[static_cast<int>(chosen_move.move->move)]--;
+                }
             }
         }
     }
@@ -1104,6 +1116,7 @@ public:
             rollout_power = 0;
         }
         was_hit_ = false;
+        took_damage_ = false;
         flinched = false;
         if (slow_start_count < 5) {
             slow_start_count++;
@@ -1599,17 +1612,24 @@ inline int16_t get_power_based_on_move(
         if (attacker_item == Item::None) {
             power = 0;
         } else if (attacker_item == Item::ChoiceBand ||
-            attacker_item == Item::QuickPowder
+            attacker_item == Item::QuickPowder ||
+            attacker_item == Item::MuscleBand
         ) {
             power = 10;
         } else if (attacker_item == Item::StickyBarb) {
             power = 80;
+        } else if (attacker_item == Item::SpellTag ||
+            attacker_item == Item::RazorFang
+        ) {
+            power = 30;
         } else {
             throw std::runtime_error{
                 "No fling: " + ITEM_TO_STRING.at(attacker_item)
             };
         }
-    } else if (attacker_move == Move::WringOut) {
+    } else if (attacker_move == Move::WringOut ||
+        attacker_move == Move::CrushGrip
+    ) {
         power = static_cast<int16_t>(
             1 + std::floor(
                 120 * defender_state.get_health() / defender_state.max_health
@@ -2028,6 +2048,10 @@ inline int16_t apply_damage_modifiers(
         break;
     }
 
+    if (attacker_move == Move::Assurance && attacker_state.took_damage()) {
+        damage *= 2;
+    }
+
     return static_cast<int16_t>(std::floor(damage));
 }
 
@@ -2149,7 +2173,10 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
     if (move_has_flag(attacker_move_info->move, MoveFlag::HAS_POWER) ||
         ((attacker_move_info->move == Move::HiddenPower ||
                 attacker_move_info->move == Move::WringOut ||
-                attacker_move_info->move == Move::Flail) &&
+                attacker_move_info->move == Move::Flail ||
+                attacker_move_info->move == Move::Eruption ||
+                attacker_move_info->move == Move::WaterSpout ||
+                attacker_move_info->move == Move::GrassKnot) &&
             effectiveness > 0)
     ) {
         damage = std::max(static_cast<int16_t>(1), damage);

@@ -265,6 +265,7 @@ inline void check_unimplemented_moves(
             move != Move::IceBall &&
             move != Move::Fling &&
             move != Move::Thief &&
+            move != Move::Covet &&
             move != Move::SecretPower &&
             move != Move::Explosion &&
             move != Move::Selfdestruct &&
@@ -274,6 +275,8 @@ inline void check_unimplemented_moves(
             move != Move::Pursuit &&
             move != Move::WakeUpSlap &&
             move != Move::Magnitude &&
+            move != Move::SpitUp &&
+            move != Move::Assurance &&
             (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -726,6 +729,13 @@ class BattleState {
                     ) ||
                     (attacker_move->move == Move::FalseSwipe &&
                         defender_health == 1) ||
+                    (move_has_flag(
+                            attacker_move->move,
+                            MoveFlag::IS_SOUND_BASED
+                        ) &&
+                        defender_ability == Ability::Soundproof) ||
+                    (attacker_move->move == Move::SpitUp &&
+                        damage == 0) ||
                     unable_to_hit_defender
                 ) {
                     best_move = {
@@ -798,6 +808,10 @@ class BattleState {
                 defender_state.has_type(PokemonType::GHOST)) ||
             (attacker_state.pokemon.name == Pokemon::Unown &&
                 best_move.move->move == Move::HiddenPower) ||
+            (attacker_state.pokemon.name == Pokemon::Chatot &&
+                defender_ability == Ability::Soundproof) ||
+            (attacker_state.pokemon.name == Pokemon::Suicune &&
+                defender_state.pokemon.name == Pokemon::AlteredGiratina) ||
             unable_to_hit_defender
         ) {
             hits_to_defender = std::numeric_limits<uint>::max();
@@ -1203,14 +1217,14 @@ class BattleState {
             attacker_is_player ? opponent_state : player_state;
 
         auto attacker_chosen_move = attacker_state.get_chosen_move();
+        const auto defender_ability = defender_state.get_ability();
         if (attacker_chosen_move.move == nullptr) {
-            attacker_state.update_last_used_move(true);
+            attacker_state.update_last_used_move(true, defender_ability);
             return;
         }
         auto attacker_move = attacker_chosen_move.move->move;
 
         const auto defender_chosen_move = defender_state.get_chosen_move();
-        const auto defender_ability = defender_state.get_ability();
         if ((attacker_move == Move::FakeOut && !is_first_turn()) ||
 
             (attacker_move == Move::SuckerPunch &&
@@ -1232,7 +1246,7 @@ class BattleState {
                         defender_chosen_move.move->move == Move::Detect))
             )
         ) {
-            attacker_state.update_last_used_move(true);
+            attacker_state.update_last_used_move(true, defender_ability);
             return;
         }
 
@@ -1252,7 +1266,7 @@ class BattleState {
                         false
                     );
                 }
-                attacker_state.update_last_used_move(true);
+                attacker_state.update_last_used_move(true, defender_ability);
                 return;
             }
         }
@@ -1406,7 +1420,7 @@ class BattleState {
             attacker_chosen_move.move->move == Move::Transform
         ) {
             attacker_state.transform(defender_state);
-            attacker_state.update_last_used_move(false);
+            attacker_state.update_last_used_move(false, defender_ability);
             return;
         }
 
@@ -1442,7 +1456,9 @@ class BattleState {
         if (field_location == FieldLocation::ON_FIELD &&
             (move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
                 !defender_state.is_protected() ||
-                attacker_move == Move::Feint)
+                attacker_move == Move::Feint) &&
+            !(defender_state.get_field_location() != FieldLocation::ON_FIELD &&
+                attacker_chosen_move.damage == 0)
         ) {
             // Apply the damage
             if ((defender_ability == Ability::VoltAbsorb &&
@@ -1497,20 +1513,20 @@ class BattleState {
                 if (attacker_move == Move::FakeOut) {
                     defender_state.set_flinched();
                 }
-                if (attacker_move == Move::KnockOff &&
-                    defender_ability != Ability::StickyHold &&
-                    defender_ability != Ability::Multitype
-                ) {
-                    if (defender_state.get_item() == Item::StickyBarb) {
-                        attacker_state.try_set_item(Item::StickyBarb);
-                    }
-                    defender_state.clear_item(true);
-                }
-                if (attacker_move == Move::Thief &&
+                if ((attacker_move == Move::Thief ||
+                        attacker_move == Move::KnockOff ||
+                        attacker_move == Move::Covet) &&
                     defender_ability != Ability::StickyHold &&
                     defender_ability != Ability::Multitype &&
                     attacker_state.try_set_item(defender_state.get_item())
                 ) {
+                    if (defender_state.get_item() == Item::StickyBarb ||
+                        attacker_move == Move::Thief ||
+                        attacker_move == Move::Covet
+                    ) {
+                        attacker_state.try_set_item(Item::StickyBarb);
+                        attacker_state.try_apply_berry(true);
+                    }
                     defender_state.clear_item(true);
                 }
             }
@@ -1571,9 +1587,9 @@ class BattleState {
                 }
             }
 
-            attacker_state.update_last_used_move(false);
+            attacker_state.update_last_used_move(false, defender_ability);
         } else {
-            attacker_state.update_last_used_move(true);
+            attacker_state.update_last_used_move(true, defender_ability);
         }
     }
 
@@ -2309,6 +2325,20 @@ public:
         player_state{player_pokemon, true},
         opponent_state{opponent_pokemon, false} {}
 
+    void add_player_move(
+        std::vector<const MoveInfo*>& player_moves,
+        const BestMove player_move
+    ) {
+        if ((player_state.get_ability() == Ability::Truant &&
+                player_move.move != nullptr) &&
+            opponent_state.get_field_location() ==
+            FieldLocation::ON_FIELD ||
+            player_state.get_last_used_move().damage > 0
+        ) {
+            player_moves.push_back(player_move.move);
+        }
+    }
+
     std::pair<bool, std::vector<const MoveInfo*>> battle() {
         std::vector<const MoveInfo*> player_moves{};
         bool player_goes_first = player_state.outspeeds(
@@ -2353,12 +2383,7 @@ public:
                     get_weather(),
                     is_mid_turn()
                 );
-                if (opponent_state.get_field_location() ==
-                    FieldLocation::ON_FIELD ||
-                    player_state.get_last_used_move().damage > 0
-                ) {
-                    player_moves.push_back(player_move.move);
-                }
+                add_player_move(player_moves, player_move);
                 apply_post_move_effects(
                     player_state,
                     player_move,
@@ -2404,12 +2429,7 @@ public:
                         get_weather(),
                         is_mid_turn()
                     );
-                    if (opponent_state.get_field_location() ==
-                        FieldLocation::ON_FIELD ||
-                        player_state.get_last_used_move().damage > 0
-                    ) {
-                        player_moves.push_back(player_move.move);
-                    }
+                    add_player_move(player_moves, player_move);
                     apply_post_move_effects(
                         player_state,
                         player_move,

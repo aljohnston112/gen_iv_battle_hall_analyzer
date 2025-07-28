@@ -18,8 +18,7 @@ std::string strip_space(const std::string& string) {
     auto end = string.end();
     do {
         --end;
-    }
-    while (std::distance(start, end) > 0 && std::isspace(*end));
+    } while (std::distance(start, end) > 0 && std::isspace(*end));
 
     return {start, end + 1};
 }
@@ -306,14 +305,20 @@ get_stats_for_battle_hall_pokemon(
     }
     std::array<uint16_t, static_cast<int>(Stat::NO_STAT)> stats{};
     for (const auto& [stat, value] : base_stats) {
-        stats[static_cast<int>(stat)] = get_stat(
-            level,
-            stat,
-            value,
-            rank * 2 + 6,
-            hall_pokemon.evs.at(stat),
-            hall_pokemon.nature
-        );
+        if (stat == Stat::HEALTH &&
+            STRING_TO_POKEMON.at(hall_pokemon.name) == Pokemon::Shedinja
+        ) {
+            stats[static_cast<int>(stat)] = 1;
+        } else {
+            stats[static_cast<int>(stat)] = get_stat(
+                level,
+                stat,
+                value,
+                rank * 2 + 6,
+                hall_pokemon.evs.at(stat),
+                hall_pokemon.nature
+            );
+        }
     }
     return stats;
 }
