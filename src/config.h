@@ -7,7 +7,7 @@
 #include "serebii_pokemon_data_source.h"
 
 constexpr bool MULTI_THREADED = true;
-constexpr uint8_t LEVEL = 30;
+constexpr uint8_t LEVEL = 60;
 constexpr bool SKIP_RANKS = false;
 constexpr bool ALL_MOVES = false;
 constexpr bool USE_HIGHEST_RANK_FOR_WALLS = true;
@@ -184,7 +184,10 @@ inline std::vector<
                 // "Chimecho", "Grovyle", "Machamp", "Sceptile",
                 // "Mr. Mime", "Torchic"
             };
-            if (!skip_names.contains(serebii_pokemon.name)) {
+            if (!skip_names.contains(serebii_pokemon.name)
+                 // && (serebii_pokemon.name == "Happiny" ||
+                 //     serebii_pokemon.name == "Ursaring")
+            ) {
                 pokemon_forms.push_back(
                     convert_serebii_to_custom(
                         serebii_pokemon,

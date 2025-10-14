@@ -2,11 +2,15 @@ cmake_minimum_required(VERSION 3.31)
 project(gen_iv_battle_hall_analyzer)
 
 set(CMAKE_CXX_STANDARD 26)
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fno-inline -fno-omit-frame-pointer")
-option(ENABLE_LIBSTDCXX_DEBUG "Enable _GLIBCXX_DEBUG for debug builds" OFF)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fno-inline -fno-omit-frame-pointer -fstack-check -fstack-protector-all -Wframe-larger-than=8388608")
+option(ENABLE_LIBSTDCXX_DEBUG "Enable _GLIBCXX_DEBUG for debug builds" ON)
 if (ENABLE_LIBSTDCXX_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 endif()
+option(ENABLE_ADDRESS_SANITIZER "Enable address sanitizer" OFF)
+#if(ENABLE_ADDRESS_SANITIZER)
+#    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,undefined")
+#endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -flto -DNDEBUG")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 add_executable(gen_iv_battle_hall_team_builder main.cpp
@@ -32,6 +36,7 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/thread_pool.h
         external/libhungarian/hungarian.c
         external/libhungarian/hungarian.h
+        src/all_v_all.h
 )
 target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
 

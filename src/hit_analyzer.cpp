@@ -74,7 +74,7 @@ struct ResultEntry {
     uint8_t over_2;
     const CustomPokemon* opponent;
     bool won;
-    std::vector<const MoveInfo*> moves;
+    std::unordered_set<const MoveInfo*> moves;
 };
 
 struct ResultEntryHash {
@@ -477,7 +477,7 @@ void print_walls(
                 std::vector<
                     std::pair<
                         const CustomPokemon*,
-                        std::vector<const MoveInfo*>
+                        std::unordered_set<const MoveInfo*>
                     >
                 >, NUMBER_OF_TYPES>,
             MAX_RANK
@@ -754,17 +754,19 @@ void print_max_streaks(
     const std::array<int, NUMBER_OF_TYPES>& lowest_over_2_for_types
 ) {
     // Print ranks beaten in the order they should be challenged
-    int over_2 = 0;
-    for (const auto& [type, rank] :
-         type_to_over_2_assignment
-    ) {
-        const auto lowest_over_2 =
-            lowest_over_2_for_types[static_cast<int>(type)];
-        std::cout << "Over 2: "
-            << std::max(over_2, lowest_over_2)
-            << ", Type: " << TYPE_TO_STRING.at(type)
-            << ", Rank: " << rank << "\n";
-        over_2++;
+    if (FULL_PRINT) {
+        int over_2 = 0;
+        for (const auto& [type, rank] :
+             type_to_over_2_assignment
+        ) {
+            const auto lowest_over_2 =
+                lowest_over_2_for_types[static_cast<int>(type)];
+            std::cout << "Over 2: "
+                << std::max(over_2, lowest_over_2)
+                << ", Type: " << TYPE_TO_STRING.at(type)
+                << ", Rank: " << rank << "\n";
+            over_2++;
+        }
     }
 
     for (const auto& [type, rank] :
@@ -846,16 +848,15 @@ void analyze(
                 form_to_first_losses.at(form),
                 over_2_to_rank_and_type_assignment
             );
-            std::cout
-                << POKEMON_TO_STRING.at(form)
-                << "'s total streak: " << total_streak << "\n";
         }
 
-        if (FULL_PRINT) {
-            print_max_streaks(
-                over_2_to_rank_and_type_assignment,
-                lowest_over_2_for_types
-            );
-        }
+        std::cout
+            << POKEMON_TO_STRING.at(form)
+            << "'s total streak: " << total_streak << "\n";
+        print_max_streaks(
+            over_2_to_rank_and_type_assignment,
+            lowest_over_2_for_types
+        );
+        std::cout << "\n";
     }
 }

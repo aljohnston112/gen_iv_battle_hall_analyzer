@@ -249,7 +249,7 @@ public:
     const uint8_t level;
     const uint16_t max_health;
 
-    PokemonState(const CustomPokemon& pokemon, const bool is_player):
+    PokemonState(const CustomPokemon& pokemon, const bool is_player) :
         moves(pokemon.moves),
         types(pokemon.types),
         ability(pokemon.ability),
@@ -2069,7 +2069,7 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
         attacker_ability,
         weather
     );
-    int16_t damage = check_for_zero_or_fixed_damage(
+    int32_t damage = check_for_zero_or_fixed_damage(
         *this,
         attacker_move_info,
         move_type,
@@ -2106,8 +2106,8 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
     }
     const uint16_t defender_defense =
         is_special
-            ? defender_state.get_defense(weather, defender_ability)
-            : defender_state.get_special_defense(weather, defender_ability);
+            ? defender_state.get_special_defense(weather, defender_ability)
+            : defender_state.get_defense(weather, defender_ability);
     // Abilities that change attack stat
     if (attacker_move_info->category == Category::PHYSICAL) {
         if ((attacker_ability == Ability::Guts &&
@@ -2138,7 +2138,11 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
     if (power == static_cast<uint16_t>(-1)) {
         throw std::logic_error{"Power is -1"};
     }
-
+    if (static_cast<uint64_t>(damage) * power * attacker_attack >
+        std::numeric_limits<uint32_t>::max()
+    ) {
+        throw std::logic_error{"Overflow!"};
+    }
     damage = std::floor(damage * power * attacker_attack / defender_defense);
     damage = static_cast<int16_t>(std::floor(damage / 50) + 2);
 
@@ -2182,12 +2186,12 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
                 attacker_move_info->move == Move::KnockOff) &&
             effectiveness > 0)
     ) {
-        damage = std::max(static_cast<int16_t>(1), damage);
+        damage = std::max(1, damage);
     }
 
     if (attacker_move_info->move == Move::FalseSwipe) {
         damage = std::min(
-            static_cast<int16_t>(defender_state.get_health() - 1),
+            defender_state.get_health() - 1,
             damage
         );
     }

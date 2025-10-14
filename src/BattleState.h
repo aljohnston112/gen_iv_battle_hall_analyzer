@@ -3,7 +3,7 @@
 
 #include "custom_pokemon.h"
 
-std::pair<bool, std::vector<const MoveInfo*>> battle(
+std::pair<bool, std::unordered_set<const MoveInfo*>> battle(
     const CustomPokemon& player,
     const CustomPokemon& opponent
 );

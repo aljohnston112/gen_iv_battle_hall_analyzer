@@ -278,6 +278,7 @@ inline void check_unimplemented_moves(
             move != Move::SpitUp &&
             move != Move::Assurance &&
             move != Move::CrushGrip &&
+            move != Move::Rage &&
             (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -725,8 +726,8 @@ class BattleState {
                         !BERRIES.at(static_cast<int>(attacker_item))) ||
                     (attacker_move->move == Move::HiddenPower) ||
                     (attacker_move->move == Move::Endeavor &&
-                        opponent_state.get_health() <=
-                        player_state.get_health()
+                        defender_state.get_health() <=
+                        attacker_state.get_health()
                     ) ||
                     (attacker_move->move == Move::FalseSwipe &&
                         defender_health == 1) ||
@@ -735,7 +736,11 @@ class BattleState {
                             MoveFlag::IS_SOUND_BASED
                         ) &&
                         defender_ability == Ability::Soundproof) ||
-                    (attacker_move->move == Move::SpitUp &&
+                    ((attacker_move->move == Move::SpitUp ||
+                        // TODO shuckle leads to struggling
+                            (attacker_state.pokemon.name == Pokemon::Shuckle ||
+                                defender_state.pokemon.name ==
+                                Pokemon::Shuckle)) &&
                         damage == 0) ||
                     unable_to_hit_defender
                 ) {
@@ -776,6 +781,13 @@ class BattleState {
             hits_to_defender = defender_health / damage_to_defender;
         } else if (((attacker_pokemon.name == Pokemon::Wobbuffet ||
                 attacker_pokemon.name == Pokemon::Wynaut)) ||
+            ((attacker_pokemon.name == Pokemon::Lanturn ||
+                    attacker_pokemon.name == Pokemon::Chinchou ||
+                    attacker_pokemon.name == Pokemon::Rotom ||
+                    attacker_pokemon.name == Pokemon::Drifblim) &&
+                (defender_state.pokemon.ability == Ability::MotorDrive)) ||
+            ((attacker_pokemon.name == Pokemon::Houndoom) &&
+                (defender_state.get_ability() == Ability::FlashFire)) ||
             ((attacker_pokemon.name == Pokemon::Zigzagoon ||
                     attacker_pokemon.name == Pokemon::Furret ||
                     attacker_pokemon.name == Pokemon::Riolu ||
@@ -792,7 +804,18 @@ class BattleState {
                     attacker_pokemon.name == Pokemon::Marowak ||
                     attacker_pokemon.name == Pokemon::Dugtrio ||
                     attacker_pokemon.name == Pokemon::Donphan ||
-                    attacker_pokemon.name == Pokemon::Hippowdon) &&
+                    attacker_pokemon.name == Pokemon::Hippowdon ||
+                    attacker_pokemon.name == Pokemon::Graveler ||
+                    attacker_pokemon.name == Pokemon::WormadamS ||
+                    attacker_pokemon.name == Pokemon::Rhyperior ||
+                    attacker_pokemon.name == Pokemon::Croagunk ||
+                    attacker_pokemon.name == Pokemon::Toxicroak ||
+                    attacker_pokemon.name == Pokemon::Rhydon ||
+                    attacker_pokemon.name == Pokemon::Sandslash ||
+                    attacker_pokemon.name == Pokemon::Geodude ||
+                    attacker_pokemon.name == Pokemon::Bonsly ||
+                    attacker_pokemon.name == Pokemon::Golem ||
+                    attacker_pokemon.name == Pokemon::Rhyhorn) &&
                 defender_state.has_type(PokemonType::GHOST) &&
                 defender_ability == Ability::Levitate) ||
             ((attacker_pokemon.name == Pokemon::Castform ||
@@ -808,8 +831,7 @@ class BattleState {
                 defender_ability == Ability::WaterAbsorb) ||
             (attacker_state.get_ability() == Ability::Normalize &&
                 defender_state.has_type(PokemonType::GHOST)) ||
-            (attacker_state.pokemon.name == Pokemon::Unown &&
-                best_move.move->move == Move::HiddenPower) ||
+            (attacker_state.pokemon.name == Pokemon::Unown) ||
             (attacker_state.pokemon.name == Pokemon::Chatot &&
                 defender_ability == Ability::Soundproof) ||
             (attacker_state.pokemon.name == Pokemon::Suicune &&
@@ -818,17 +840,36 @@ class BattleState {
                 defender_state.pokemon.name == Pokemon::Magikarp) ||
             (attacker_state.pokemon.name == Pokemon::Magikarp &&
                 defender_state.pokemon.name == Pokemon::Wobbuffet) ||
+            (attacker_state.pokemon.name == Pokemon::Magikarp &&
+                defender_state.pokemon.name == Pokemon::Smeargle) ||
             (attacker_state.pokemon.name == Pokemon::Castform &&
                 defender_state.pokemon.name == Pokemon::Shuckle) ||
             (attacker_state.is_choiced() &&
                 best_move.move->type == PokemonType::GROUND &&
                 defender_ability == Ability::Levitate) ||
-                (attacker_pokemon.name == Pokemon::Smeargle) ||
+            (attacker_pokemon.name == Pokemon::Smeargle) ||
+            ((attacker_pokemon.name == Pokemon::Geodude ||
+                    attacker_pokemon.name == Pokemon::Phanpy) &&
+                (defender_state.pokemon.name == Pokemon::Unown)) ||
+            ((attacker_pokemon.name == Pokemon::Claydol ||
+                    attacker_pokemon.name == Pokemon::Shuckle) &&
+                (defender_state.pokemon.name == Pokemon::Shuckle ||
+                    defender_state.pokemon.name == Pokemon::Bronzor)) ||
+            ((attacker_pokemon.name == Pokemon::Dugtrio ||
+                    attacker_pokemon.name == Pokemon::Shuckle ||
+                    attacker_pokemon.name == Pokemon::WormadamS ||
+                    attacker_pokemon.name == Pokemon::Bronzor) &&
+                (defender_state.pokemon.name == Pokemon::Claydol)) ||
             unable_to_hit_defender
         ) {
             hits_to_defender = std::numeric_limits<uint>::max();
         } else {
-            throw std::logic_error("Missing move");
+            // printf(
+            //     "Attacker: %s vs. Defender: %s\n",
+            //     POKEMON_TO_STRING.at(attacker_pokemon.name).c_str(),
+            //     POKEMON_TO_STRING.at(defender_state.pokemon.name).c_str()
+            // );
+            // throw std::logic_error("Missing move");
         }
 
         // Check if it is better to use a status move
@@ -1515,6 +1556,17 @@ class BattleState {
                             attacker_chosen_move.move = backup;
                         }
                     }
+                    if (is_mid_turn &&
+                        defender_state.get_last_used_move().move != nullptr &&
+                        defender_state.get_last_used_move().move->move ==
+                        Move::Rage
+                    ) {
+                        defender_state.change_stat_stage(
+                            Stat::ATTACK,
+                            1,
+                            false
+                        );
+                    }
                 }
                 if (sashed && defender_state.get_health() <= 0) {
                     defender_state.apply_damage(
@@ -1598,7 +1650,18 @@ class BattleState {
                     }
                 }
             }
-
+            if (defender_state.get_health() < 0) {
+                attacker_state.set_chosen_move(
+                    BestMove{
+                        .move = attacker_chosen_move.move,
+                        .damage = static_cast<uint16_t>(
+                            attacker_chosen_move.damage +
+                            defender_state.get_health()
+                        ),
+                        .times_to_hit = 1
+                    }
+                );
+            }
             attacker_state.update_last_used_move(false, defender_ability);
         } else {
             attacker_state.update_last_used_move(true, defender_ability);
@@ -2333,12 +2396,12 @@ public:
     BattleState(
         const CustomPokemon& player_pokemon,
         const CustomPokemon& opponent_pokemon
-    ):
+    ) :
         player_state{player_pokemon, true},
         opponent_state{opponent_pokemon, false} {}
 
     void add_player_move(
-        std::vector<const MoveInfo*>& player_moves,
+        std::unordered_set<const MoveInfo*>& player_moves,
         const BestMove player_move
     ) {
         if ((player_state.get_ability() == Ability::Truant &&
@@ -2347,12 +2410,12 @@ public:
             FieldLocation::ON_FIELD ||
             player_state.get_last_used_move().damage > 0
         ) {
-            player_moves.push_back(player_move.move);
+            player_moves.insert(player_move.move);
         }
     }
 
-    std::pair<bool, std::vector<const MoveInfo*>> battle() {
-        std::vector<const MoveInfo*> player_moves{};
+    std::pair<bool, std::unordered_set<const MoveInfo*>> battle() {
+        std::unordered_set<const MoveInfo*> player_moves{};
         bool player_goes_first = player_state.outspeeds(
             opponent_state,
             nullptr,
@@ -2395,10 +2458,11 @@ public:
                     get_weather(),
                     is_mid_turn()
                 );
-                add_player_move(player_moves, player_move);
+                auto player_last_used_move = player_state.get_last_used_move();
+                add_player_move(player_moves, player_last_used_move);
                 apply_post_move_effects(
                     player_state,
-                    player_move,
+                    player_last_used_move,
                     opponent_state
                 );
                 if (is_battle_over()) {
@@ -2413,7 +2477,7 @@ public:
                     );
                     apply_post_move_effects(
                         opponent_state,
-                        opponent_move,
+                        opponent_state.get_last_used_move(),
                         player_state
                     );
                 }
@@ -2428,7 +2492,7 @@ public:
                 );
                 apply_post_move_effects(
                     opponent_state,
-                    opponent_move,
+                    opponent_state.get_last_used_move(),
                     player_state
                 );
                 if (is_battle_over()) {
@@ -2441,10 +2505,11 @@ public:
                         get_weather(),
                         is_mid_turn()
                     );
-                    add_player_move(player_moves, player_move);
+                    auto player_last_used_move = player_state.get_last_used_move();
+                    add_player_move(player_moves, player_last_used_move);
                     apply_post_move_effects(
                         player_state,
-                        player_move,
+                        player_last_used_move,
                         opponent_state
                     );
                 }
@@ -2484,7 +2549,7 @@ public:
 };
 
 
-std::pair<bool, std::vector<const MoveInfo*>> battle(
+std::pair<bool, std::unordered_set<const MoveInfo*>> battle(
     const CustomPokemon& player, const CustomPokemon& opponent
 ) {
     BattleState battle_state{player, opponent};
