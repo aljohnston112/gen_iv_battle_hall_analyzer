@@ -13,6 +13,7 @@ constexpr bool ALL_MOVES = false;
 constexpr bool USE_HIGHEST_RANK_FOR_WALLS = true;
 constexpr bool ANALYZE_ALL = true;
 constexpr bool FULL_PRINT = false;
+constexpr bool SKIP_REFLECT_AND_MIRROR_COAT = true;
 
 
 inline std::array<int, NUMBER_OF_TYPES> get_type_to_rank_to_skip() {

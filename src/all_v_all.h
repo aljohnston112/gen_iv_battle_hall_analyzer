@@ -327,7 +327,7 @@ inline std::unordered_map<
             wins,
             sorted_move_counts
         ] = wins_and_sorted_move_counts;
-        const uint8_t number_of_moves = 4;
+        const uint8_t number_of_moves = 3;
         if (sorted_move_counts.size() > number_of_moves) {
             wins = 0;
             int extra_move_index = -1;
@@ -619,8 +619,8 @@ inline void analyze_all(
         const auto& move_counts =
             wins_and_sorted_moves_with_win_counts.second;
         static std::unordered_set<Move> moves_to_skip = {
-            Move::Counter,
-            Move::MirrorCoat
+            // Move::Counter,
+            // Move::MirrorCoat
         };
         bool skip = false;
         for (const auto& moves :

@@ -1315,6 +1315,11 @@ inline bool should_skip_move(
     const MoveInfo* move,
     const BestMove& defender_chosen_move
 ) {
+    if (move->move == Move::Counter &&
+        !SKIP_REFLECT_AND_MIRROR_COAT
+    ) {
+        return true;
+    }
     if (!attacker_state.has_power_points(move->move) ||
         move->move == Move::Explosion ||
         move->move == Move::Selfdestruct

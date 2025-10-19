@@ -569,6 +569,17 @@ class BattleState {
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
+            if (attacker_state.pokemon.ability == Ability::Steadfast &&
+                attacker_state.pokemon.name == Pokemon::Gallade &&
+                defender_state.pokemon.ability == Ability::Blaze &&
+                defender_state.pokemon.name == Pokemon::Blaziken &&
+                (attacker_move->move == Move::Earthquake
+                    || attacker_move->move == Move::ThunderPunch) &&
+                    attacker_state.is_player
+            ) {
+                volatile int a;
+            }
+
             if (has_choice_item &&
                 attacker_state.is_choiced() &&
                 attackers_last_used_move.move != nullptr &&
@@ -737,7 +748,7 @@ class BattleState {
                         ) &&
                         defender_ability == Ability::Soundproof) ||
                     ((attacker_move->move == Move::SpitUp ||
-                        // TODO shuckle leads to struggling
+                            // TODO shuckle leads to struggling
                             (attacker_state.pokemon.name == Pokemon::Shuckle ||
                                 defender_state.pokemon.name ==
                                 Pokemon::Shuckle)) &&
@@ -2505,7 +2516,8 @@ public:
                         get_weather(),
                         is_mid_turn()
                     );
-                    auto player_last_used_move = player_state.get_last_used_move();
+                    auto player_last_used_move =
+                        player_state.get_last_used_move();
                     add_player_move(player_moves, player_last_used_move);
                     apply_post_move_effects(
                         player_state,
