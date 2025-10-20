@@ -19,23 +19,22 @@ struct BattleAllEntry {
     CustomPokemon opponent;
 };
 
-struct AllResultEntry {
-    const CustomPokemon* opponent;
-    bool won;
-    std::unordered_set<const MoveInfo*> moves;
-};
-
 inline void battle_all(
     const BattleAllEntry& battle_entry,
-    std::promise<AllResultEntry>&& promise
+    std::promise<BattleResultEntry>&& promise
 ) {
-    auto [won, moves] =
-        battle(battle_entry.player, battle_entry.opponent);
+    auto [
+        _,
+        won,
+        moves,
+        opponent_moves
+    ] = battle(battle_entry.player, battle_entry.opponent);
     promise.set_value(
-        AllResultEntry{
+        BattleResultEntry{
             .opponent = &battle_entry.opponent,
             .won = won,
-            .moves = std::move(moves)
+            .player_moves = std::move(moves),
+            .opponent_moves = std::move(opponent_moves)
         }
     );
 }
@@ -231,11 +230,20 @@ inline void aggregate_battle_results(
         >,
         PokemonPairHash
     >& pokemon_to_wins_and_moves_with_win_counts,
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::unordered_map<
+            std::pair<Pokemon, Ability>,
+            std::unordered_set<const MoveInfo*>,
+            PokemonPairHash
+        >,
+        PokemonPairHash
+    >& pokemon_to_losses,
     const std::unordered_map<
         std::pair<Pokemon, Ability>,
-        std::vector<AllResultEntry>,
+        std::vector<BattleResultEntry>,
         PokemonPairHash
-    > pokemon_to_battle_result_entries
+    >& pokemon_to_battle_result_entries
 ) {
     for (const auto& [
              player_pokemon,
@@ -245,7 +253,8 @@ inline void aggregate_battle_results(
         for (const auto& [
                  opponent_pokemon,
                  won,
-                 moves
+                 moves,
+                 opponent_moves
              ] : battle_result_entries
         ) {
             if (won) {
@@ -255,6 +264,11 @@ inline void aggregate_battle_results(
                 ] = pokemon_to_wins_and_moves_with_win_counts[player_pokemon];
                 wins++;
                 move_counts[moves]++;
+            } else {
+                pokemon_to_losses[player_pokemon][
+                    std::make_pair(opponent_pokemon->name,
+                                   opponent_pokemon->ability)
+                ] = opponent_moves;
             }
         }
     }
@@ -398,7 +412,7 @@ inline std::unordered_map<
 inline void aggregate_second_run(
     const std::unordered_map<
         std::pair<Pokemon, Ability>,
-        std::vector<AllResultEntry>,
+        std::vector<BattleResultEntry>,
         PokemonPairHash
     >& pokemon_to_battle_result_entries,
     std::unordered_map<
@@ -424,8 +438,18 @@ inline void aggregate_second_run(
         >,
         PokemonPairHash
     > pokemon_to_wins_and_moves_with_win_counts{};
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::unordered_map<
+            std::pair<Pokemon, Ability>,
+            std::unordered_set<const MoveInfo*>,
+            PokemonPairHash
+        >,
+        PokemonPairHash
+    > pokemon_to_losses{};
     aggregate_battle_results(
         pokemon_to_wins_and_moves_with_win_counts,
+        pokemon_to_losses,
         pokemon_to_battle_result_entries
     );
 
@@ -489,7 +513,7 @@ inline void analyze_all(
     > pokemon_to_wins_and_moves_with_win_counts{};
     std::unordered_map<
         std::pair<Pokemon, Ability>,
-        std::vector<AllResultEntry>,
+        std::vector<BattleResultEntry>,
         PokemonPairHash
     > pokemon_to_battle_result_entries{};
     for (const auto& [
@@ -500,7 +524,7 @@ inline void analyze_all(
         auto battle_result_entries =
             thread_pool::ThreadPool::getCPUWorkInstance()->
             createAndRunTasks<
-                AllResultEntry,
+                BattleResultEntry,
                 std::vector<BattleAllEntry>,
                 BattleAllEntry
             >(battle_all, battles);
@@ -508,8 +532,18 @@ inline void analyze_all(
             battle_result_entries
         );
     }
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::unordered_map<
+            std::pair<Pokemon, Ability>,
+            std::unordered_set<const MoveInfo*>,
+            PokemonPairHash
+        >,
+        PokemonPairHash
+    > pokemon_to_losses{};
     aggregate_battle_results(
         pokemon_to_wins_and_moves_with_win_counts,
+        pokemon_to_losses,
         pokemon_to_battle_result_entries
     );
 
@@ -585,7 +619,7 @@ inline void analyze_all(
             auto battle_result_entries =
                 thread_pool::ThreadPool::getCPUWorkInstance()->
                 createAndRunTasks<
-                    AllResultEntry,
+                    BattleResultEntry,
                     std::vector<BattleAllEntry>,
                     BattleAllEntry
                 >(battle_all, battles);
@@ -647,7 +681,8 @@ inline void analyze_all(
         for (const auto& [
                  opponent,
                  won,
-                 moves
+                 moves,
+                 _
              ] : battle_results
         ) {
             if (!won) {
@@ -755,7 +790,12 @@ inline void analyze_all(
         std::pair<Pokemon, Ability>,
         std::pair<
             std::unordered_set<const MoveInfo*>,
-            std::vector<std::pair<Pokemon, Ability>>
+            std::vector<
+                std::pair<
+                    std::pair<Pokemon, Ability>,
+                    std::unordered_set<const MoveInfo*>
+                >
+            >
         >,
         PokemonPairHash
     > pokemon_team_member_to_moves_and_loss_list{};
@@ -885,23 +925,23 @@ inline void analyze_all(
             }
         }
 
-        const auto& opponents_beaten =
-            pokemon_to_opponents_beaten.second;
-        std::vector<std::pair<Pokemon, Ability>> opponents_lost_to{};
-        opponents_lost_to.reserve(all_opponents.size());
-        for (const auto& opponent : all_opponents) {
-            if (!opponents_beaten.contains(opponent)) {
-                opponents_lost_to.emplace_back(opponent);
-            }
-        }
         pokemon_team_member_to_moves_and_loss_list[
             pokemon_to_opponents_beaten.first
-        ] = (
-            std::pair(
-                move_set,
-                opponents_lost_to
-            )
-        );
+        ].first = move_set;
+        for (const auto& [
+                 opponent,
+                 opponent_moves
+             ] : pokemon_to_losses[pokemon_to_opponents_beaten.first]
+        ) {
+            pokemon_team_member_to_moves_and_loss_list[
+                pokemon_to_opponents_beaten.first
+            ].second.emplace_back(
+                std::pair(
+                    opponent,
+                    opponent_moves
+                )
+            );
+        }
     }
 
     for (const auto& [
@@ -925,13 +965,23 @@ inline void analyze_all(
                 << '\n';
         }
         std::cout << "Losses:\n";
-        for (const auto& [opponent, opponent_ability] : losses) {
+        for (const auto& [
+                 opponent,
+                 opponent_moves
+             ] : losses
+        ) {
             std::cout
                 << "    "
-                << POKEMON_TO_STRING.at(opponent)
+                << POKEMON_TO_STRING.at(opponent.first)
                 << "  "
-                << ABILITY_TO_STRING.at(opponent_ability)
-                << '\n';
+                << ABILITY_TO_STRING.at(opponent.second)
+                << ": ";
+            for (const auto& opponent_move : opponent_moves) {
+                std::cout
+                    << opponent_move->name
+                    << ", ";
+            }
+            std::cout << '\n';
         }
     }
 }

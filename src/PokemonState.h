@@ -596,7 +596,7 @@ public:
         }
     }
 
-    [[nodiscard]] FieldLocation& get_field_location() {
+    [[nodiscard]] FieldLocation get_field_location() const {
         return field_location;
     }
 

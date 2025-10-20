@@ -244,8 +244,12 @@ void do_battle(
     const BattleEntry& battle_entry,
     std::promise<ResultEntry>&& promise
 ) {
-    auto [won, moves] =
-        battle(battle_entry.player, battle_entry.opponent);
+    auto [
+        _,
+        won,
+        moves,
+        __
+    ] = battle(battle_entry.player, battle_entry.opponent);
     promise.set_value(
         ResultEntry{
             .type = battle_entry.type,

@@ -295,6 +295,21 @@ inline void check_unimplemented_moves(
     }
 }
 
+void add_last_used_move(
+    std::unordered_set<const MoveInfo*>& player_moves,
+    const PokemonState& attacker_state,
+    const PokemonState& defender_state
+) {
+    if ((attacker_state.get_ability() == Ability::Truant &&
+            attacker_state.get_last_used_move().move != nullptr) &&
+        defender_state.get_field_location() ==
+        FieldLocation::ON_FIELD ||
+        attacker_state.get_last_used_move().damage > 0
+    ) {
+        player_moves.insert(attacker_state.get_last_used_move().move);
+    }
+}
+
 class BattleState {
     PokemonState player_state;
     PokemonState opponent_state;
@@ -575,7 +590,7 @@ class BattleState {
                 defender_state.pokemon.name == Pokemon::Blaziken &&
                 (attacker_move->move == Move::Earthquake
                     || attacker_move->move == Move::ThunderPunch) &&
-                    attacker_state.is_player
+                attacker_state.is_player
             ) {
                 volatile int a;
             }
@@ -1429,7 +1444,7 @@ class BattleState {
 
         // Off field move
         bool attacker_vanished = false;
-        auto& field_location = attacker_state.get_field_location();
+        auto field_location = attacker_state.get_field_location();
         if (field_location == FieldLocation::ON_FIELD) {
             const bool goes_into_air =
                 move_has_flag(attacker_move, MoveFlag::GOES_INTO_AIR);
@@ -2379,10 +2394,12 @@ class BattleState {
                     attacker_state
                 );
             } else if (attacker_state.get_item_for_effect() ==
-                Item::MentalHerb) {
+                Item::MentalHerb
+            ) {
                 defender_state.set_infatuated();
             } else if (attacker_state.get_item_for_effect() ==
-                Item::WhiteHerb) {
+                Item::WhiteHerb
+            ) {
                 defender_state.clear_negative_stat_changes();
             }
             attacker_state.clear_item();
@@ -2411,22 +2428,10 @@ public:
         player_state{player_pokemon, true},
         opponent_state{opponent_pokemon, false} {}
 
-    void add_player_move(
-        std::unordered_set<const MoveInfo*>& player_moves,
-        const BestMove player_move
-    ) {
-        if ((player_state.get_ability() == Ability::Truant &&
-                player_move.move != nullptr) &&
-            opponent_state.get_field_location() ==
-            FieldLocation::ON_FIELD ||
-            player_state.get_last_used_move().damage > 0
-        ) {
-            player_moves.insert(player_move.move);
-        }
-    }
 
-    std::pair<bool, std::unordered_set<const MoveInfo*>> battle() {
+    BattleResultEntry battle() {
         std::unordered_set<const MoveInfo*> player_moves{};
+        std::unordered_set<const MoveInfo*> opponent_moves{};
         bool player_goes_first = player_state.outspeeds(
             opponent_state,
             nullptr,
@@ -2469,11 +2474,14 @@ public:
                     get_weather(),
                     is_mid_turn()
                 );
-                auto player_last_used_move = player_state.get_last_used_move();
-                add_player_move(player_moves, player_last_used_move);
+                add_last_used_move(
+                    player_moves,
+                    player_state,
+                    opponent_state
+                );
                 apply_post_move_effects(
                     player_state,
-                    player_last_used_move,
+                    player_state.get_last_used_move(),
                     opponent_state
                 );
                 if (is_battle_over()) {
@@ -2485,6 +2493,11 @@ public:
                         false,
                         get_weather(),
                         is_mid_turn()
+                    );
+                    add_last_used_move(
+                        opponent_moves,
+                        opponent_state,
+                        player_state
                     );
                     apply_post_move_effects(
                         opponent_state,
@@ -2501,6 +2514,11 @@ public:
                     get_weather(),
                     is_mid_turn()
                 );
+                add_last_used_move(
+                    opponent_moves,
+                    opponent_state,
+                    player_state
+                );
                 apply_post_move_effects(
                     opponent_state,
                     opponent_state.get_last_used_move(),
@@ -2516,12 +2534,14 @@ public:
                         get_weather(),
                         is_mid_turn()
                     );
-                    auto player_last_used_move =
-                        player_state.get_last_used_move();
-                    add_player_move(player_moves, player_last_used_move);
+                    add_last_used_move(
+                        player_moves,
+                        player_state,
+                        opponent_state
+                    );
                     apply_post_move_effects(
                         player_state,
-                        player_last_used_move,
+                        player_state.get_last_used_move(),
                         opponent_state
                     );
                 }
@@ -2554,14 +2574,24 @@ public:
         }
 
         if (player_state.get_health() > 0) {
-            return {true, std::move(player_moves)};
+            return {
+                &opponent_state.pokemon,
+                true,
+                std::move(player_moves),
+                std::move(opponent_moves)
+            };
         }
-        return {false, std::move(player_moves)};
+        return {
+            &opponent_state.pokemon,
+            false,
+            std::move(player_moves),
+            std::move(opponent_moves)
+        };
     }
 };
 
 
-std::pair<bool, std::unordered_set<const MoveInfo*>> battle(
+BattleResultEntry battle(
     const CustomPokemon& player, const CustomPokemon& opponent
 ) {
     BattleState battle_state{player, opponent};
