@@ -1200,6 +1200,10 @@ public:
     [[nodiscard]] int8_t get_power_points_left(Move move) const {
         return power_points[static_cast<int>(move)];
     }
+
+    void set_field_location(FieldLocation field_location) {
+        this->field_location = field_location;
+    }
 };
 
 inline bool check_transform(PokemonState& attacker_state) {
@@ -1315,8 +1319,8 @@ inline bool should_skip_move(
     const MoveInfo* move,
     const BestMove& defender_chosen_move
 ) {
-    if (move->move == Move::Counter &&
-        !SKIP_REFLECT_AND_MIRROR_COAT
+    if ((move->move == Move::Counter &&
+        SKIP_REFLECT_AND_MIRROR_COAT)
     ) {
         return true;
     }
@@ -1362,7 +1366,7 @@ inline bool check_fake_out(
     const uint16_t damage,
     const bool is_first_turn
 ) {
-    if (attacker_move->move == Move::FakeOut && is_first_turn) {
+    if (attacker_move->move == Move::FakeOut && is_first_turn && damage != 0) {
         attacker_state.set_chosen_move(
             BestMove{
                 .move = attacker_move,

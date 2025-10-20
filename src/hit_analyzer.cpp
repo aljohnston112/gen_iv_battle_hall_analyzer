@@ -250,6 +250,10 @@ void do_battle(
         moves,
         __
     ] = battle(battle_entry.player, battle_entry.opponent);
+    std::unordered_set<const MoveInfo*> move_set{};
+    for (const auto& move : moves | std::views::keys) {
+        move_set.insert(move);
+    }
     promise.set_value(
         ResultEntry{
             .type = battle_entry.type,
@@ -257,7 +261,7 @@ void do_battle(
             .over_2 = battle_entry.over_2,
             .opponent = &battle_entry.opponent,
             .won = won,
-            .moves = std::move(moves)
+            .moves = std::move(move_set)
         }
     );
 }

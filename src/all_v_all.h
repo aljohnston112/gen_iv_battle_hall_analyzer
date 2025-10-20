@@ -234,7 +234,10 @@ inline void aggregate_battle_results(
         std::pair<Pokemon, Ability>,
         std::unordered_map<
             std::pair<Pokemon, Ability>,
-            std::unordered_set<const MoveInfo*>,
+            std::unordered_set<
+                std::pair<const MoveInfo*, int>,
+                MoveDamagePairHash
+            >,
             PokemonPairHash
         >,
         PokemonPairHash
@@ -257,13 +260,17 @@ inline void aggregate_battle_results(
                  opponent_moves
              ] : battle_result_entries
         ) {
+            std::unordered_set<const MoveInfo*> move_set{};
+            for (const auto& move : moves | std::views::keys) {
+                move_set.insert(move);
+            }
             if (won) {
                 auto& [
                     wins,
                     move_counts
                 ] = pokemon_to_wins_and_moves_with_win_counts[player_pokemon];
                 wins++;
-                move_counts[moves]++;
+                move_counts[move_set]++;
             } else {
                 pokemon_to_losses[player_pokemon][
                     std::make_pair(opponent_pokemon->name,
@@ -442,7 +449,10 @@ inline void aggregate_second_run(
         std::pair<Pokemon, Ability>,
         std::unordered_map<
             std::pair<Pokemon, Ability>,
-            std::unordered_set<const MoveInfo*>,
+            std::unordered_set<
+                std::pair<const MoveInfo*, int>,
+                MoveDamagePairHash
+            >,
             PokemonPairHash
         >,
         PokemonPairHash
@@ -536,7 +546,10 @@ inline void analyze_all(
         std::pair<Pokemon, Ability>,
         std::unordered_map<
             std::pair<Pokemon, Ability>,
-            std::unordered_set<const MoveInfo*>,
+            std::unordered_set<
+                std::pair<const MoveInfo*, int>,
+                MoveDamagePairHash
+            >,
             PokemonPairHash
         >,
         PokemonPairHash
@@ -786,18 +799,22 @@ inline void analyze_all(
     // Find the 6 pokemon with good enough coverage
     // Best takes too long
     constexpr uint8_t TEAM_SIZE = 6;
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
+    std::vector<
         std::pair<
-            std::unordered_set<const MoveInfo*>,
-            std::vector<
-                std::pair<
-                    std::pair<Pokemon, Ability>,
-                    std::unordered_set<const MoveInfo*>
+            std::pair<Pokemon, Ability>,
+            std::pair<
+                std::unordered_set<const MoveInfo*>,
+                std::vector<
+                    std::pair<
+                        std::pair<Pokemon, Ability>,
+                        std::unordered_set<
+                            std::pair<const MoveInfo*, int>,
+                            MoveDamagePairHash
+                        >
+                    >
                 >
             >
-        >,
-        PokemonPairHash
+        >
     > pokemon_team_member_to_moves_and_loss_list{};
     std::unordered_map<
         std::pair<Pokemon, Ability>,
@@ -843,9 +860,18 @@ inline void analyze_all(
                  opponents_beaten
              ] : candidate_pokemon_to_beaten_opponents
         ) {
-            if (pokemon_team_member_to_moves_and_loss_list.contains(pokemon)) {
+            bool skip = false;
+            for (const auto& poke_pair :
+                 pokemon_team_member_to_moves_and_loss_list | std::views::keys
+            ) {
+                if (poke_pair.first == pokemon.first) {
+                    skip = true;
+                }
+            }
+            if (skip) {
                 continue;
             }
+
             // Find the best pokemon for the current opponents
             std::unordered_set<
                 std::pair<Pokemon, Ability>,
@@ -925,23 +951,56 @@ inline void analyze_all(
             }
         }
 
-        pokemon_team_member_to_moves_and_loss_list[
-            pokemon_to_opponents_beaten.first
-        ].first = move_set;
+        pokemon_team_member_to_moves_and_loss_list.emplace_back(
+            pokemon_to_opponents_beaten.first,
+            std::make_pair(
+                move_set,
+                std::vector<
+                    std::pair<
+                        std::pair<Pokemon, Ability>,
+                        std::unordered_set<
+                            std::pair<const MoveInfo*, int>,
+                            MoveDamagePairHash
+                        >
+                    >
+                >{}
+            )
+        );
         for (const auto& [
                  opponent,
                  opponent_moves
              ] : pokemon_to_losses[pokemon_to_opponents_beaten.first]
         ) {
-            pokemon_team_member_to_moves_and_loss_list[
-                pokemon_to_opponents_beaten.first
-            ].second.emplace_back(
+            pokemon_team_member_to_moves_and_loss_list.back().second.second.emplace_back(
                 std::pair(
                     opponent,
                     opponent_moves
                 )
             );
         }
+        std::sort(
+            pokemon_team_member_to_moves_and_loss_list.back().second.second.begin(),
+            pokemon_team_member_to_moves_and_loss_list.back().second.second.end(),
+            [](const auto& a, const auto& b) {
+                auto maxA = std::max_element(
+                    a.second.begin(), a.second.end(),
+                    [](const auto& x, const auto& y) {
+                        return x.second < y.second;
+                    }
+                );
+                auto maxB = std::max_element(
+                    b.second.begin(), b.second.end(),
+                    [](const auto& x, const auto& y) {
+                        return x.second < y.second;
+                    }
+                );
+                const int valA =
+                    (maxA == a.second.end()) ? 0 : maxA->second;
+                const int valB =
+                    (maxB == b.second.end()) ? 0 : maxB->second;
+                return valA > valB; // descending
+            }
+        );
     }
 
     for (const auto& [
@@ -976,10 +1035,17 @@ inline void analyze_all(
                 << "  "
                 << ABILITY_TO_STRING.at(opponent.second)
                 << ": ";
-            for (const auto& opponent_move : opponent_moves) {
+            for (const auto& [
+                     move,
+                     damage
+                 ] : opponent_moves
+            ) {
                 std::cout
-                    << opponent_move->name
-                    << ", ";
+                    << move->name
+                    << ", "
+                    << "("
+                    << damage
+                    << "),";
             }
             std::cout << '\n';
         }

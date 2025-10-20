@@ -296,17 +296,25 @@ inline void check_unimplemented_moves(
 }
 
 void add_last_used_move(
-    std::unordered_set<const MoveInfo*>& player_moves,
+    std::unordered_set<
+        std::pair<const MoveInfo*, int>,
+        MoveDamagePairHash
+    >& attacker_moves,
     const PokemonState& attacker_state,
     const PokemonState& defender_state
 ) {
-    if ((attacker_state.get_ability() == Ability::Truant &&
-            attacker_state.get_last_used_move().move != nullptr) &&
-        defender_state.get_field_location() ==
-        FieldLocation::ON_FIELD ||
-        attacker_state.get_last_used_move().damage > 0
+    if (const auto last_used_move = attacker_state.get_last_used_move();
+        (attacker_state.get_ability() == Ability::Truant &&
+            last_used_move.move != nullptr) &&
+        defender_state.get_field_location() == FieldLocation::ON_FIELD ||
+        last_used_move.damage > 0
     ) {
-        player_moves.insert(attacker_state.get_last_used_move().move);
+        attacker_moves.insert(
+            std::make_pair(
+                last_used_move.move,
+                last_used_move.damage
+            )
+        );
     }
 }
 
@@ -584,12 +592,10 @@ class BattleState {
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
-            if (attacker_state.pokemon.ability == Ability::Steadfast &&
-                attacker_state.pokemon.name == Pokemon::Gallade &&
-                defender_state.pokemon.ability == Ability::Blaze &&
-                defender_state.pokemon.name == Pokemon::Blaziken &&
-                (attacker_move->move == Move::Earthquake
-                    || attacker_move->move == Move::ThunderPunch) &&
+            if (attacker_state.pokemon.ability == Ability::Scrappy &&
+                attacker_state.pokemon.name == Pokemon::Kangaskhan &&
+                defender_state.pokemon.ability == Ability::Trace &&
+                defender_state.pokemon.name == Pokemon::Porygon2 &&
                 attacker_state.is_player
             ) {
                 volatile int a;
@@ -692,8 +698,8 @@ class BattleState {
                 best_move.move == nullptr;
             bool move_must_charge =
                 does_move_have_to_charge(attacker_move, attacker_item, weather);
-            const bool passes_charge_check =
-                ((!move_must_charge &&
+            const bool passes_charge_check = best_move.move == nullptr ||
+                (((!move_must_charge &&
                         !best_move_must_charge &&
                         damage > best_move.damage) ||
                     (best_move_must_charge &&
@@ -705,7 +711,7 @@ class BattleState {
                             (damage_from_defender < attacker_health / 2) ||
                             best_move.damage == 0))) &&
                 !(move_must_charge &&
-                    attacker_ability == Ability::Truant);
+                    attacker_ability == Ability::Truant));
 
             if ((passes_priority_check && passes_charge_check)) {
                 best_move.damage = damage;
@@ -1481,7 +1487,9 @@ class BattleState {
         if (!attacker_vanished &&
             field_location != FieldLocation::ON_FIELD
         ) {
-            field_location = FieldLocation::ON_FIELD;
+            attacker_state.set_field_location(FieldLocation::ON_FIELD);
+        } else if (attacker_vanished) {
+            attacker_state.set_field_location(field_location);
         }
 
         if (field_location != FieldLocation::ON_FIELD && !is_mid_turn) {
@@ -2430,8 +2438,14 @@ public:
 
 
     BattleResultEntry battle() {
-        std::unordered_set<const MoveInfo*> player_moves{};
-        std::unordered_set<const MoveInfo*> opponent_moves{};
+        std::unordered_set<
+            std::pair<const MoveInfo*, int>,
+            MoveDamagePairHash
+        > player_moves{};
+        std::unordered_set<
+            std::pair<const MoveInfo*, int>,
+            MoveDamagePairHash
+        > opponent_moves{};
         bool player_goes_first = player_state.outspeeds(
             opponent_state,
             nullptr,
@@ -2467,6 +2481,14 @@ public:
                 player_move.move,
                 get_weather()
             );
+
+            if (player_state.pokemon.ability == Ability::NaturalCure &&
+                player_state.pokemon.name == Pokemon::Starmie &&
+                opponent_state.pokemon.ability == Ability::NaturalCure &&
+                opponent_state.pokemon.name == Pokemon::Happiny
+            ) {
+                volatile int a;
+            }
 
             if (player_goes_first) {
                 execute_move(
