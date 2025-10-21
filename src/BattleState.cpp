@@ -279,6 +279,7 @@ inline void check_unimplemented_moves(
             move != Move::Assurance &&
             move != Move::CrushGrip &&
             move != Move::Rage &&
+            move != Move::Struggle &&
             (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -488,6 +489,35 @@ class BattleState {
             return attacker_state.get_chosen_move();
         }
 
+        // Struggle
+        const auto attacker_item = attacker_state.get_item_for_effect();
+        if (!attacker_state.has_power_points()) {
+            constexpr static auto struggle = MoveInfo{
+                .name = "Struggle",
+                .move = Move::Struggle,
+                .type = PokemonType::COUNT,
+                .category = Category::PHYSICAL,
+                .power = 50,
+                .accuracy = 100,
+                .power_points = 999,
+                .effect_percent = 0
+            };
+            attacker_state.set_chosen_move(
+                BestMove{
+                    .move = &struggle,
+                    .damage = attacker_state.get_damage_of_attacker_move(
+                        attacker_item,
+                        &struggle,
+                        defender_state,
+                        weather,
+                        is_mid_turn
+                    ),
+                    .times_to_hit = 1
+                }
+            );
+            return attacker_state.get_chosen_move();
+        }
+
         if ((is_mid_turn || chosen_move_only) &&
             attacker_chosen_move.move != nullptr
         ) {
@@ -546,7 +576,6 @@ class BattleState {
 
         const auto attacker_health = attacker_state.get_health();
         const auto defender_health = defender_state.get_health();
-        const auto attacker_item = attacker_state.get_item_for_effect();
         const bool attacker_faster = attacker_state.outspeeds(
             defender_state,
             nullptr,
@@ -699,7 +728,7 @@ class BattleState {
             bool move_must_charge =
                 does_move_have_to_charge(attacker_move, attacker_item, weather);
             const bool passes_charge_check = best_move.move == nullptr ||
-                (((!move_must_charge &&
+            (((!move_must_charge &&
                         !best_move_must_charge &&
                         damage > best_move.damage) ||
                     (best_move_must_charge &&
@@ -1878,6 +1907,8 @@ class BattleState {
                 attacker_state.apply_damage(attacker_move.damage / 4);
             } else if (move == Move::BellyDrum) {
                 attacker_state.apply_damage(attacker_state.max_health / 2);
+            } else if (move == Move::Struggle) {
+                attacker_state.apply_damage(attacker_state.max_health / 4);
             }
         }
 
@@ -2482,10 +2513,10 @@ public:
                 get_weather()
             );
 
-            if (player_state.pokemon.ability == Ability::NaturalCure &&
-                player_state.pokemon.name == Pokemon::Starmie &&
-                opponent_state.pokemon.ability == Ability::NaturalCure &&
-                opponent_state.pokemon.name == Pokemon::Happiny
+            if (player_state.pokemon.ability == Ability::Technician &&
+                player_state.pokemon.name == Pokemon::Meowth
+                // && opponent_state.pokemon.ability == Ability::NaturalCure &&
+                // opponent_state.pokemon.name == Pokemon::Happiny
             ) {
                 volatile int a;
             }

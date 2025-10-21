@@ -861,7 +861,11 @@ public:
         }
         // TODO may not always be used?
         if (chosen_move.move != nullptr) {
-            assert(power_points[static_cast<int>(chosen_move.move->move)] > 0);
+            assert(
+                power_points[static_cast<int>(chosen_move.move->move)] > 0 ||
+                (chosen_move.move->move == Move::Struggle &&
+                    !has_power_points())
+            );
             if (field_location == FieldLocation::ON_FIELD) {
                 power_points[static_cast<int>(chosen_move.move->move)]--;
                 if (defender_ability == Ability::Pressure) {
@@ -1193,6 +1197,15 @@ public:
         update_end_of_turn(ability);
     }
 
+    [[nodiscard]] bool has_power_points() const {
+        for (const auto& move : moves) {
+            if (has_power_points(move->move)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     [[nodiscard]] bool has_power_points(Move move) const {
         return power_points[static_cast<int>(move)] > 0;
     }
@@ -1319,8 +1332,8 @@ inline bool should_skip_move(
     const MoveInfo* move,
     const BestMove& defender_chosen_move
 ) {
-    if ((move->move == Move::Counter &&
-        SKIP_REFLECT_AND_MIRROR_COAT)
+    if (((move->move == Move::Counter || move->move == Move::MirrorCoat) &&
+            SKIP_COUNTER_AND_MIRROR_COAT) || move->move == Move::DoubleEdge
     ) {
         return true;
     }
@@ -1754,7 +1767,7 @@ inline int16_t apply_ability_power_modifiers(
     const auto attacker_max_health = attacker_state.max_health;
     if (const Ability attacker_ability = attacker_state.get_ability();
         (attacker_ability == Ability::Technician &&
-            power <= 50) ||
+            power <= 50 && attacker_move != Move::Struggle) ||
         (attacker_ability == Ability::Blaze &&
             attacker_health <= attacker_max_health / 3 &&
             move_type == PokemonType::FIRE) ||
@@ -1828,7 +1841,7 @@ inline int16_t apply_field_location_power_modifiers(
     const PokemonState& attacker_state,
     const MoveInfo* attacker_move_info,
     int16_t power,
-    PokemonState& defender_state,
+    const PokemonState& defender_state,
     const Weather weather,
     const bool is_mid_turn
 ) {

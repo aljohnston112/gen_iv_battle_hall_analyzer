@@ -284,12 +284,12 @@ static std::unordered_map<Item, std::string> ITEM_TO_STRING =
     initialize_item_to_string();
 
 // 20% boost in power
-static const std::array<
-    std::array<bool, static_cast<int>(PokemonType::COUNT)>,
+static constexpr std::array<
+    std::array<bool, static_cast<int>(PokemonType::COUNT) + 1>,
     static_cast<int>(Item::None) + 1
 > ITEM_TO_TYPE = [] {
     std::array<
-        std::array<bool, static_cast<int>(PokemonType::COUNT)>,
+        std::array<bool, static_cast<int>(PokemonType::COUNT) + 1>,
         static_cast<int>(Item::None) + 1
     > flags{};
     for (auto& flag : flags) {
