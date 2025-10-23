@@ -172,6 +172,37 @@ inline std::unordered_map<
     return pokemon_to_forms;
 }
 
+const std::unordered_set team = {
+    Pokemon::Kingdra,
+    Pokemon::Gallade,
+    Pokemon::PorygonZ,
+    Pokemon::Arcanine,
+    Pokemon::Ambipom,
+    Pokemon::Starmie,
+};
+
+inline void change_stats(CustomPokemon& pokemon) {
+    if (const auto& name = pokemon.name;
+        name == Pokemon::Kingdra
+    ) {
+        pokemon.stats[static_cast<int>(Stat::ATTACK)] = 171;
+       pokemon.stats[static_cast<int>(Stat::DEFENSE)] = 125;
+       // pokemon.stats[static_cast<int>(Stat::SPECIAL_ATTACK)] = 107;
+        pokemon.stats[static_cast<int>(Stat::SPECIAL_DEFENSE)] = 107;
+       pokemon.stats[static_cast<int>(Stat::SPEED)] = 114;
+    } else if (name == Pokemon::Kangaskhan) {
+        //
+    } else if (name == Pokemon::Gallade) {
+        //
+    } else if (name == Pokemon::Infernape) {
+        //
+    } else if (name == Pokemon::PorygonZ) {
+        //
+    } else if (name == Pokemon::Staraptor) {
+        //
+    }
+}
+
 inline std::unordered_map<
     std::pair<Pokemon, Ability>,
     std::vector<BattleAllEntry>,
@@ -190,17 +221,24 @@ inline std::unordered_map<
     pokemon_to_battles.reserve(
         pokemon_to_forms.size() * pokemon_to_forms.size()
     );
-    for (const auto& player_pokemon_forms :
+    for (auto& player_pokemon_forms :
          pokemon_to_forms | std::views::values
     ) {
-        for (const auto& player_pokemon : player_pokemon_forms) {
+        for (auto& player_pokemon : player_pokemon_forms) {
+            auto player_name = player_pokemon.name;
+            if (TEAM_ONLY && !team.contains(player_name)) {
+                continue;
+            }
+            if (TEAM_ONLY) {
+                change_stats(player_pokemon);
+            }
             for (const auto& opponent_pokemon_forms :
                  pokemon_to_forms | std::views::values
             ) {
                 for (const auto& opponent_pokemon : opponent_pokemon_forms) {
                     pokemon_to_battles[
                             std::make_pair(
-                                player_pokemon.name,
+                                player_name,
                                 player_pokemon.ability
                             )
                         ].
@@ -470,9 +508,16 @@ inline void aggregate_second_run(
     >& pokemon_to_battle_result_entries,
     std::unordered_map<
         std::pair<Pokemon, Ability>,
-        std::unordered_set<const MoveInfo*>,
+        std::unordered_map<
+            std::pair<Pokemon, Ability>,
+            std::unordered_set<
+                std::pair<const MoveInfo*, int>,
+                MoveDamagePairHash
+            >,
+            PokemonPairHash
+        >,
         PokemonPairHash
-    >& pokemon_to_move_sets
+    >& pokemon_to_losses
 ) {
     std::unordered_map<
         std::pair<Pokemon, Ability>,
@@ -486,36 +531,11 @@ inline void aggregate_second_run(
         >,
         PokemonPairHash
     > pokemon_to_moves_to_beaten_opponents{};
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::unordered_map<
-            std::pair<Pokemon, Ability>,
-            std::unordered_set<
-                std::pair<const MoveInfo*, int>,
-                MoveDamagePairHash
-            >,
-            PokemonPairHash
-        >,
-        PokemonPairHash
-    > pokemon_to_losses{};
     aggregate_battle_results(
         pokemon_to_moves_to_beaten_opponents,
         pokemon_to_losses,
         pokemon_to_battle_result_entries
     );
-
-    for (const auto& [
-             pokemon,
-             moves_to_beaten_opponents
-         ] : pokemon_to_moves_to_beaten_opponents
-    ) {
-        for (auto move_set : moves_to_beaten_opponents | std::views::keys
-        ) {
-            for (const auto& move : move_set) {
-                pokemon_to_move_sets[pokemon].insert(move);
-            }
-        }
-    }
 }
 
 inline void analyze_all(
@@ -621,6 +641,12 @@ inline void analyze_all(
          ] : pokemon_to_forms
     ) {
         for (auto& pokemon_form : pokemon_forms) {
+            if (TEAM_ONLY && !team.contains(pokemon_form.name)) {
+                continue;
+            }
+            if (TEAM_ONLY) {
+                change_stats(pokemon_form);
+            }
             const auto& ability = pokemon_form.ability;
             pokemon_form.moves.clear();
             for (const auto& move :
@@ -641,6 +667,9 @@ inline void analyze_all(
          pokemon_to_forms | std::views::values
     ) {
         for (const auto& player_pokemon : player_pokemon_forms) {
+            if (TEAM_ONLY && !team.contains(player_pokemon.name)) {
+                continue;
+            }
             for (const auto& opponent_pokemon_forms :
                  get_all_pokemon_to_analyze(pokemon_name_to_serebii_pokemon) |
                  std::views::values
@@ -681,10 +710,10 @@ inline void analyze_all(
         }
     }
 
-    pokemon_to_move_sets.clear();
+    pokemon_to_losses.clear();
     aggregate_second_run(
         pokemon_to_battle_result_entries,
-        pokemon_to_move_sets
+        pokemon_to_losses
     );
 
     // Get the opponents beaten for each pokemon
@@ -879,17 +908,17 @@ inline void analyze_all(
                  opponents_beaten
              ] : candidate_pokemon_to_beaten_opponents
         ) {
-            bool skip = false;
-            for (const auto& poke_pair :
-                 pokemon_team_member_to_moves_and_loss_list | std::views::keys
-            ) {
-                if (poke_pair.first == pokemon.first) {
-                    skip = true;
-                }
-            }
-            if (skip) {
-                continue;
-            }
+            // bool skip = false;
+            // for (const auto& poke_pair :
+            //      pokemon_team_member_to_moves_and_loss_list | std::views::keys
+            // ) {
+            //     if (poke_pair.first == pokemon.first) {
+            //         skip = true;
+            //     }
+            // }
+            // if (skip) {
+            //     continue;
+            // }
 
             // Find the best pokemon for the current opponents
             std::unordered_set<

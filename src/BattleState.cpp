@@ -621,10 +621,10 @@ class BattleState {
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
-            if (attacker_state.pokemon.ability == Ability::Scrappy &&
-                attacker_state.pokemon.name == Pokemon::Kangaskhan &&
-                defender_state.pokemon.ability == Ability::Trace &&
-                defender_state.pokemon.name == Pokemon::Porygon2 &&
+            if (attacker_state.pokemon.ability == Ability::SwiftSwim &&
+                attacker_state.pokemon.name == Pokemon::Kingdra &&
+                defender_state.pokemon.ability == Ability::MoldBreaker &&
+                defender_state.pokemon.name == Pokemon::Rampardos &&
                 attacker_state.is_player
             ) {
                 volatile int a;
@@ -1479,8 +1479,7 @@ class BattleState {
 
         // Off field move
         bool attacker_vanished = false;
-        auto field_location = attacker_state.get_field_location();
-        if (field_location == FieldLocation::ON_FIELD) {
+        if (attacker_state.get_field_location() == FieldLocation::ON_FIELD) {
             const bool goes_into_air =
                 move_has_flag(attacker_move, MoveFlag::GOES_INTO_AIR);
             const bool goes_under_ground =
@@ -1498,31 +1497,37 @@ class BattleState {
                     attacker_state.clear_item();
                 } else {
                     if (goes_into_air) {
-                        field_location = FieldLocation::IN_AIR;
+                        attacker_state.
+                            set_field_location(FieldLocation::IN_AIR);
                         attacker_vanished = true;
                     } else if (goes_under_ground) {
-                        field_location = FieldLocation::UNDER_GROUND;
+                        attacker_state.set_field_location(
+                            FieldLocation::UNDER_GROUND);
                         attacker_vanished = true;
                     } else if (goes_under_water) {
-                        field_location = FieldLocation::UNDER_WATER;
+                        attacker_state.set_field_location(
+                            FieldLocation::UNDER_WATER);
                         attacker_vanished = true;
                     } else if (goes_into_void) {
-                        field_location = FieldLocation::IN_THE_VOID;
+                        attacker_state.set_field_location(
+                            FieldLocation::IN_THE_VOID);
                         attacker_vanished = true;
                     }
                 }
             }
         }
         if (!attacker_vanished &&
-            field_location != FieldLocation::ON_FIELD
+            attacker_state.get_field_location() != FieldLocation::ON_FIELD
         ) {
             attacker_state.set_field_location(FieldLocation::ON_FIELD);
+            recalculate_chosen_move_damage(
+                defender_state,
+                attacker_state,
+                defender_chosen_move,
+                weather,
+                is_mid_turn
+            );
         } else if (attacker_vanished) {
-            attacker_state.set_field_location(field_location);
-        }
-
-        if (field_location != FieldLocation::ON_FIELD && !is_mid_turn) {
-            // Defender attack may miss or do double damage
             recalculate_chosen_move_damage(
                 defender_state,
                 attacker_state,
@@ -1569,7 +1574,7 @@ class BattleState {
         }
 
         // Do the damage
-        if (field_location == FieldLocation::ON_FIELD &&
+        if (attacker_state.get_field_location() == FieldLocation::ON_FIELD &&
             (move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
                 !defender_state.is_protected() ||
                 attacker_move == Move::Feint) &&
@@ -2496,6 +2501,14 @@ public:
                 false
             );
 
+            if (player_state.pokemon.ability == Ability::SwiftSwim &&
+                player_state.pokemon.name == Pokemon::Kingdra
+                && opponent_state.pokemon.ability == Ability::MoldBreaker &&
+                opponent_state.pokemon.name == Pokemon::Rampardos
+            ) {
+                volatile int a;
+            }
+
             BestMove opponent_move = choose_move_against_defender(
                 false,
                 false,
@@ -2513,10 +2526,10 @@ public:
                 get_weather()
             );
 
-            if (player_state.pokemon.ability == Ability::Technician &&
-                player_state.pokemon.name == Pokemon::Meowth
-                // && opponent_state.pokemon.ability == Ability::NaturalCure &&
-                // opponent_state.pokemon.name == Pokemon::Happiny
+            if (player_state.pokemon.ability == Ability::SwiftSwim &&
+                player_state.pokemon.name == Pokemon::Kingdra
+                && opponent_state.pokemon.ability == Ability::Download &&
+                opponent_state.pokemon.name == Pokemon::PorygonZ
             ) {
                 volatile int a;
             }

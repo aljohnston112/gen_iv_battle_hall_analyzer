@@ -844,7 +844,7 @@ public:
 
     void update_last_used_move(
         const bool move_failed,
-        Ability defender_ability
+        const Ability defender_ability
     ) {
         if (!move_failed) {
             last_used_move = BestMove{
@@ -859,8 +859,7 @@ public:
                 .times_to_hit = 0
             };
         }
-        // TODO may not always be used?
-        if (chosen_move.move != nullptr) {
+        if (last_used_move.move != nullptr) {
             assert(
                 power_points[static_cast<int>(chosen_move.move->move)] > 0 ||
                 (chosen_move.move->move == Move::Struggle &&
@@ -1332,8 +1331,13 @@ inline bool should_skip_move(
     const MoveInfo* move,
     const BestMove& defender_chosen_move
 ) {
-    if (((move->move == Move::Counter || move->move == Move::MirrorCoat) &&
-            SKIP_COUNTER_AND_MIRROR_COAT) || move->move == Move::DoubleEdge
+    if (((move->move == Move::Counter ||
+                move->move == Move::MirrorCoat ||
+                move->move == Move::SuckerPunch
+            ) &&
+            SKIP_COUNTER_AND_MIRROR_COAT) ||
+        move->move == Move::DoubleEdge ||
+        move->move == Move::HiddenPower
     ) {
         return true;
     }
@@ -1393,13 +1397,38 @@ inline bool check_fake_out(
 }
 
 inline bool does_zero_damage(
-    const Ability defender_ability,
+    const PokemonState& defender_state,
     const Move attacker_move
 ) {
-    return (defender_ability == Ability::Damp &&
+    if (const auto defender_field_position = defender_state.get_field_location()
+        ;
+        defender_field_position != FieldLocation::ON_FIELD
+    ) {
+        if ((defender_field_position == FieldLocation::IN_AIR &&
+                !move_has_flag(
+                    attacker_move,
+                    MoveFlag::HITS_DEFENDER_IN_AIR)
+            ) ||
+            (defender_field_position == FieldLocation::UNDER_GROUND &&
+                !move_has_flag(
+                    attacker_move,
+                    MoveFlag::HITS_DEFENDER_UNDER_GROUND)
+            ) ||
+            (defender_field_position == FieldLocation::UNDER_WATER &&
+                !move_has_flag(
+                    attacker_move,
+                    MoveFlag::HITS_DEFENDER_UNDER_WATER)
+            ) ||
+            (defender_field_position == FieldLocation::IN_THE_VOID)
+        ) {
+            return true;
+        }
+    }
+
+    return (defender_state.get_ability() == Ability::Damp &&
             (attacker_move == Move::Selfdestruct ||
                 attacker_move == Move::Explosion)) ||
-        (defender_ability == Ability::Soundproof &&
+        (defender_state.get_ability() == Ability::Soundproof &&
             move_has_flag(attacker_move, MoveFlag::IS_SOUND_BASED));
 }
 
@@ -1521,15 +1550,13 @@ inline int16_t check_for_zero_or_fixed_damage(
     const PokemonType move_type,
     const PokemonState& defender_state
 ) {
-    auto const defender_ability = defender_state.get_ability();
     auto const attacker_move = attacker_move_info->move;
-    if (does_zero_damage(defender_ability, attacker_move)) {
+    if (does_zero_damage(defender_state, attacker_move)) {
         return 0;
     }
 
     const auto attacker_health = attacker_state.get_health();
-
-    if (type_nullified_by_ability(defender_ability, move_type)) {
+    if (type_nullified_by_ability(defender_state.get_ability(), move_type)) {
         return 0;
     }
 
