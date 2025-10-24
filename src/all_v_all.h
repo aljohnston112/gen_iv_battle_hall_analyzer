@@ -39,25 +39,6 @@ inline void battle_all(
     );
 }
 
-struct MoveSetHash {
-    std::size_t operator()(
-        const std::unordered_set<const MoveInfo*>& move_set
-    ) const {
-        std::vector sorted_moves(move_set.begin(), move_set.end());
-        std::sort(sorted_moves.begin(), sorted_moves.end());
-
-        std::size_t hash = 0;
-        int i = 0;
-        for (const MoveInfo* move : sorted_moves) {
-            const int shift = i *
-                std::bit_width(static_cast<uint>(Move::Count));
-            hash |= static_cast<std::size_t>(move->move) << shift;
-            i++;
-        }
-        return hash;
-    }
-};
-
 struct PokemonPairHash {
     std::size_t operator()(const std::pair<Pokemon, Ability>& p) const {
         return (static_cast<int>(p.first) << bits_for_ability) |
@@ -186,10 +167,10 @@ inline void change_stats(CustomPokemon& pokemon) {
         name == Pokemon::Kingdra
     ) {
         pokemon.stats[static_cast<int>(Stat::ATTACK)] = 171;
-       pokemon.stats[static_cast<int>(Stat::DEFENSE)] = 125;
-       // pokemon.stats[static_cast<int>(Stat::SPECIAL_ATTACK)] = 107;
+        pokemon.stats[static_cast<int>(Stat::DEFENSE)] = 125;
+        // pokemon.stats[static_cast<int>(Stat::SPECIAL_ATTACK)] = 107;
         pokemon.stats[static_cast<int>(Stat::SPECIAL_DEFENSE)] = 107;
-       pokemon.stats[static_cast<int>(Stat::SPEED)] = 114;
+        pokemon.stats[static_cast<int>(Stat::SPEED)] = 114;
     } else if (name == Pokemon::Kangaskhan) {
         //
     } else if (name == Pokemon::Gallade) {
@@ -254,6 +235,25 @@ inline std::unordered_map<
     }
     return pokemon_to_battles;
 }
+
+struct MoveSetHash {
+    std::size_t operator()(
+        const std::unordered_set<const MoveInfo*>& move_set
+    ) const {
+        std::vector sorted_moves(move_set.begin(), move_set.end());
+        std::sort(sorted_moves.begin(), sorted_moves.end());
+
+        std::size_t hash = 0;
+        int i = 0;
+        for (const MoveInfo* move : sorted_moves) {
+            const int shift = i *
+                std::bit_width(static_cast<uint>(Move::Count));
+            hash |= static_cast<std::size_t>(move->move) << shift;
+            i++;
+        }
+        return hash;
+    }
+};
 
 inline void aggregate_battle_results(
     std::unordered_map<
@@ -1097,5 +1097,101 @@ inline void analyze_all(
     }
 }
 
+
+constexpr int N =
+    (static_cast<int>(Pokemon::Count) * static_cast<int>(Ability::Disabled)) +
+    (static_cast<int>(Pokemon::Count) * static_cast<int>(Ability::Disabled));
+using RoundRobinResults = std::tuple<
+    std::array<const CustomPokemon*, N>,
+    std::array<bool, N>,
+    std::array<
+        std::unordered_set<std::pair<const MoveInfo*, int>, MoveDamagePairHash>,
+        N
+    >,
+    std::array<
+        std::unordered_set<std::pair<const MoveInfo*, int>, MoveDamagePairHash>,
+        N
+    >
+>;
+using BattleResults = std::tuple<
+    const CustomPokemon*,
+    bool,
+    std::unordered_set<std::pair<const MoveInfo*, int>, MoveDamagePairHash>,
+    std::unordered_set<std::pair<const MoveInfo*, int>, MoveDamagePairHash>
+>;
+
+inline void battle_all2(
+    const BattleAllEntry& battle_entry,
+    std::promise<
+        std::tuple<
+            const CustomPokemon*,
+            bool,
+            std::unordered_set<std::pair<const MoveInfo*, int>,
+                               MoveDamagePairHash>,
+            std::unordered_set<std::pair<const MoveInfo*, int>,
+                               MoveDamagePairHash>
+        >
+    >&& promise
+) {
+    auto [
+        _,
+        won,
+        moves,
+        opponent_moves
+    ] = battle(battle_entry.player, battle_entry.opponent);
+    promise.set_value(
+        std::tuple{
+            &battle_entry.opponent,
+            won,
+            std::move(moves),
+            std::move(opponent_moves)
+        }
+    );
+}
+
+inline void test(
+    const std::unordered_map<
+        std::string,
+        SerebiiPokemon
+    >& pokemon_name_to_serebii_pokemon
+) {
+    const std::unordered_map<
+        Pokemon,
+        std::vector<CustomPokemon>
+    > pokemon_to_forms =
+        get_all_pokemon_to_analyze(pokemon_name_to_serebii_pokemon);
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::vector<BattleAllEntry>,
+        PokemonPairHash
+    > pokemon_to_battles = get_battle_entries(pokemon_to_forms);
+    for (const auto& battles : pokemon_to_battles |
+         std::views::values
+    ) {
+        /**
+        typename... TupleTypes,
+        class TupleOfArrays,
+        class InputDataContainer,
+        class InputDataType
+        **/
+        auto battle_result_entries =
+            thread_pool::ThreadPool::getCPUWorkInstance()->
+            createAndRunTasks2<
+                std::vector<BattleAllEntry>,
+                BattleAllEntry,
+                N,
+                const CustomPokemon*,
+                bool,
+                std::unordered_set<
+                    std::pair<const MoveInfo*, int>,
+                    MoveDamagePairHash
+                >,
+                std::unordered_set<
+                    std::pair<const MoveInfo*, int>,
+                    MoveDamagePairHash
+                >
+            >(battle_all2, battles);
+    }
+}
 
 #endif //ALL_V_ALL_H

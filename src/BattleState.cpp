@@ -797,11 +797,7 @@ class BattleState {
                             MoveFlag::IS_SOUND_BASED
                         ) &&
                         defender_ability == Ability::Soundproof) ||
-                    ((attacker_move->move == Move::SpitUp ||
-                            // TODO shuckle leads to struggling
-                            (attacker_state.pokemon.name == Pokemon::Shuckle ||
-                                defender_state.pokemon.name ==
-                                Pokemon::Shuckle)) &&
+                    (attacker_move->move == Move::SpitUp &&
                         damage == 0) ||
                     unable_to_hit_defender
                 ) {

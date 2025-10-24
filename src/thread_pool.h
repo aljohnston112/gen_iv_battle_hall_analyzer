@@ -64,18 +64,18 @@ namespace thread_pool {
 
         template <
             class PromiseResult,
-            class DataContainer,
-            class ParameterType
+            class InputDataContainer,
+            class InputDataType
         >
         std::vector<PromiseResult> createAndRunTasks(
             std::function<
-                void(const ParameterType&, std::promise<PromiseResult>&&)
+                void(const InputDataType&, std::promise<PromiseResult>&&)
             >&& function,
-            const DataContainer& allData
+            const InputDataContainer& allData
         ) {
             std::vector<PromiseResult> results{};
             std::vector<std::future<PromiseResult>> futures;
-            for (const ParameterType& data : allData) {
+            for (const InputDataType& data : allData) {
                 submit(
                     futures,
                     function,
@@ -85,6 +85,40 @@ namespace thread_pool {
             for (auto& future : futures) {
                 auto result = future.get();
                 results.emplace_back(std::move(result));
+            }
+            return results;
+        }
+
+        template <
+            class InputDataContainer,
+            class InputDataType,
+            std::size_t N,
+            typename... TupleTypes
+        >
+        std::tuple<std::array<TupleTypes, N>...> createAndRunTasks2(
+            auto&& function,
+            const InputDataContainer& allData
+        ) {
+            std::tuple<std::array<TupleTypes, N>...> results{};
+            std::vector<std::future<std::tuple<TupleTypes...>>> futures;
+            for (const InputDataType& data : allData) {
+                submit(
+                    futures,
+                    function,
+                    data
+                );
+            }
+            for (size_t i = 0; i < futures.size(); i++) {
+                [&results, i]<std::size_t... Is>(
+                    std::index_sequence<Is...>,
+                    std::tuple<TupleTypes...> tuple_values
+                ) {
+                        ((std::get<Is>(results)[i] =
+                                std::get<Is>(tuple_values)),
+                            ...
+                        );
+                    }(std::make_index_sequence<N>{},
+                      futures[i].get());
             }
             return results;
         }

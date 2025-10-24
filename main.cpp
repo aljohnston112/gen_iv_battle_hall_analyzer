@@ -12,7 +12,8 @@ int main() {
 
     const auto all_serebii_pokemon =
         get_all_serebii_pokemon();
-    analyze_all(all_serebii_pokemon);
+    test(all_serebii_pokemon);
+    // analyze_all(all_serebii_pokemon);
 
     // const auto all_moves =
     //     get_all_pokemon_moves(
