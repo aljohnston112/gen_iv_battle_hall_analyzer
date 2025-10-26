@@ -621,11 +621,13 @@ class BattleState {
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
-            if (attacker_state.pokemon.ability == Ability::SwiftSwim &&
-                attacker_state.pokemon.name == Pokemon::Kingdra &&
-                defender_state.pokemon.ability == Ability::MoldBreaker &&
-                defender_state.pokemon.name == Pokemon::Rampardos &&
-                attacker_state.is_player
+            if (attacker_state.pokemon.ability == Ability::Guts &&
+                attacker_state.pokemon.name == Pokemon::Raticate &&
+                // defender_state.pokemon.ability == Ability::MoldBreaker &&
+                // defender_state.pokemon.name == Pokemon::Rampardos &&
+                attacker_state.is_player &&
+                (attacker_move->move == Move::Return ||
+                attacker_move->move == Move::SecretPower)
             ) {
                 volatile int a;
             }
@@ -767,7 +769,7 @@ class BattleState {
                         attacker_move->type
                     ) == 0) ||
                     (attacker_move->type == PokemonType::GROUND &&
-                        (defender_state.get_ability() == Ability::Levitate ||
+                        (defender_ability == Ability::Levitate ||
                             defender_state.has_type(PokemonType::FLYING))) ||
                     // TODO these might go off after a second run through the pokemon
                     // ((attacker_move->move == Move::HiddenPower ||
@@ -812,6 +814,10 @@ class BattleState {
             }
         }
 
+
+
+
+
         uint damage_to_defender = 0;
         if (best_move.move != nullptr &&
             best_move.move->move != Move::TripleKick
@@ -844,7 +850,7 @@ class BattleState {
                     attacker_pokemon.name == Pokemon::Drifblim) &&
                 (defender_state.pokemon.ability == Ability::MotorDrive)) ||
             ((attacker_pokemon.name == Pokemon::Houndoom) &&
-                (defender_state.get_ability() == Ability::FlashFire)) ||
+                (defender_ability == Ability::FlashFire)) ||
             ((attacker_pokemon.name == Pokemon::Zigzagoon ||
                     attacker_pokemon.name == Pokemon::Furret ||
                     attacker_pokemon.name == Pokemon::Riolu ||
@@ -2654,8 +2660,9 @@ public:
 
 
 BattleResultEntry battle(
-    const CustomPokemon& player, const CustomPokemon& opponent
+    const CustomPokemon& player,
+    const CustomPokemon& opponent
 ) {
     BattleState battle_state{player, opponent};
-    return battle_state.battle();
+    return std::move(battle_state.battle());
 }

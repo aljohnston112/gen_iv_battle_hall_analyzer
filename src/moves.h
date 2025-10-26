@@ -4223,8 +4223,7 @@ static constexpr std::array<
 }();
 
 inline bool move_has_flag(const Move move, const MoveFlag move_flag) {
-    return MOVE_FLAGS[static_cast<int>(move)][
-        static_cast<size_t>(move_flag)];
+    return MOVE_FLAGS[static_cast<int>(move)][static_cast<size_t>(move_flag)];
 }
 
 static constexpr std::array<int8_t, static_cast<int>(Move::Count)> MOVE_PRIORITIES

@@ -451,7 +451,8 @@ get_moves_for_serebii_pokemon(
         }
     }
     for (const auto& move : serebii_pokemon.tm_or_hm_to_move |
-         std::views::values) {
+         std::views::values
+    ) {
         shared_moves[move.move] = &move;
     }
     for (const auto& move : serebii_pokemon.egg_moves) {
@@ -594,7 +595,18 @@ const std::unordered_set IGNORED_MOVES = {
     Move::Snore,
     Move::LastResort,
     Move::DreamEater,
-    Move::Frustration
+    Move::Frustration,
+    Move::SuckerPunch,
+    Move::DoubleEdge,
+    Move::HiddenPower,
+    Move::Dive,
+    Move::Dig,
+    Move::Fly,
+    Move::ShadowSneak,
+    Move::UTurn,
+
+    Move::Counter,
+    Move::MirrorCoat,
 };
 
 std::unordered_map<

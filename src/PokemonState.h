@@ -1197,12 +1197,12 @@ public:
     }
 
     [[nodiscard]] bool has_power_points() const {
-        for (const auto& move : moves) {
-            if (has_power_points(move->move)) {
-                return true;
-            }
+        bool result = false;
+#pragma omp parallel for reduction(|:result) num_threads(12)
+        for (size_t i = 0; i < moves.size(); ++i) {
+            result |= has_power_points(moves[i]->move);
         }
-        return false;
+        return result;
     }
 
     [[nodiscard]] bool has_power_points(Move move) const {
@@ -1331,16 +1331,6 @@ inline bool should_skip_move(
     const MoveInfo* move,
     const BestMove& defender_chosen_move
 ) {
-    if (((move->move == Move::Counter ||
-                move->move == Move::MirrorCoat ||
-                move->move == Move::SuckerPunch
-            ) &&
-            SKIP_COUNTER_AND_MIRROR_COAT) ||
-        move->move == Move::DoubleEdge ||
-        move->move == Move::HiddenPower
-    ) {
-        return true;
-    }
     if (!attacker_state.has_power_points(move->move) ||
         move->move == Move::Explosion ||
         move->move == Move::Selfdestruct
@@ -1425,10 +1415,11 @@ inline bool does_zero_damage(
         }
     }
 
-    return (defender_state.get_ability() == Ability::Damp &&
+    const auto defender_ability = defender_state.get_ability();
+    return (defender_ability == Ability::Damp &&
             (attacker_move == Move::Selfdestruct ||
                 attacker_move == Move::Explosion)) ||
-        (defender_state.get_ability() == Ability::Soundproof &&
+        (defender_ability == Ability::Soundproof &&
             move_has_flag(attacker_move, MoveFlag::IS_SOUND_BASED));
 }
 
@@ -1942,7 +1933,7 @@ inline uint16_t get_move_power(
     const PokemonState& attacker_state,
     const MoveInfo* attacker_move_info,
     const PokemonType move_type,
-    PokemonState& defender_state,
+    const PokemonState& defender_state,
     const Weather weather,
     const bool is_mid_turn
 ) {
@@ -1975,7 +1966,7 @@ inline uint16_t get_move_power(
         weather,
         is_mid_turn
     );
-    return std::floor(power);
+    return power;
 }
 
 inline int16_t apply_damage_modifiers(
@@ -2184,14 +2175,7 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
     if (power == 0) {
         return 0;
     }
-    if (power == static_cast<uint16_t>(-1)) {
-        throw std::logic_error{"Power is -1"};
-    }
-    if (static_cast<uint64_t>(damage) * power * attacker_attack >
-        std::numeric_limits<uint32_t>::max()
-    ) {
-        throw std::logic_error{"Overflow!"};
-    }
+
     damage = std::floor(damage * power * attacker_attack / defender_defense);
     damage = static_cast<int16_t>(std::floor(damage / 50) + 2);
 

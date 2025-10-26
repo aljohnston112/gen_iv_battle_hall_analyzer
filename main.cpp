@@ -1,19 +1,23 @@
 #include <chrono>
 #include <iostream>
 
-#include "src/all_v_all.h"
 #include "src/battle_hall_data_source.h"
 #include "src/config.h"
-#include "src/hit_analyzer.h"
+#include "src/round_robin.h"
 
 int main() {
+if (MULTI_THREADED) {
+    printf("OpenMP version: %d\n", _OPENMP);
+} else {
+    printf("OpenMP is not enabled.\n");
+}
+
     const auto start =
         std::chrono::high_resolution_clock::now();
 
     const auto all_serebii_pokemon =
         get_all_serebii_pokemon();
-    test(all_serebii_pokemon);
-    // analyze_all(all_serebii_pokemon);
+    round_robin(all_serebii_pokemon);
 
     // const auto all_moves =
     //     get_all_pokemon_moves(
