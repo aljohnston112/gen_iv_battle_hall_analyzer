@@ -7,6 +7,8 @@
 #include "serebii_pokemon_data_source.h"
 
 constexpr bool MULTI_THREADED = true;
+constexpr int NUMBER_OF_THREADS = MULTI_THREADED ? 8 : 1;
+
 constexpr uint8_t LEVEL = 60;
 constexpr bool SKIP_RANKS = false;
 constexpr bool ALL_MOVES = false;

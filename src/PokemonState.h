@@ -1198,7 +1198,7 @@ public:
 
     [[nodiscard]] bool has_power_points() const {
         bool result = false;
-#pragma omp parallel for reduction(|:result) num_threads(12)
+// #pragma omp parallel for reduction(|:result) num_threads(NUMBER_OF_THREADS)
         for (size_t i = 0; i < moves.size(); ++i) {
             result |= has_power_points(moves[i]->move);
         }

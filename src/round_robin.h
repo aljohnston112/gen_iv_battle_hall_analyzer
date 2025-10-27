@@ -1,6 +1,6 @@
 #ifndef GEN_IV_BATTLE_HALL_ANALYZER_ROUND_ROBIN_H
 #define GEN_IV_BATTLE_HALL_ANALYZER_ROUND_ROBIN_H
-#include <mutex>
+#include <future>
 #include <unordered_map>
 #include <vector>
 
@@ -9,6 +9,7 @@
 #include "custom_pokemon.h"
 #include "Pokemon.h"
 #include "serebii_pokemon_data_source.h"
+#include "thread_pool.h"
 
 static const std::unordered_set banned = {
     Pokemon::Palkia,
@@ -285,6 +286,26 @@ inline std::vector<
     return pokemon_to_battles;
 }
 
+inline void battle_all(
+    const BattleEntry& battle_entry,
+    std::promise<BattleResultEntry>&& promise
+) {
+    auto [
+        _,
+        won,
+        moves,
+        opponent_moves
+    ] = battle(battle_entry.player, battle_entry.opponent);
+    promise.set_value(
+        BattleResultEntry{
+            .opponent = &battle_entry.opponent,
+            .won = won,
+            .player_moves = std::move(moves),
+            .opponent_moves = std::move(opponent_moves)
+        }
+    );
+}
+
 inline void do_battles(
     std::vector<
         std::pair<
@@ -309,18 +330,34 @@ inline void do_battles(
         all_pokemon.push_back(pokemon);
     }
 
-#pragma omp parallel for num_threads(12)
+// #pragma omp parallel for num_threads(NUMBER_OF_THREADS)
+//     for (size_t i = 0; i < pokemon_to_battles.size(); ++i) {
+//         const auto& pokemon_and_battles = pokemon_to_battles[i];
+//         const auto& pokemon = pokemon_and_battles.first;
+//         const auto& battles = pokemon_and_battles.second;
+//         auto& results =
+//             pokemon_to_battle_result_entries.at(pokemon);
+//         results.resize(battles.size());
+//         for (size_t j = 0; j < battles.size(); ++j) {
+//             results[j] = std::move(
+//                 battle(battles[j].player, battles[j].opponent));
+//         }
+//     }
+
     for (size_t i = 0; i < pokemon_to_battles.size(); ++i) {
         const auto& pokemon_and_battles = pokemon_to_battles[i];
         const auto& pokemon = pokemon_and_battles.first;
         const auto& battles = pokemon_and_battles.second;
         auto& results =
             pokemon_to_battle_result_entries.at(pokemon);
-        results.resize(battles.size());
-        for (size_t j = 0; j < battles.size(); ++j) {
-            results[j] = std::move(
-                battle(battles[j].player, battles[j].opponent));
-        }
+        auto battle_result_entries =
+                thread_pool::ThreadPool::getCPUWorkInstance()->
+                createAndRunTasks<
+                    BattleResultEntry,
+                    std::vector<BattleEntry>,
+                    BattleEntry
+                >(battle_all, battles);
+        pokemon_to_battle_result_entries.at(pokemon) = std::move(results);
     }
 }
 
@@ -443,9 +480,10 @@ inline void do_round_robin(
         std::string,
         SerebiiPokemon
     >& pokemon_name_to_serebii_pokemon,
-    std::unordered_map<std::pair<Pokemon, Ability>,
-                       std::vector<BattleResultEntry>,
-                       PokemonPairHash
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::vector<BattleResultEntry>,
+        PokemonPairHash
     >& pokemon_to_battle_result_entries
 ) {
     const std::unordered_map<

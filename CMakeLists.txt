@@ -12,7 +12,7 @@ if (CCACHE_PROGRAM)
 endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fno-inline -fno-omit-frame-pointer -fstack-check -fstack-protector-all -Wframe-larger-than=8388608")
-option(ENABLE_LIBSTDCXX_DEBUG "Enable _GLIBCXX_DEBUG for debug builds" ON)
+option(ENABLE_LIBSTDCXX_DEBUG "Enable _GLIBCXX_DEBUG for debug builds" OFF)
 if (ENABLE_LIBSTDCXX_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 endif()
@@ -47,6 +47,8 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         external/libhungarian/hungarian.c
         external/libhungarian/hungarian.h
         src/round_robin.h
+        src/thread_pool.cpp
+        src/thread_pool.h
 )
 target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
 
