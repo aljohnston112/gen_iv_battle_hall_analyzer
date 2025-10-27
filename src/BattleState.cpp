@@ -297,9 +297,8 @@ inline void check_unimplemented_moves(
 }
 
 void add_last_used_move(
-    std::unordered_set<
-        std::pair<const MoveInfo*, int>,
-        MoveDamagePairHash
+    std::vector<
+        std::pair<const MoveInfo*, int>
     >& attacker_moves,
     const PokemonState& attacker_state,
     const PokemonState& defender_state
@@ -310,7 +309,7 @@ void add_last_used_move(
         defender_state.get_field_location() == FieldLocation::ON_FIELD ||
         last_used_move.damage > 0
     ) {
-        attacker_moves.insert(
+        attacker_moves.push_back(
             std::make_pair(
                 last_used_move.move,
                 last_used_move.damage
@@ -2476,13 +2475,11 @@ public:
 
 
     BattleResultEntry battle() {
-        std::unordered_set<
-            std::pair<const MoveInfo*, int>,
-            MoveDamagePairHash
+        std::vector<
+            std::pair<const MoveInfo*, int>
         > player_moves{};
-        std::unordered_set<
-            std::pair<const MoveInfo*, int>,
-            MoveDamagePairHash
+        std::vector<
+            std::pair<const MoveInfo*, int>
         > opponent_moves{};
         bool player_goes_first = player_state.outspeeds(
             opponent_state,

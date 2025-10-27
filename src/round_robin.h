@@ -92,6 +92,7 @@ inline std::unordered_map<
     > pokemon_to_forms{};
     const auto all_pokemon_forms =
         get_pokemon_forms(name_to_serebii_pokemon);
+    uint i = 0;
     for (const auto& pokemon_forms : all_pokemon_forms) {
         for (const auto& pokemon_variants :
              pokemon_forms | std::views::values
@@ -103,6 +104,10 @@ inline std::unordered_map<
                     ].emplace_back(pokemon);
                 }
             }
+        }
+        i++;
+        if (i > 10) {
+            break;
         }
     }
     return pokemon_to_forms;
@@ -313,51 +318,49 @@ inline void do_battles(
             std::vector<BattleEntry>
         >
     >& pokemon_to_battles,
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<BattleResultEntry>,
-        PokemonPairHash
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
     >& pokemon_to_battle_result_entries
 ) {
     pokemon_to_battle_result_entries = {};
     std::vector<std::pair<Pokemon, Ability>> all_pokemon{};
-    for (const auto& [
-             pokemon,
-             battles
-         ] : pokemon_to_battles
+    for (const auto& pokemon :
+         pokemon_to_battles | std::views::keys
     ) {
-        pokemon_to_battle_result_entries.try_emplace(pokemon, battles.size());
         all_pokemon.push_back(pokemon);
     }
 
-// #pragma omp parallel for num_threads(NUMBER_OF_THREADS)
-//     for (size_t i = 0; i < pokemon_to_battles.size(); ++i) {
-//         const auto& pokemon_and_battles = pokemon_to_battles[i];
-//         const auto& pokemon = pokemon_and_battles.first;
-//         const auto& battles = pokemon_and_battles.second;
-//         auto& results =
-//             pokemon_to_battle_result_entries.at(pokemon);
-//         results.resize(battles.size());
-//         for (size_t j = 0; j < battles.size(); ++j) {
-//             results[j] = std::move(
-//                 battle(battles[j].player, battles[j].opponent));
-//         }
-//     }
+    // #pragma omp parallel for num_threads(NUMBER_OF_THREADS)
+    //     for (size_t i = 0; i < pokemon_to_battles.size(); ++i) {
+    //         const auto& pokemon_and_battles = pokemon_to_battles[i];
+    //         const auto& pokemon = pokemon_and_battles.first;
+    //         const auto& battles = pokemon_and_battles.second;
+    //         auto& results =
+    //             pokemon_to_battle_result_entries.at(pokemon);
+    //         results.resize(battles.size());
+    //         for (size_t j = 0; j < battles.size(); ++j) {
+    //             results[j] = std::move(
+    //                 battle(battles[j].player, battles[j].opponent));
+    //         }
+    //     }
 
     for (size_t i = 0; i < pokemon_to_battles.size(); ++i) {
         const auto& pokemon_and_battles = pokemon_to_battles[i];
         const auto& pokemon = pokemon_and_battles.first;
         const auto& battles = pokemon_and_battles.second;
-        auto& results =
-            pokemon_to_battle_result_entries.at(pokemon);
         auto battle_result_entries =
-                thread_pool::ThreadPool::getCPUWorkInstance()->
-                createAndRunTasks<
-                    BattleResultEntry,
-                    std::vector<BattleEntry>,
-                    BattleEntry
-                >(battle_all, battles);
-        pokemon_to_battle_result_entries.at(pokemon) = std::move(results);
+            thread_pool::ThreadPool::getCPUWorkInstance()->
+            createAndRunTasks<
+                BattleResultEntry,
+                std::vector<BattleEntry>,
+                BattleEntry
+            >(battle_all, battles);
+        pokemon_to_battle_result_entries.push_back(
+            std::pair(pokemon, battle_result_entries)
+        );
     }
 }
 
@@ -371,9 +374,11 @@ inline void do_round_robin_with_best_moves(
         std::vector<CustomPokemon>,
         PokemonPairHash
     >& pokemon_to_forms,
-    std::unordered_map<
-        std::pair<Pokemon, Ability>, std::vector<BattleResultEntry>,
-        PokemonPairHash
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
     >& pokemon_to_battle_result_entries
 ) {
     std::vector<
@@ -480,10 +485,11 @@ inline void do_round_robin(
         std::string,
         SerebiiPokemon
     >& pokemon_name_to_serebii_pokemon,
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<BattleResultEntry>,
-        PokemonPairHash
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
     >& pokemon_to_battle_result_entries
 ) {
     const std::unordered_map<
@@ -517,15 +523,54 @@ inline void round_robin(
         SerebiiPokemon
     >& pokemon_name_to_serebii_pokemon
 ) {
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<BattleResultEntry>,
-        PokemonPairHash
-    > pokemon_to_battle_result_entries;
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
+    > pokemon_to_battle_result_entries{};
     do_round_robin(
         pokemon_name_to_serebii_pokemon,
         pokemon_to_battle_result_entries
     );
+
+    for (auto& battle_results :
+         pokemon_to_battle_result_entries | std::views::values
+    ) {
+        for (auto& battle_result : battle_results) {
+            std::sort(
+                battle_result.opponent_moves.begin(),
+                battle_result.opponent_moves.end(),
+                [](const auto& a, const auto& b) {
+                    return a.second > b.second;
+                }
+            );
+        }
+    }
+    for (auto& battle_results :
+         pokemon_to_battle_result_entries | std::views::values
+    ) {
+        std::sort(
+            battle_results.begin(),
+            battle_results.end(),
+            [](const auto& a, const auto& b) {
+                if (a.opponent_moves.size() == 0 ||
+                    b.opponent_moves.size() == 0
+                ) {
+                    return a.opponent_moves.size() != 0;
+                }
+                if (a.opponent_moves[0].second != b.opponent_moves[0].second) {
+                    return a.opponent_moves[0].second -
+                        b.opponent_moves[0].second;
+                }
+                const double a_ratio =
+                    a.player_moves.size() / a.opponent_moves.size();
+                const double b_ratio =
+                    b.player_moves.size() / b.opponent_moves.size();
+                return a_ratio < b_ratio;
+            }
+        );
+    }
 
     printf("");
 }

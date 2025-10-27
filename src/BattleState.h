@@ -16,13 +16,11 @@ struct MoveDamagePairHash {
 struct BattleResultEntry {
     const CustomPokemon* opponent;
     bool won;
-    std::unordered_set<
-        std::pair<const MoveInfo*, int>,
-        MoveDamagePairHash
+    std::vector<
+        std::pair<const MoveInfo*, int>
     > player_moves;
-    std::unordered_set<
-        std::pair<const MoveInfo*, int>,
-        MoveDamagePairHash
+    std::vector<
+        std::pair<const MoveInfo*, int>
     > opponent_moves;
 };
 
