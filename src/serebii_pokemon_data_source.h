@@ -16,34 +16,34 @@ struct SerebiiPokemon {
     std::string ability;
     double pounds = 0;
     std::unordered_map<Stat, uint16_t> base_stats;
-    std::unordered_map<int, std::vector<MoveInfo>> level_to_moves;
-    std::unordered_map<std::string, MoveInfo> tm_or_hm_to_move;
-    std::vector<MoveInfo> egg_moves;
+    std::unordered_map<int, std::vector<const MoveInfo*>> level_to_moves;
+    std::unordered_map<std::string, const MoveInfo*> tm_or_hm_to_move;
+    std::vector<const MoveInfo*> egg_moves;
     std::unordered_map<
         int,
-        std::unordered_map<int, std::vector<MoveInfo>>
+        std::unordered_map<int, std::vector<const MoveInfo*>>
     > pre_evolution_moves;
-    std::vector<MoveInfo> move_tutor_attacks;
+    std::vector<const MoveInfo*> move_tutor_attacks;
     std::unordered_map<
         std::string,
-        std::unordered_map<int, std::vector<MoveInfo>>
+        std::unordered_map<int, std::vector<const MoveInfo*>>
     > game_to_level_to_moves;
-    std::vector<MoveInfo> special_moves;
+    std::vector<const MoveInfo*> special_moves;
     std::unordered_map<
         std::string,
         std::unordered_map<Stat, uint16_t>
     > form_to_base_stats;
     std::unordered_map<
         std::string,
-        std::unordered_map<int, std::vector<MoveInfo>>
+        std::unordered_map<int, std::vector<const MoveInfo*>>
     > form_to_level_up_moves;
     std::unordered_map<
         std::string,
-        std::unordered_map<std::string, MoveInfo>
+        std::unordered_map<std::string, const MoveInfo*>
     > form_to_tm_or_hm_to_move;
     std::unordered_map<
         std::string,
-        std::vector<MoveInfo>
+        std::vector<const MoveInfo*>
     > form_to_move_tutor_moves;
 };
 

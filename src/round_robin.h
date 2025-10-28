@@ -559,15 +559,15 @@ inline void round_robin(
                 ) {
                     return a.opponent_moves.size() != 0;
                 }
-                if (a.opponent_moves[0].second != b.opponent_moves[0].second) {
-                    return a.opponent_moves[0].second -
-                        b.opponent_moves[0].second;
-                }
+
                 const double a_ratio =
                     a.player_moves.size() / a.opponent_moves.size();
                 const double b_ratio =
                     b.player_moves.size() / b.opponent_moves.size();
-                return a_ratio < b_ratio;
+                if (a_ratio != b_ratio) {
+                    return a_ratio < b_ratio;
+                }
+                return a.opponent_moves[0].second > b.opponent_moves[0].second;
             }
         );
     }
