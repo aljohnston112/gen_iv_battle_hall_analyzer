@@ -242,7 +242,7 @@ inline std::vector<
         std::pair<Pokemon, Ability>,
         std::vector<CustomPokemon>,
         PokemonPairHash
-    > pokemon_to_forms
+    > opponent_pokemon_to_forms
 ) {
     std::vector<
         std::pair<
@@ -251,7 +251,7 @@ inline std::vector<
         >
     > pokemon_to_battles{};
     pokemon_to_battles.reserve(
-        pokemon_to_forms.size() * pokemon_to_forms.size()
+        player_pokemon_to_forms.size() * opponent_pokemon_to_forms.size()
     );
     for (auto& player_pokemon_forms :
          player_pokemon_to_forms | std::views::values
@@ -266,7 +266,7 @@ inline std::vector<
             }
             std::vector<BattleEntry> battles_for_player{};
             for (const auto& opponent_pokemon_forms :
-                 pokemon_to_forms | std::views::values
+                 opponent_pokemon_to_forms | std::views::values
             ) {
                 for (const auto& opponent_pokemon : opponent_pokemon_forms) {
                     battles_for_player.emplace_back(
@@ -364,22 +364,24 @@ inline void do_battles(
     }
 }
 
-inline void do_round_robin_with_best_moves(
+void get_player_pokemon_with_top_3_moves(
     const std::unordered_map<
         std::string,
         SerebiiPokemon
     >& pokemon_name_to_serebii_pokemon,
-    const std::unordered_map<
+    const std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<
+                BattleResultEntry
+            >
+        >
+    >& pokemon_to_battle_result_entries,
+    std::unordered_map<
         std::pair<Pokemon, Ability>,
         std::vector<CustomPokemon>,
         PokemonPairHash
-    >& pokemon_to_forms,
-    std::vector<
-        std::pair<
-            std::pair<Pokemon, Ability>,
-            std::vector<BattleResultEntry>
-        >
-    >& pokemon_to_battle_result_entries
+    >& player_pokemon_to_forms
 ) {
     std::vector<
         std::pair<
@@ -411,7 +413,7 @@ inline void do_round_robin_with_best_moves(
                 ) {
                     move_set.emplace(move);
                 }
-                moves_to_times_used_to_win[move_set]++;
+                moves_to_times_used_to_win[std::move(move_set)]++;
             }
         }
         std::vector<
@@ -433,37 +435,56 @@ inline void do_round_robin_with_best_moves(
             for (const auto& move :
                  sorted_move_set_counts[i].first
             ) {
-                top_3_moves.emplace(move);
+                top_3_moves.insert(move);
             }
             i++;
         }
         pokemon_and_top_moves.push_back(
-            std::pair(pokemon, top_3_moves)
+            std::pair(pokemon, std::move(top_3_moves))
         );
     }
 
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<CustomPokemon>,
-        PokemonPairHash
-    > player_pokemon_to_forms =
+    player_pokemon_to_forms =
         get_all_pokemon_to_analyze(pokemon_name_to_serebii_pokemon);
     for (const auto& [
              pokemon,
-             moves
+             best_moves
          ] : pokemon_and_top_moves
     ) {
-        for (auto player_pokemon : player_pokemon_to_forms[pokemon]) {
+        if (best_moves.size() == 0) {
+            player_pokemon_to_forms.erase(pokemon);
+            continue;
+        }
+        for (auto& player_pokemon : player_pokemon_to_forms[pokemon]) {
             const auto all_moves = player_pokemon.moves;
             player_pokemon.moves.clear();
-            for (const auto& move : moves) {
+            for (const auto& move : best_moves) {
                 if (std::ranges::find(all_moves, move) != all_moves.end()) {
                     player_pokemon.moves.push_back(move);
                 }
             }
         }
     }
+}
 
+inline void do_round_robin_with_best_moves(
+    const std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::vector<CustomPokemon>,
+        PokemonPairHash
+    >& player_pokemon_to_forms,
+    const std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::vector<CustomPokemon>,
+        PokemonPairHash
+    >& opponent_pokemon_to_forms,
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
+    >& pokemon_to_battle_result_entries
+) {
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
@@ -471,7 +492,7 @@ inline void do_round_robin_with_best_moves(
         >
     > pokemon_to_battles = get_battle_entries(
         player_pokemon_to_forms,
-        pokemon_to_forms
+        opponent_pokemon_to_forms
     );
 
     do_battles(
@@ -482,15 +503,34 @@ inline void do_round_robin_with_best_moves(
 
 inline void do_round_robin(
     const std::unordered_map<
-        std::string,
-        SerebiiPokemon
-    >& pokemon_name_to_serebii_pokemon,
+        std::pair<Pokemon, Ability>,
+        std::vector<CustomPokemon>,
+        PokemonPairHash
+    >& pokemon_to_forms,
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
             std::vector<BattleResultEntry>
         >
     >& pokemon_to_battle_result_entries
+) {
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleEntry>
+        >
+    > pokemon_to_battles = get_battle_entries(pokemon_to_forms);
+    do_battles(
+        pokemon_to_battles,
+        pokemon_to_battle_result_entries
+    );
+}
+
+inline void round_robin(
+    const std::unordered_map<
+        std::string,
+        SerebiiPokemon
+    >& pokemon_name_to_serebii_pokemon
 ) {
     const std::unordered_map<
         std::pair<Pokemon, Ability>,
@@ -502,35 +542,27 @@ inline void do_round_robin(
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
-            std::vector<BattleEntry>
-        >
-    > pokemon_to_battles = get_battle_entries(pokemon_to_forms);
-    do_battles(
-        pokemon_to_battles,
-        pokemon_to_battle_result_entries
-    );
-
-    do_round_robin_with_best_moves(
-        pokemon_name_to_serebii_pokemon,
-        pokemon_to_forms,
-        pokemon_to_battle_result_entries
-    );
-}
-
-inline void round_robin(
-    const std::unordered_map<
-        std::string,
-        SerebiiPokemon
-    >& pokemon_name_to_serebii_pokemon
-) {
-    std::vector<
-        std::pair<
-            std::pair<Pokemon, Ability>,
             std::vector<BattleResultEntry>
         >
     > pokemon_to_battle_result_entries{};
     do_round_robin(
+        pokemon_to_forms,
+        pokemon_to_battle_result_entries
+    );
+
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::vector<CustomPokemon>,
+        PokemonPairHash
+    > player_pokemon_to_forms{};
+    get_player_pokemon_with_top_3_moves(
         pokemon_name_to_serebii_pokemon,
+        pokemon_to_battle_result_entries,
+        player_pokemon_to_forms
+    );
+    do_round_robin_with_best_moves(
+        player_pokemon_to_forms,
+        pokemon_to_forms,
         pokemon_to_battle_result_entries
     );
 
@@ -554,22 +586,75 @@ inline void round_robin(
             battle_results.begin(),
             battle_results.end(),
             [](const auto& a, const auto& b) {
-                if (a.opponent_moves.size() == 0 ||
-                    b.opponent_moves.size() == 0
-                ) {
-                    return a.opponent_moves.size() != 0;
+                const auto aps = a.player_moves.size();
+                const auto aos = a.opponent_moves.size();
+                const int a_diff = aos - aps;
+                const auto bps = b.player_moves.size();
+                const auto bos = b.opponent_moves.size();
+                const int b_diff = bos - bps;
+                if (a_diff > 0) { // opponent attacked more
+                    if (b_diff <= 0) { // opponent attacked less
+                        return false;
+                    }
+                    // b_diff > 0; opponent attacked more
+                    if (aps != bps) {
+                        return aps < bps;
+                    }
+                    if (aos > 0) {
+                        return a.opponent_moves[0].second <
+                            b.opponent_moves[0].second;
+                    }
+                    return a.player_moves[0].second >
+                        b.player_moves[0].second;
                 }
-
-                const double a_ratio =
-                    a.player_moves.size() / a.opponent_moves.size();
-                const double b_ratio =
-                    b.player_moves.size() / b.opponent_moves.size();
-                if (a_ratio != b_ratio) {
-                    return a_ratio < b_ratio;
+                if (a_diff == 0) {
+                    if (b_diff < 0) { // opponent attacked less
+                        return false;
+                    }
+                    // b_diff can't be 0 when a_diff is
+                    // b_diff > 0; opponent attacked more
+                    return true;
                 }
-                return a.opponent_moves[0].second > b.opponent_moves[0].second;
+                // a_diff < 0; opponent attacked less
+                if (b_diff >= 0) { // opponent attacked more
+                    return true;
+                }
+                // b_diff < 0
+                if (aps != bps) {
+                    return aps < bps;
+                }
+                if (aos > 0) {
+                    return a.opponent_moves[0].second <
+                        b.opponent_moves[0].second;
+                }
+                return a.player_moves[0].second >
+                    b.player_moves[0].second;
             }
         );
+    }
+
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::unordered_map<Stat, int>,
+        PokemonPairHash
+    >{};
+    for (const auto& [
+             pokemon,
+             battle_results
+         ] : pokemon_to_battle_result_entries
+    ) {
+        for (const auto& [
+                 opponent,
+                 won,
+                 player_moves,
+                 opponent_moves
+             ] : battle_results) {
+            if (!won) {
+                continue;
+            }
+            // TODO where the EV to losses defeated map will be created
+            if (player_moves.size() == opponent_moves.size()) {} else {}
+        }
     }
 
     printf("");
