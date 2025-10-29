@@ -65,7 +65,8 @@ static const std::unordered_set banned = {
     Pokemon::LandShaymin,
     Pokemon::SkyShaymin,
     Pokemon::Slaking,
-    Pokemon::Wobbuffet
+    Pokemon::Wobbuffet,
+    Pokemon::Smeargle
 };
 
 struct PokemonPairHash {
@@ -106,9 +107,9 @@ inline std::unordered_map<
             }
         }
         i++;
-        if (i > 10) {
-            break;
-        }
+        // if (i > 10) {
+        //     break;
+        // }
     }
     return pokemon_to_forms;
 }
@@ -312,7 +313,7 @@ inline void battle_all(
 }
 
 inline void do_battles(
-    std::vector<
+    const std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
             std::vector<BattleEntry>
@@ -468,16 +469,12 @@ void get_player_pokemon_with_top_3_moves(
 }
 
 inline void do_round_robin_with_best_moves(
-    const std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<CustomPokemon>,
-        PokemonPairHash
-    >& player_pokemon_to_forms,
-    const std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<CustomPokemon>,
-        PokemonPairHash
-    >& opponent_pokemon_to_forms,
+    const std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleEntry>
+        >
+    >& pokemon_to_battles,
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
@@ -485,16 +482,6 @@ inline void do_round_robin_with_best_moves(
         >
     >& pokemon_to_battle_result_entries
 ) {
-    std::vector<
-        std::pair<
-            std::pair<Pokemon, Ability>,
-            std::vector<BattleEntry>
-        >
-    > pokemon_to_battles = get_battle_entries(
-        player_pokemon_to_forms,
-        opponent_pokemon_to_forms
-    );
-
     do_battles(
         pokemon_to_battles,
         pokemon_to_battle_result_entries
@@ -502,11 +489,12 @@ inline void do_round_robin_with_best_moves(
 }
 
 inline void do_round_robin(
-    const std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<CustomPokemon>,
-        PokemonPairHash
-    >& pokemon_to_forms,
+    const std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleEntry>
+        >
+    >& pokemon_to_battles,
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
@@ -514,12 +502,6 @@ inline void do_round_robin(
         >
     >& pokemon_to_battle_result_entries
 ) {
-    std::vector<
-        std::pair<
-            std::pair<Pokemon, Ability>,
-            std::vector<BattleEntry>
-        >
-    > pokemon_to_battles = get_battle_entries(pokemon_to_forms);
     do_battles(
         pokemon_to_battles,
         pokemon_to_battle_result_entries
@@ -538,16 +520,21 @@ inline void round_robin(
         PokemonPairHash
     > pokemon_to_forms =
         get_all_pokemon_to_analyze(pokemon_name_to_serebii_pokemon);
-
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleEntry>
+        >
+    > pokemon_to_battles = get_battle_entries(pokemon_to_forms);
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
             std::vector<BattleResultEntry>
         >
-    > pokemon_to_battle_result_entries{};
+    > original_pokemon_to_battle_result_entries{};
     do_round_robin(
-        pokemon_to_forms,
-        pokemon_to_battle_result_entries
+        pokemon_to_battles,
+        original_pokemon_to_battle_result_entries
     );
 
     std::unordered_map<
@@ -557,17 +544,32 @@ inline void round_robin(
     > player_pokemon_to_forms{};
     get_player_pokemon_with_top_3_moves(
         pokemon_name_to_serebii_pokemon,
-        pokemon_to_battle_result_entries,
+        original_pokemon_to_battle_result_entries,
         player_pokemon_to_forms
     );
-    do_round_robin_with_best_moves(
+
+    const std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleEntry>
+        >
+    > best_moves_pokemon_to_battles = get_battle_entries(
         player_pokemon_to_forms,
-        pokemon_to_forms,
-        pokemon_to_battle_result_entries
+        pokemon_to_forms
+    );
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
+    > best_moves_pokemon_to_battle_result_entries{};
+    do_round_robin_with_best_moves(
+        best_moves_pokemon_to_battles,
+        best_moves_pokemon_to_battle_result_entries
     );
 
     for (auto& battle_results :
-         pokemon_to_battle_result_entries | std::views::values
+         best_moves_pokemon_to_battle_result_entries | std::views::values
     ) {
         for (auto& battle_result : battle_results) {
             std::sort(
@@ -580,7 +582,7 @@ inline void round_robin(
         }
     }
     for (auto& battle_results :
-         pokemon_to_battle_result_entries | std::views::values
+         best_moves_pokemon_to_battle_result_entries | std::views::values
     ) {
         std::sort(
             battle_results.begin(),
@@ -592,8 +594,10 @@ inline void round_robin(
                 const auto bps = b.player_moves.size();
                 const auto bos = b.opponent_moves.size();
                 const int b_diff = bos - bps;
-                if (a_diff > 0) { // opponent attacked more
-                    if (b_diff <= 0) { // opponent attacked less
+                if (a_diff > 0) {
+                    // opponent attacked more
+                    if (b_diff <= 0) {
+                        // opponent attacked less
                         return false;
                     }
                     // b_diff > 0; opponent attacked more
@@ -608,7 +612,8 @@ inline void round_robin(
                         b.player_moves[0].second;
                 }
                 if (a_diff == 0) {
-                    if (b_diff < 0) { // opponent attacked less
+                    if (b_diff < 0) {
+                        // opponent attacked less
                         return false;
                     }
                     // b_diff can't be 0 when a_diff is
@@ -616,10 +621,11 @@ inline void round_robin(
                     return true;
                 }
                 // a_diff < 0; opponent attacked less
-                if (b_diff >= 0) { // opponent attacked more
+                if (b_diff >= 0) {
+                    // opponent attacked more
                     return true;
                 }
-                // b_diff < 0
+                // b_diff < 0; opponent attacked less
                 if (aps != bps) {
                     return aps < bps;
                 }
@@ -641,7 +647,7 @@ inline void round_robin(
     for (const auto& [
              pokemon,
              battle_results
-         ] : pokemon_to_battle_result_entries
+         ] : best_moves_pokemon_to_battle_result_entries
     ) {
         for (const auto& [
                  opponent,
