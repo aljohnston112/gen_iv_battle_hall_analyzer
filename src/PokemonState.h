@@ -123,6 +123,7 @@ class PokemonState {
     bool is_choiced_ = false;
 
     bool protected_ = false;
+    int safeguard_turns = 0;
     bool reflect = false;
     bool light_screen = false;
 
@@ -269,7 +270,8 @@ public:
         is_player(is_player),
         pokemon(pokemon),
         level(pokemon.level),
-        max_health(pokemon.stats[HEALTH_INDEX]) {
+        max_health(pokemon.stats[HEALTH_INDEX])
+    {
         power_points.fill(0);
         for (const auto& move : moves) {
             power_points[static_cast<int>(move->move)] = move->power_points;
@@ -624,7 +626,11 @@ public:
                     has_type(PokemonType::WATER))) &&
             !(status == Status::PARALYZED && ability == Ability::Limber) &&
             !(status == Status::FROZEN && ability == Ability::MagmaArmor) &&
-            !(weather == Weather::SUN && ability == Ability::LeafGuard)
+            !(weather == Weather::SUN && ability == Ability::LeafGuard) ||
+            !((status == Status::BURN ||
+                status == Status::POISON ||
+                status != Status::BADLY_POISONED) &&
+                safeguard_turns > 0)
         ) {
             this->status = status;
             if (ability == Ability::Synchronize &&
@@ -790,6 +796,10 @@ public:
 
     [[nodiscard]] uint16_t get_rollout_turns() const {
         return rollout_turns;
+    }
+
+    void start_safeguard() {
+        this->safeguard_turns = 5;
     }
 
     void start_rollout() {
@@ -1049,7 +1059,7 @@ public:
         }
     }
 
-    void try_apply_status(const Ability ability) {
+    void try_apply_status_damage(const Ability ability) {
         const bool has_magic_guard = ability == Ability::MagicGuard;
         if (!has_magic_guard && status == Status::BURN) {
             if (get_ability() == Ability::Heatproof) {
@@ -1118,6 +1128,9 @@ public:
         } else {
             rollout_power = 0;
         }
+        if (safeguard_turns > 0) {
+            safeguard_turns--;
+        }
         was_hit_ = false;
         took_damage_ = false;
         flinched = false;
@@ -1162,7 +1175,7 @@ public:
 
         // 6.4 Leech Seed: "pokémon's health is sapped by leech seed"
         // 6.5 Burn, Nightmare, Poison Heal, Poison: "pokémon is hurt by poison"
-        try_apply_status(ability);
+        try_apply_status_damage(ability);
 
         // 6.6 Flame Orb activation, Toxic Orb activation
         try_apply_flame_or_toxic_orb(weather, defender_state, item);
@@ -1331,9 +1344,7 @@ inline bool should_skip_move(
     const MoveInfo* move,
     const BestMove& defender_chosen_move
 ) {
-    if (!attacker_state.has_power_points(move->move) ||
-        move->move == Move::Explosion ||
-        move->move == Move::Selfdestruct
+    if (!attacker_state.has_power_points(move->move)
     ) {
         return true;
     }
@@ -1342,7 +1353,6 @@ inline bool should_skip_move(
         attacker_state.get_last_used_move();
     const auto category = move->category;
     return category == Category::STATUS ||
-
         (attacker_state.is_choiced() &&
             attackers_last_used_move.move != nullptr &&
             move->move != attackers_last_used_move.move->move) ||

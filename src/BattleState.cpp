@@ -279,7 +279,10 @@ inline void check_unimplemented_moves(
             move != Move::Assurance &&
             move != Move::CrushGrip &&
             move != Move::Rage &&
+            move != Move::Splash &&
+            move != Move::Safeguard &&
             move != Move::Struggle &&
+            !move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) &&
             (move_has_flag(
                     move,
                     MoveFlag::CAN_BE_REFLECTED_BY_MIRROR_MOVE
@@ -304,10 +307,8 @@ void add_last_used_move(
     const PokemonState& defender_state
 ) {
     if (const auto last_used_move = attacker_state.get_last_used_move();
-        (attacker_state.get_ability() == Ability::Truant &&
-            last_used_move.move != nullptr) &&
-        defender_state.get_field_location() == FieldLocation::ON_FIELD ||
-        last_used_move.damage > 0
+        last_used_move.move != nullptr &&
+        defender_state.get_field_location() == FieldLocation::ON_FIELD
     ) {
         attacker_moves.push_back(
             std::make_pair(
@@ -620,15 +621,15 @@ class BattleState {
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
-            if (attacker_state.pokemon.ability == Ability::Guts &&
-                attacker_state.pokemon.name == Pokemon::Raticate &&
-                // defender_state.pokemon.ability == Ability::MoldBreaker &&
-                // defender_state.pokemon.name == Pokemon::Rampardos &&
+            if (attacker_state.pokemon.ability == Ability::SwiftSwim &&
+                attacker_state.pokemon.name == Pokemon::Magikarp &&
+                defender_state.pokemon.ability == Ability::SwiftSwim &&
+                defender_state.pokemon.name == Pokemon::Magikarp &&
                 attacker_state.is_player &&
-                (attacker_move->move == Move::Return ||
-                attacker_move->move == Move::SecretPower)
+                (attacker_move->move == Move::Flail ||
+                    attacker_move->move == Move::SecretPower)
             ) {
-                volatile int a;
+                volatile int a = 0;
             }
 
             if (has_choice_item &&
@@ -734,7 +735,7 @@ class BattleState {
                         damage > best_move.damage) ||
                     (best_move_must_charge &&
                         damage > best_move.damage / 2) ||
-                    (move_must_charge &&
+                    (move_must_charge && attacker_faster &&
                         damage > best_move.damage * 2 &&
                         ((damage_from_defender < attacker_health &&
                                 attacker_faster) ||
@@ -812,10 +813,6 @@ class BattleState {
                 }
             }
         }
-
-
-
-
 
         uint damage_to_defender = 0;
         if (best_move.move != nullptr &&
@@ -926,12 +923,9 @@ class BattleState {
         ) {
             hits_to_defender = std::numeric_limits<uint>::max();
         } else {
-            // printf(
-            //     "Attacker: %s vs. Defender: %s\n",
-            //     POKEMON_TO_STRING.at(attacker_pokemon.name).c_str(),
-            //     POKEMON_TO_STRING.at(defender_state.pokemon.name).c_str()
-            // );
-            // throw std::logic_error("Missing move");
+            if (!attacker_state.has_power_points()) {
+                throw std::logic_error("Missing move ");
+            }
         }
 
         // Check if it is better to use a status move
@@ -1318,6 +1312,23 @@ class BattleState {
         }
 
         attacker_state.set_chosen_move(std::move(best_move));
+
+        if (attacker_state.get_chosen_move().move == nullptr) {
+            for (const auto move : attacker_state.get_moves()) {
+                if (attacker_state.has_power_points(move->move)) {
+                    attacker_state.set_chosen_move(
+                        BestMove{
+                            .move = move,
+                            .damage = 0,
+                            .times_to_hit =
+                            get_times_to_hit(attacker_is_player, move)
+                        }
+                    );
+                    return attacker_state.get_chosen_move();
+                }
+            }
+            throw std::runtime_error("Struggle was not picked");
+        }
         return attacker_state.get_chosen_move();
     }
 
@@ -2489,6 +2500,7 @@ public:
         );
         check_abilities(player_goes_first);
 
+        BestMove opponent_move;
         while (player_state.get_health() > 0 &&
             opponent_state.get_health() > 0
         ) {
@@ -2500,15 +2512,15 @@ public:
                 false
             );
 
-            if (player_state.pokemon.ability == Ability::SwiftSwim &&
-                player_state.pokemon.name == Pokemon::Kingdra
-                && opponent_state.pokemon.ability == Ability::MoldBreaker &&
-                opponent_state.pokemon.name == Pokemon::Rampardos
+            if (player_state.pokemon.ability == Ability::Trace &&
+                player_state.pokemon.name == Pokemon::Gardevoir
+                && opponent_state.pokemon.ability == Ability::Blaze &&
+                opponent_state.pokemon.name == Pokemon::Torchic
             ) {
                 volatile int a;
             }
 
-            BestMove opponent_move = choose_move_against_defender(
+            opponent_move = choose_move_against_defender(
                 false,
                 false,
                 get_weather(),
@@ -2636,6 +2648,17 @@ public:
             player_state.get_ability() != Ability::Damp
         ) {
             player_state.apply_damage(player_state.max_health / 4);
+        }
+
+        if (opponent_moves.size() == 0 && player_moves.size() != 1 &&
+            !(player_goes_first &&
+                player_moves.size() == 2 &&
+                player_moves[0].first->move == Move::FakeOut) &&
+            !(player_moves[0].first->move == Move::FakeOut &&
+                opponent_state.get_ability() == Ability::Truant) &&
+            (opponent_move.move->move != Move::SolarBeam)
+        ) {
+            throw std::runtime_error("Opponent could not attack");
         }
 
         if (player_state.get_health() > 0) {

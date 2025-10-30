@@ -51,11 +51,11 @@ namespace thread_pool {
             addTask(
                 [
                     &function = function,
-                    &namedSeries = data,
+                    &data = data,
                     promise = std::move(promise)
                 ] mutable {
                     function(
-                        namedSeries,
+                        data,
                         std::move(promise)
                     );
                 }

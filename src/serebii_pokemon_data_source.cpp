@@ -595,6 +595,10 @@ const std::unordered_set IGNORED_MOVES = {
     Move::Fly,
     Move::ShadowSneak,
     Move::UTurn,
+    Move::DestinyBond,
+
+    Move::Explosion,
+    Move::Selfdestruct,
 
     Move::Counter,
     Move::MirrorCoat,
