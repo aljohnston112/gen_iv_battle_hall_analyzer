@@ -621,10 +621,10 @@ class BattleState {
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
-            if (attacker_state.pokemon.ability == Ability::SwiftSwim &&
-                attacker_state.pokemon.name == Pokemon::Magikarp &&
-                defender_state.pokemon.ability == Ability::SwiftSwim &&
-                defender_state.pokemon.name == Pokemon::Magikarp &&
+            if (attacker_state.pokemon->ability == Ability::SwiftSwim &&
+                attacker_state.pokemon->name == Pokemon::Magikarp &&
+                defender_state.pokemon->ability == Ability::SwiftSwim &&
+                defender_state.pokemon->name == Pokemon::Magikarp &&
                 attacker_state.is_player &&
                 (attacker_move->move == Move::Flail ||
                     attacker_move->move == Move::SecretPower)
@@ -838,99 +838,103 @@ class BattleState {
         uint hits_to_defender;
         if (damage_to_defender != 0) {
             hits_to_defender = defender_health / damage_to_defender;
-        } else if (((attacker_pokemon.name == Pokemon::Wobbuffet ||
-                attacker_pokemon.name == Pokemon::Wynaut)) ||
-            ((attacker_pokemon.name == Pokemon::Lanturn ||
-                    attacker_pokemon.name == Pokemon::Chinchou ||
-                    attacker_pokemon.name == Pokemon::Rotom ||
-                    attacker_pokemon.name == Pokemon::Drifblim) &&
-                (defender_state.pokemon.ability == Ability::MotorDrive)) ||
-            ((attacker_pokemon.name == Pokemon::Houndoom) &&
-                (defender_ability == Ability::FlashFire)) ||
-            ((attacker_pokemon.name == Pokemon::Zigzagoon ||
-                    attacker_pokemon.name == Pokemon::Furret ||
-                    attacker_pokemon.name == Pokemon::Riolu ||
-                    attacker_pokemon.name == Pokemon::Tyrogue ||
-                    attacker_pokemon.name == Pokemon::Machop ||
-                    attacker_pokemon.name == Pokemon::Machamp ||
-                    attacker_pokemon.name == Pokemon::Lucario ||
-                    attacker_pokemon.name == Pokemon::Hippopotas ||
-                    attacker_pokemon.name == Pokemon::Trapinch ||
-                    attacker_pokemon.name == Pokemon::Diglett ||
-                    attacker_pokemon.name == Pokemon::Cubone ||
-                    attacker_pokemon.name == Pokemon::Sandshrew ||
-                    attacker_pokemon.name == Pokemon::Phanpy ||
-                    attacker_pokemon.name == Pokemon::Marowak ||
-                    attacker_pokemon.name == Pokemon::Dugtrio ||
-                    attacker_pokemon.name == Pokemon::Donphan ||
-                    attacker_pokemon.name == Pokemon::Hippowdon ||
-                    attacker_pokemon.name == Pokemon::Graveler ||
-                    attacker_pokemon.name == Pokemon::WormadamS ||
-                    attacker_pokemon.name == Pokemon::Rhyperior ||
-                    attacker_pokemon.name == Pokemon::Croagunk ||
-                    attacker_pokemon.name == Pokemon::Toxicroak ||
-                    attacker_pokemon.name == Pokemon::Rhydon ||
-                    attacker_pokemon.name == Pokemon::Sandslash ||
-                    attacker_pokemon.name == Pokemon::Geodude ||
-                    attacker_pokemon.name == Pokemon::Bonsly ||
-                    attacker_pokemon.name == Pokemon::Golem ||
-                    attacker_pokemon.name == Pokemon::Rhyhorn) &&
-                defender_state.has_type(PokemonType::GHOST) &&
-                defender_ability == Ability::Levitate) ||
-            ((attacker_pokemon.name == Pokemon::Castform ||
-                    attacker_pokemon.name == Pokemon::Umbreon ||
-                    attacker_pokemon.name == Pokemon::Magikarp) &&
-                defender_state.has_type(PokemonType::GHOST)) ||
-            ((attacker_pokemon.name == Pokemon::Barboach ||
-                    attacker_pokemon.name == Pokemon::Wooper ||
-                    attacker_pokemon.name == Pokemon::Marshtomp ||
-                    attacker_pokemon.name == Pokemon::Quagsire ||
-                    attacker_pokemon.name == Pokemon::Swampert) &&
-                defender_state.has_type(PokemonType::FLYING) &&
-                defender_ability == Ability::WaterAbsorb) ||
-            (attacker_state.get_ability() == Ability::Normalize &&
-                defender_state.has_type(PokemonType::GHOST)) ||
-            (attacker_state.pokemon.name == Pokemon::Unown) ||
-            (attacker_state.pokemon.name == Pokemon::Chatot &&
-                defender_ability == Ability::Soundproof) ||
-            (attacker_state.pokemon.name == Pokemon::Suicune &&
-                defender_state.pokemon.name == Pokemon::AlteredGiratina) ||
-            (attacker_state.pokemon.name == Pokemon::Ditto &&
-                defender_state.pokemon.name == Pokemon::Magikarp) ||
-            (attacker_state.pokemon.name == Pokemon::Magikarp &&
-                defender_state.pokemon.name == Pokemon::Wobbuffet) ||
-            (attacker_state.pokemon.name == Pokemon::Magikarp &&
-                defender_state.pokemon.name == Pokemon::Smeargle) ||
-            (attacker_state.pokemon.name == Pokemon::Castform &&
-                defender_state.pokemon.name == Pokemon::Shuckle) ||
-            (attacker_state.is_choiced() &&
-                best_move.move->type == PokemonType::GROUND &&
-                defender_ability == Ability::Levitate) ||
-            (attacker_pokemon.name == Pokemon::Smeargle) ||
-            ((attacker_pokemon.name == Pokemon::Geodude ||
-                    attacker_pokemon.name == Pokemon::Phanpy) &&
-                (defender_state.pokemon.name == Pokemon::Unown)) ||
-            ((attacker_pokemon.name == Pokemon::Claydol ||
-                    attacker_pokemon.name == Pokemon::Shuckle) &&
-                (defender_state.pokemon.name == Pokemon::Shuckle ||
-                    defender_state.pokemon.name == Pokemon::Bronzor)) ||
-            ((attacker_pokemon.name == Pokemon::Dugtrio ||
-                    attacker_pokemon.name == Pokemon::Shuckle ||
-                    attacker_pokemon.name == Pokemon::WormadamS ||
-                    attacker_pokemon.name == Pokemon::Bronzor) &&
-                (defender_state.pokemon.name == Pokemon::Claydol)) ||
-            unable_to_hit_defender
-        ) {
-            hits_to_defender = std::numeric_limits<uint>::max();
         } else {
-            if (!attacker_state.has_power_points()) {
-                throw std::logic_error("Missing move ");
+            auto attacker_name = attacker_pokemon->name;
+            auto defender_name = defender_state.pokemon->name;
+            if (((attacker_name == Pokemon::Wobbuffet ||
+                    attacker_name == Pokemon::Wynaut)) ||
+                ((attacker_name == Pokemon::Lanturn ||
+                        attacker_name == Pokemon::Chinchou ||
+                        attacker_name == Pokemon::Rotom ||
+                        attacker_name == Pokemon::Drifblim) &&
+                    (defender_state.pokemon->ability == Ability::MotorDrive)) ||
+                ((attacker_name == Pokemon::Houndoom) &&
+                    (defender_ability == Ability::FlashFire)) ||
+                ((attacker_name == Pokemon::Zigzagoon ||
+                        attacker_name == Pokemon::Furret ||
+                        attacker_name == Pokemon::Riolu ||
+                        attacker_name == Pokemon::Tyrogue ||
+                        attacker_name == Pokemon::Machop ||
+                        attacker_name == Pokemon::Machamp ||
+                        attacker_name == Pokemon::Lucario ||
+                        attacker_name == Pokemon::Hippopotas ||
+                        attacker_name == Pokemon::Trapinch ||
+                        attacker_name == Pokemon::Diglett ||
+                        attacker_name == Pokemon::Cubone ||
+                        attacker_name == Pokemon::Sandshrew ||
+                        attacker_name == Pokemon::Phanpy ||
+                        attacker_name == Pokemon::Marowak ||
+                        attacker_name == Pokemon::Dugtrio ||
+                        attacker_name == Pokemon::Donphan ||
+                        attacker_name == Pokemon::Hippowdon ||
+                        attacker_name == Pokemon::Graveler ||
+                        attacker_name == Pokemon::WormadamS ||
+                        attacker_name == Pokemon::Rhyperior ||
+                        attacker_name == Pokemon::Croagunk ||
+                        attacker_name == Pokemon::Toxicroak ||
+                        attacker_name == Pokemon::Rhydon ||
+                        attacker_name == Pokemon::Sandslash ||
+                        attacker_name == Pokemon::Geodude ||
+                        attacker_name == Pokemon::Bonsly ||
+                        attacker_name == Pokemon::Golem ||
+                        attacker_name == Pokemon::Rhyhorn) &&
+                    defender_state.has_type(PokemonType::GHOST) &&
+                    defender_ability == Ability::Levitate) ||
+                ((attacker_name == Pokemon::Castform ||
+                        attacker_name == Pokemon::Umbreon ||
+                        attacker_name == Pokemon::Magikarp) &&
+                    defender_state.has_type(PokemonType::GHOST)) ||
+                ((attacker_name == Pokemon::Barboach ||
+                        attacker_name == Pokemon::Wooper ||
+                        attacker_name == Pokemon::Marshtomp ||
+                        attacker_name == Pokemon::Quagsire ||
+                        attacker_name == Pokemon::Swampert) &&
+                    defender_state.has_type(PokemonType::FLYING) &&
+                    defender_ability == Ability::WaterAbsorb) ||
+                (attacker_state.get_ability() == Ability::Normalize &&
+                    defender_state.has_type(PokemonType::GHOST)) ||
+                (attacker_name == Pokemon::Unown) ||
+                (attacker_name == Pokemon::Chatot &&
+                    defender_ability == Ability::Soundproof) ||
+                (attacker_name == Pokemon::Suicune &&
+                    defender_name == Pokemon::AlteredGiratina) ||
+                (attacker_name == Pokemon::Ditto &&
+                    defender_name == Pokemon::Magikarp) ||
+                (attacker_name == Pokemon::Magikarp &&
+                    defender_name == Pokemon::Wobbuffet) ||
+                (attacker_name == Pokemon::Magikarp &&
+                    defender_name == Pokemon::Smeargle) ||
+                (attacker_name == Pokemon::Castform &&
+                    defender_name == Pokemon::Shuckle) ||
+                (attacker_state.is_choiced() &&
+                    best_move.move->type == PokemonType::GROUND &&
+                    defender_ability == Ability::Levitate) ||
+                (attacker_name == Pokemon::Smeargle) ||
+                ((attacker_name == Pokemon::Geodude ||
+                        attacker_name == Pokemon::Phanpy) &&
+                    (defender_name == Pokemon::Unown)) ||
+                ((attacker_name == Pokemon::Claydol ||
+                        attacker_name == Pokemon::Shuckle) &&
+                    (defender_name == Pokemon::Shuckle ||
+                        defender_name == Pokemon::Bronzor)) ||
+                ((attacker_name == Pokemon::Dugtrio ||
+                        attacker_name == Pokemon::Shuckle ||
+                        attacker_name == Pokemon::WormadamS ||
+                        attacker_name == Pokemon::Bronzor) &&
+                    (defender_name == Pokemon::Claydol)) ||
+                unable_to_hit_defender
+            ) {
+                hits_to_defender = std::numeric_limits<uint>::max();
+            } else {
+                if (!attacker_state.has_power_points()) {
+                    throw std::logic_error("Missing move ");
+                }
             }
         }
 
         // Check if it is better to use a status move
         if (!has_choice_item) {
-            for (const auto& move : attacker_pokemon.moves) {
+            for (const auto& move : attacker_pokemon->moves) {
                 if (should_skip_move(
                         attacker_state,
                         move,
@@ -1010,7 +1014,7 @@ class BattleState {
         // Healing may be better too
         const auto defenders_last_used_move =
             defender_state.get_last_used_move();
-        for (const auto& move : attacker_pokemon.moves) {
+        for (const auto& move : attacker_pokemon->moves) {
             if (should_skip_move(
                     attacker_state,
                     move,
@@ -1092,7 +1096,7 @@ class BattleState {
         }
 
         // Weather
-        for (const auto& move : attacker_pokemon.moves) {
+        for (const auto& move : attacker_pokemon->moves) {
             if (should_skip_move(
                     attacker_state,
                     move,
@@ -2478,8 +2482,8 @@ class BattleState {
 
 public:
     BattleState(
-        const CustomPokemon& player_pokemon,
-        const CustomPokemon& opponent_pokemon
+        const CustomPokemon* player_pokemon,
+        const CustomPokemon* opponent_pokemon
     ) :
         player_state{player_pokemon, true},
         opponent_state{opponent_pokemon, false} {}
@@ -2512,10 +2516,10 @@ public:
                 false
             );
 
-            if (player_state.pokemon.ability == Ability::Trace &&
-                player_state.pokemon.name == Pokemon::Gardevoir
-                && opponent_state.pokemon.ability == Ability::Blaze &&
-                opponent_state.pokemon.name == Pokemon::Torchic
+            if (player_state.pokemon->ability == Ability::Trace &&
+                player_state.pokemon->name == Pokemon::Gardevoir
+                && opponent_state.pokemon->ability == Ability::Blaze &&
+                opponent_state.pokemon->name == Pokemon::Torchic
             ) {
                 volatile int a;
             }
@@ -2537,10 +2541,10 @@ public:
                 get_weather()
             );
 
-            if (player_state.pokemon.ability == Ability::SwiftSwim &&
-                player_state.pokemon.name == Pokemon::Kingdra
-                && opponent_state.pokemon.ability == Ability::Download &&
-                opponent_state.pokemon.name == Pokemon::PorygonZ
+            if (player_state.pokemon->ability == Ability::SwiftSwim &&
+                player_state.pokemon->name == Pokemon::Kingdra
+                && opponent_state.pokemon->ability == Ability::Download &&
+                opponent_state.pokemon->name == Pokemon::PorygonZ
             ) {
                 volatile int a;
             }
@@ -2663,14 +2667,14 @@ public:
 
         if (player_state.get_health() > 0) {
             return {
-                &opponent_state.pokemon,
+                opponent_state.pokemon,
                 true,
                 std::move(player_moves),
                 std::move(opponent_moves)
             };
         }
         return {
-            &opponent_state.pokemon,
+            opponent_state.pokemon,
             false,
             std::move(player_moves),
             std::move(opponent_moves)
@@ -2680,8 +2684,8 @@ public:
 
 
 BattleResultEntry battle(
-    const CustomPokemon& player,
-    const CustomPokemon& opponent
+    const CustomPokemon* player,
+    const CustomPokemon* opponent
 ) {
     BattleState battle_state{player, opponent};
     return std::move(battle_state.battle());

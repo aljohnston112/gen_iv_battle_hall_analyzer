@@ -25,8 +25,8 @@ struct BattleResultEntry {
 };
 
 BattleResultEntry battle(
-    const CustomPokemon& player,
-    const CustomPokemon& opponent
+    const CustomPokemon* player,
+    const CustomPokemon* opponent
 );
 
 #endif //BATTLE_SIMULATOR_H
