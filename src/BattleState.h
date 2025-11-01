@@ -271,11 +271,11 @@ public:
     player_state{player_pokemon, true},
     opponent_state{opponent_pokemon, false} {}
 
-    [[nodiscard]] const PokemonState& get_player_state() const {
+    [[nodiscard]] PokemonState& get_player_state() {
         return player_state;
     }
 
-    [[nodiscard]] const PokemonState& get_opponent_state() const {
+    [[nodiscard]] PokemonState& get_opponent_state() {
         return opponent_state;
     }
 

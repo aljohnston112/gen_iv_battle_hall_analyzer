@@ -35,11 +35,6 @@ double extract_right_double(const std::string& line) {
     return std::stod(line.substr(colon + 1));
 }
 
-static std::array<
-    MoveInfo,
-    static_cast<int>(Move::Count)
-> move_info_map{};
-
 const MoveInfo* parse_move(
     std::ifstream& in
 ) {
@@ -52,7 +47,7 @@ const MoveInfo* parse_move(
         if (line.find("name") != std::string::npos) {
             move_info.name = extract_right_string(line);
             move_info.move = MOVE_MAP.at(move_info.name);
-            if (move_info_map[
+            if (MOVE_INFO_MAP[
                     static_cast<int>(move_info.move)
                 ].name.size() != 0
             ) {
@@ -61,7 +56,7 @@ const MoveInfo* parse_move(
                         break;
                     }
                 }
-                return &move_info_map[static_cast<int>(move_info.move)];
+                return &MOVE_INFO_MAP[static_cast<int>(move_info.move)];
             }
         } else if (line.find("move_type") != std::string::npos) {
             move_info.type =
@@ -82,8 +77,8 @@ const MoveInfo* parse_move(
                 extract_right_int(line);
         }
     }
-    move_info_map[static_cast<int>(move_info.move)] = move_info;
-    return &move_info_map[static_cast<int>(move_info.move)];
+    MOVE_INFO_MAP[static_cast<int>(move_info.move)] = move_info;
+    return &MOVE_INFO_MAP[static_cast<int>(move_info.move)];
 }
 
 SerebiiPokemon parse_pokemon(std::ifstream& input_stream) {

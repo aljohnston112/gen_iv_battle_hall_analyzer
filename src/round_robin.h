@@ -464,6 +464,87 @@ inline void do_round_robin_with_best_moves(
     );
 }
 
+inline void get_evs_needed_for_diff(
+    const int diff,
+    int& evs,
+    int& nature_evs
+) {
+    evs = std::ceil(diff / 0.6) * 4;
+    nature_evs = std::ceil(evs / 1.1 / 4) * 4;
+}
+
+inline void do_battles_with_updated_evs(
+    const std::pair<Pokemon, Ability>& pokemon,
+    CustomPokemon* player_pokemon,
+    std::vector<std::pair<Stat, int>>& evs,
+    std::vector<std::pair<Stat, int>>& nature_evs,
+    CustomPokemon* const opponent,
+    const std::vector<CustomPokemon*>& losses_to_beat,
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::vector<
+            std::pair<
+                std::pair<std::vector<std::pair<Stat, int>>, bool>,
+                std::unordered_set<const CustomPokemon*>
+            >
+        >,
+        PokemonPairHash
+    >& stat_and_ability_to_evs_and_losses_beaten
+) {
+    if (evs.empty() && nature_evs.empty()) {
+        return;
+    }
+    if (battle(*player_pokemon, *opponent).won) {
+        std::vector<BattleEntry> battles{};
+        for (const auto o : losses_to_beat) {
+            battles.emplace_back(
+                BattleEntry{*player_pokemon, *o}
+            );
+        }
+        const auto battle_result_entries =
+            thread_pool::ThreadPool::getCPUWorkInstance()->
+            createAndRunTasks<
+                BattleResultEntry,
+                std::vector<BattleEntry>,
+                BattleEntry
+            >(battle_all, battles);
+        std::unordered_set<const CustomPokemon*> losses_beaten{};
+        for (const auto& results :
+             battle_result_entries
+        ) {
+            if (results.won) {
+                losses_beaten.insert(results.opponent);
+            }
+        }
+        if (losses_beaten.size() > 0) {
+            if (!evs.empty()) {
+                stat_and_ability_to_evs_and_losses_beaten
+                    [pokemon].emplace_back(
+                        std::pair{
+                            std::pair{
+                                evs,
+                                false
+                            },
+                            losses_beaten
+                        }
+                    );
+            }
+            if (!nature_evs.empty()) {
+                stat_and_ability_to_evs_and_losses_beaten
+                    [pokemon].emplace_back(
+                        std::pair{
+                            std::pair{
+                                nature_evs,
+                                true
+                            },
+                            std::move(losses_beaten)
+                        }
+                    );
+            }
+        }
+    }
+}
+
 inline void round_robin(
     const std::unordered_map<
         std::string,
@@ -648,6 +729,8 @@ inline void round_robin(
             BattleState battle_state{*player, *opponent};
 
             if (player_moves.size() == opponent_moves.size()) {
+                const auto p_hp =
+                    battle_state.get_player_state().get_health();
                 // be faster
                 // speed
                 const auto p_speed =
@@ -656,71 +739,100 @@ inline void round_robin(
                     battle_state.get_opponent_state().get_speed(Weather::CLEAR);
                 if (p_speed <= o_speed) {
                     const auto speed_diff = o_speed - p_speed + 1;
-                    const int evs = std::ceil(speed_diff / 0.6) * 4;
-                    const int nature_evs = std::ceil(evs / 1.1 / 4) * 4;
-                    auto p = *player;
-                    auto new_speed = p.stats[static_cast<int>(Stat::SPEED)] +
-                        speed_diff;
-                    p.stats[static_cast<int>(Stat::SPEED)] = new_speed;
-                    if (battle(p, *opponent).won) {
-                        std::unordered_set<const CustomPokemon*> losses_beaten
-                            {};
-                        std::vector<BattleEntry> battles{};
-
-                        for (auto o : losses_to_beat) {
-                            battles.emplace_back(
-                                BattleEntry{p, *o}
+                    int speed_evs;
+                    int speed_nature_evs;
+                    get_evs_needed_for_diff(
+                        speed_diff,
+                        speed_evs,
+                        speed_nature_evs
+                    );
+                    if (speed_nature_evs < 253) {
+                        auto p = *player;
+                        auto new_speed =
+                            p.stats[static_cast<int>(Stat::SPEED)] + speed_diff;
+                        p.stats[static_cast<int>(Stat::SPEED)] = new_speed;
+                        auto evs = std::vector<std::pair<Stat, int>>{};
+                        bool stats_changed = false;
+                        if (speed_evs < 253) {
+                            evs.emplace_back(
+                                std::pair{Stat::SPEED, speed_evs}
+                            );
+                            stats_changed = true;
+                        }
+                        auto nature_evs = std::vector<std::pair<Stat, int>>{};
+                        if (speed_nature_evs != speed_evs) {
+                            evs.emplace_back(
+                                std::pair{Stat::SPEED, speed_nature_evs}
+                            );
+                            stats_changed = true;
+                        }
+                        if (stats_changed) {
+                            do_battles_with_updated_evs(
+                                pokemon,
+                                &p,
+                                evs,
+                                nature_evs,
+                                opponent,
+                                losses_to_beat,
+                                stat_and_ability_to_evs_and_losses_beaten
                             );
                         }
-                        auto battle_result_entries =
-                            thread_pool::ThreadPool::getCPUWorkInstance()->
-                            createAndRunTasks<
-                                BattleResultEntry,
-                                std::vector<BattleEntry>,
-                                BattleEntry
-                            >(battle_all, battles);
-                        for (const auto& results :
-                             battle_result_entries
-                        ) {
-                            if (results.won) {
-                                losses_beaten.insert(results.opponent);
-                            }
-                        }
-                        if (losses_beaten.size() > 0) {
-                            stat_and_ability_to_evs_and_losses_beaten
-                                [pokemon].emplace_back(
-                                    std::pair{
-                                        std::pair{
-                                            std::vector{
-                                                std::pair{Stat::SPEED, evs}
-                                            },
-                                            false
-                                        },
-                                        losses_beaten
-                                    }
+                        // be faster and survive first hit
+                        // hp
+                        const auto damage =
+                            battle_state
+                            .get_opponent_state()
+                            .get_damage_of_attacker_move(
+                                opponent->item,
+                                &MOVE_INFO_MAP[
+                                    static_cast<int>(opponent_moves[0].first)
+                                ],
+                                battle_state.get_player_state(),
+                                Weather::CLEAR,
+                                true
+                            );
+                        const auto hp_diff = (damage - p_hp) + 1;
+                        int hp_evs;
+                        int hp_nature_evs;
+                        get_evs_needed_for_diff(
+                            hp_diff,
+                            hp_evs,
+                            hp_nature_evs
+                        );
+                        if (hp_nature_evs < 253) {
+                            auto new_hp =
+                                p.stats[static_cast<int>(Stat::HEALTH)] +
+                                hp_diff;
+                            p.stats[static_cast<int>(Stat::HEALTH)] = new_hp;
+                            stats_changed = false;
+                            if (hp_evs < 253) {
+                                evs.emplace_back(
+                                    std::pair{Stat::HEALTH, hp_evs}
                                 );
-                            if (nature_evs != evs) {
-                                stat_and_ability_to_evs_and_losses_beaten
-                                    [pokemon].emplace_back(
-                                        std::pair{
-                                            std::pair{
-                                                std::vector{
-                                                    std::pair{Stat::SPEED, evs}
-                                                },
-                                                true
-                                            },
-                                            losses_beaten
-                                        }
-                                    );
+                                stats_changed = true;
                             }
+                            if (hp_nature_evs != hp_evs) {
+                                evs.emplace_back(
+                                    std::pair{Stat::HEALTH, hp_nature_evs}
+                                );
+                                stats_changed = true;
+                            }
+                            if (stats_changed) {
+                                do_battles_with_updated_evs(
+                                    pokemon,
+                                    &p,
+                                    evs,
+                                    nature_evs,
+                                    opponent,
+                                    losses_to_beat,
+                                    stat_and_ability_to_evs_and_losses_beaten
+                                );
+                            }
+                            // def
+                            printf("");
                         }
                     }
-                    // be faster and survive first hit
-                    // hp
-                    // def
-                    printf("");
                 }
-
                 // survive the first hit
                 // hp
                 // def
