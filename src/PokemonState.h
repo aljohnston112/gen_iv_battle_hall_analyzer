@@ -246,31 +246,31 @@ class PokemonState {
 
 public:
     const bool is_player;
-    const CustomPokemon* pokemon;
+    CustomPokemon& pokemon;
     const uint8_t level;
     const uint16_t max_health;
 
-    PokemonState(const CustomPokemon* pokemon, const bool is_player) :
-        moves(pokemon->moves),
-        types(pokemon->types),
-        ability(pokemon->ability),
-        pounds(pokemon->pounds),
-        item(pokemon->item),
+    PokemonState(CustomPokemon& pokemon, const bool is_player) :
+        moves(pokemon.moves),
+        types(pokemon.types),
+        ability(pokemon.ability),
+        pounds(pokemon.pounds),
+        item(pokemon.item),
         current_stats(
             {
-                static_cast<int16_t>(pokemon->stats[HEALTH_INDEX]),
-                static_cast<int16_t>(pokemon->stats[ATTACK_INDEX]),
-                static_cast<int16_t>(pokemon->stats[DEFENSE_INDEX]),
-                static_cast<int16_t>(pokemon->stats[SPECIAL_ATTACK_INDEX]),
-                static_cast<int16_t>(pokemon->stats[SPECIAL_DEFENSE_INDEX]),
-                static_cast<int16_t>(pokemon->stats[SPEED_INDEX])
+                static_cast<int16_t>(pokemon.stats[HEALTH_INDEX]),
+                static_cast<int16_t>(pokemon.stats[ATTACK_INDEX]),
+                static_cast<int16_t>(pokemon.stats[DEFENSE_INDEX]),
+                static_cast<int16_t>(pokemon.stats[SPECIAL_ATTACK_INDEX]),
+                static_cast<int16_t>(pokemon.stats[SPECIAL_DEFENSE_INDEX]),
+                static_cast<int16_t>(pokemon.stats[SPEED_INDEX])
             }
         ),
         grounded(item == Item::IronBall),
         is_player(is_player),
         pokemon(pokemon),
-        level(pokemon->level),
-        max_health(pokemon->stats[HEALTH_INDEX])
+        level(pokemon.level),
+        max_health(pokemon.stats[HEALTH_INDEX])
     {
         power_points.fill(0);
         for (const auto& move : moves) {
@@ -278,7 +278,7 @@ public:
         }
         if (ability == Ability::Multitype &&
             PLATE_ITEMS[static_cast<int>(item)] &&
-            pokemon->name == Pokemon::Arceus
+            pokemon.name == Pokemon::Arceus
         ) {
             types = {
                 PLATE_ITEM_TYPES[static_cast<int>(item)],
@@ -344,7 +344,7 @@ public:
             grounded = this->item == Item::IronBall;
             if (ability == Ability::Multitype &&
                 PLATE_ITEMS[static_cast<int>(item)] &&
-                pokemon->name == Pokemon::Arceus
+                pokemon.name == Pokemon::Arceus
             ) {
                 types = {
                     PLATE_ITEM_TYPES[static_cast<int>(item)],
@@ -364,10 +364,10 @@ public:
         item = Item::None;
         grounded = false;
         if (PLATE_ITEMS[static_cast<int>(item)] &&
-            pokemon->name == Pokemon::Arceus &&
+            pokemon.name == Pokemon::Arceus &&
             ability == Ability::Multitype
         ) {
-            types = pokemon->types;
+            types = pokemon.types;
         }
     }
 
@@ -494,21 +494,22 @@ public:
         if (const auto item = get_item_for_effect();
             item == Item::ChoiceScarf
         ) {
-            speed = std::floor(speed * 1.5);
+            speed = speed * 3 / 2;
         } else if (item == Item::IronBall) {
             speed = speed / 2;
         }
 
         const auto ability = get_ability();
-        if ((ability == Ability::Chlorophyll &&
+        if (weather != Weather::CLEAR &&
+            ((ability == Ability::Chlorophyll &&
                 weather == Weather::SUN) ||
             (ability == Ability::SwiftSwim &&
-                weather == Weather::RAIN) ||
+                weather == Weather::RAIN)) ||
             (ability == Ability::Unburden && unburdened)
         ) {
             speed = speed * 2;
         } else if (ability == Ability::QuickFeet) {
-            speed = std::floor(speed * 1.5);
+            speed = speed * 3 / 2;
         } else if (ability == Ability::SlowStart &&
             slow_start_count < 5
         ) {
@@ -518,7 +519,7 @@ public:
         if (status == Status::PARALYZED &&
             ability != Ability::QuickFeet
         ) {
-            speed = std::floor(speed * 0.25);
+            speed = speed  / 4;
         }
         return speed;
     }
@@ -575,7 +576,7 @@ public:
         current_stats[index] =
             static_cast<int16_t>(
                 calculate_stat_based_on_stage(
-                    pokemon->stats[index],
+                    pokemon.stats[index],
                     stat_stages[index]
                 )
             );
@@ -589,7 +590,7 @@ public:
                 current_stats[i] =
                     static_cast<int16_t>(
                         calculate_stat_based_on_stage(
-                            pokemon->stats[i],
+                            pokemon.stats[i],
                             stat_stages[i]
                         )
                     );
@@ -1021,7 +1022,7 @@ public:
         }
         if (ability == Ability::IceBody &&
             weather == Weather::HAIL &&
-            ability == pokemon->ability
+            ability == pokemon.ability
         ) {
             heal(max_health / 8);
         }
@@ -1858,7 +1859,7 @@ inline int16_t apply_item_power_modifiers(
     ) {
         power = std::floor(power * 1.2);
     } else if (attacker_item == Item::LightBall &&
-        attacker_state.pokemon->name == Pokemon::Pikachu
+        attacker_state.pokemon.name == Pokemon::Pikachu
     ) {
         power = static_cast<int16_t>(power * 2);
     }
