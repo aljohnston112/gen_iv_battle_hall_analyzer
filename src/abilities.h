@@ -177,7 +177,7 @@ enum class Ability {
 
 constexpr size_t NUMBER_OF_ABILITIES = static_cast<size_t>(Ability::Disabled);
 
-static constexpr std::array<bool, NUMBER_OF_ABILITIES> IGNORABLE_ABILITIES = [] {
+inline constexpr std::array<bool, NUMBER_OF_ABILITIES> IGNORABLE_ABILITIES = [] {
     std::array<bool, NUMBER_OF_ABILITIES> flags{};
     flags.fill(false);
     flags[static_cast<int>(Ability::BattleArmor)] = true;
@@ -229,7 +229,7 @@ inline bool ability_is_ignorable(Ability ability) {
     return IGNORABLE_ABILITIES.at(static_cast<int>(ability));
 }
 
-static constexpr std::array<bool, NUMBER_OF_ABILITIES> NON_COPYABLE_ABILITIES = [] {
+inline constexpr std::array<bool, NUMBER_OF_ABILITIES> NON_COPYABLE_ABILITIES = [] {
     std::array<bool, NUMBER_OF_ABILITIES> flags{};
     flags.fill(false);
     flags[static_cast<int>(Ability::Forecast)] = true;
@@ -242,7 +242,7 @@ inline bool ability_is_copyable(Ability ability) {
     return !NON_COPYABLE_ABILITIES.at(static_cast<int>(ability));
 }
 
-static const std::unordered_map<Ability, std::string> ABILITY_TO_STRING = {
+inline const std::unordered_map<Ability, std::string> ABILITY_TO_STRING = {
     {Ability::Adaptability, "Adaptability"},
     {Ability::Aftermath, "Aftermath"},
     {Ability::AirLock, "Air Lock"},
@@ -368,7 +368,7 @@ static const std::unordered_map<Ability, std::string> ABILITY_TO_STRING = {
     {Ability::WonderGuard, "Wonder Guard"}
 };
 
-static const std::unordered_map<Pokemon, std::vector<Ability>> ABILITY_MAP = {
+inline const std::unordered_map<Pokemon, std::vector<Ability>> ABILITY_MAP = {
     {Pokemon::Abomasnow, {Ability::SnowWarning}},
     {Pokemon::Abra, {Ability::InnerFocus, Ability::Synchronize}},
     {Pokemon::Absol, {Ability::Pressure, Ability::SuperLuck}},

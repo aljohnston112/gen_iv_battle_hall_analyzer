@@ -4226,8 +4226,11 @@ inline bool move_has_flag(const Move move, const MoveFlag move_flag) {
     return MOVE_FLAGS[static_cast<int>(move)][static_cast<size_t>(move_flag)];
 }
 
-static constexpr std::array<int8_t, static_cast<int>(Move::Count)> MOVE_PRIORITIES
-    = [] {
+static constexpr std::array<
+    int8_t,
+static_cast<int>(Move::Count)
+> MOVE_PRIORITIES =
+    [] {
         std::array<int8_t, static_cast<int>(Move::Count)> array{};
         array[static_cast<int>(Move::HelpingHand)] = 5;
 
@@ -4328,7 +4331,7 @@ inline int8_t get_move_priority(const MoveInfo* move_info) {
     return MOVE_PRIORITIES[move];
 }
 
-static const std::unordered_map<std::string, Move> MOVE_MAP = {
+inline const std::unordered_map<std::string, Move> MOVE_MAP = {
     {"Pound", Move::Pound},
     {"Karate Chop", Move::KarateChop},
     {"Doubleslap", Move::DoubleSlap},

@@ -1,6 +1,8 @@
 #ifndef BATTLE_SIMULATOR_H
 #define BATTLE_SIMULATOR_H
 
+#include <memory>
+
 #include "custom_pokemon.h"
 #include "PokemonState.h"
 
@@ -15,15 +17,60 @@ struct MoveDamagePairHash {
 };
 
 struct BattleResultEntry {
-    CustomPokemon* player;
-    CustomPokemon* opponent;
+    std::shared_ptr<CustomPokemon> player;
+    std::shared_ptr<CustomPokemon> opponent;
     bool won;
     std::vector<
-        std::pair<Move, int>
+        std::tuple<Move, int, int>
     > player_moves;
     std::vector<
-        std::pair<Move, int>
+        std::tuple<Move, int, int>
     > opponent_moves;
+
+    BattleResultEntry(
+        std::shared_ptr<CustomPokemon> player_,
+        std::shared_ptr<CustomPokemon> opponent_,
+        const bool won_,
+        std::vector<std::tuple<Move, int, int>> player_moves_,
+        std::vector<std::tuple<Move, int, int>> opponent_moves_
+    )
+        : player(std::move(player_)),
+          opponent(std::move(opponent_)),
+          won(won_),
+          player_moves(std::move(player_moves_)),
+          opponent_moves(std::move(opponent_moves_)) {}
+
+    BattleResultEntry(const BattleResultEntry& other) :
+        won(other.won),
+        player_moves(other.player_moves),
+        opponent_moves(other.opponent_moves) {
+        if (other.player) {
+            player = std::make_shared<CustomPokemon>(*other.player);
+        }
+        if (other.opponent) {
+            opponent = std::make_shared<CustomPokemon>(*other.opponent);
+        }
+    }
+
+    BattleResultEntry& operator=(const BattleResultEntry& other) {
+        if (this == &other) return *this;
+
+        won = other.won;
+        player_moves = other.player_moves;
+        opponent_moves = other.opponent_moves;
+
+        player = other.player
+            ? std::make_shared<CustomPokemon>(*other.player)
+            : nullptr;
+        opponent = other.opponent
+            ? std::make_shared<CustomPokemon>(*other.opponent)
+            : nullptr;
+
+        return *this;
+    }
+
+    BattleResultEntry(BattleResultEntry&&) = default;
+    BattleResultEntry& operator=(BattleResultEntry&&) = default;
 };
 
 BattleResultEntry battle(
@@ -194,6 +241,48 @@ class BattleState {
         check_forecast(opponent_state);
     }
 
+    BestMove choose_move_against_defender(
+        bool attacker_is_player,
+        bool chosen_move_only,
+        Weather weather,
+        bool is_mid_turn,
+        bool checking_future
+    );
+    void execute_move(
+        bool attacker_is_player,
+        Weather weather,
+        bool is_mid_turn
+    );
+    void apply_post_move_effects(
+        PokemonState& attacker_state,
+        const BestMove& attacker_move,
+        PokemonState& defender_state
+    ) const;
+
+    void apply_end_of_turn_effects() {
+        player_state.apply_end_of_turn_effects(
+            get_weather(),
+            opponent_state
+        );
+        opponent_state.apply_end_of_turn_effects(
+            get_weather(),
+            player_state
+        );
+    }
+
+    [[nodiscard]] bool is_battle_over() const {
+        return player_state.get_health() <= 0 ||
+            opponent_state.get_health() <= 0;
+    }
+
+public:
+    BattleState(
+        CustomPokemon& player_pokemon,
+        CustomPokemon& opponent_pokemon
+    ) :
+        player_state{player_pokemon, true},
+        opponent_state{opponent_pokemon, false} {}
+
     void check_abilities(const bool player_goes_first) {
         // May suppress abilities
         check_mold_breaker(player_state, opponent_state);
@@ -229,47 +318,6 @@ class BattleState {
             check_snow_warning(player_state);
         }
     }
-
-    BestMove choose_move_against_defender(
-        bool attacker_is_player,
-        bool chosen_move_only,
-        Weather weather,
-        bool is_mid_turn,
-        bool checking_future
-    );
-    void execute_move(
-        bool attacker_is_player,
-        Weather weather,
-        bool is_mid_turn
-    );
-    void apply_post_move_effects(
-        PokemonState& attacker_state,
-        const BestMove& attacker_move,
-        PokemonState& defender_state
-    ) const;
-
-    void apply_end_of_turn_effects() {
-        player_state.apply_end_of_turn_effects(
-            get_weather(),
-            opponent_state
-        );
-        opponent_state.apply_end_of_turn_effects(
-            get_weather(),
-            player_state
-        );
-    }
-
-    [[nodiscard]] bool is_battle_over() const {
-        return player_state.get_health() <= 0 ||
-            opponent_state.get_health() <= 0;
-    }
-public:
-    BattleState(
-    CustomPokemon& player_pokemon,
-    CustomPokemon& opponent_pokemon
-) :
-    player_state{player_pokemon, true},
-    opponent_state{opponent_pokemon, false} {}
 
     [[nodiscard]] PokemonState& get_player_state() {
         return player_state;

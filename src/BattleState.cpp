@@ -250,7 +250,7 @@ inline void check_unimplemented_moves(
 
 void add_last_used_move(
     std::vector<
-        std::pair<Move, int>
+        std::tuple<Move, int, int>
     >& attacker_moves,
     const PokemonState& attacker_state,
     const PokemonState& defender_state
@@ -260,9 +260,10 @@ void add_last_used_move(
         defender_state.get_field_location() == FieldLocation::ON_FIELD
     ) {
         attacker_moves.push_back(
-            std::make_pair(
+            std::make_tuple(
                 last_used_move.move->move,
-                last_used_move.damage
+                last_used_move.damage,
+                last_used_move.potential_damage
             )
         );
     }
@@ -303,16 +304,18 @@ BestMove BattleState::choose_move_against_defender(
             .power_points = 999,
             .effect_percent = 0
         };
+        auto damage = attacker_state.get_damage_of_attacker_move(
+            attacker_item,
+            &struggle,
+            defender_state,
+            weather,
+            is_mid_turn
+        );
         attacker_state.set_chosen_move(
             BestMove{
                 .move = &struggle,
-                .damage = attacker_state.get_damage_of_attacker_move(
-                    attacker_item,
-                    &struggle,
-                    defender_state,
-                    weather,
-                    is_mid_turn
-                ),
+                .damage = damage,
+                .potential_damage = damage,
                 .times_to_hit = 1
             }
         );
@@ -485,6 +488,7 @@ BestMove BattleState::choose_move_against_defender(
             attacker_state.get_rollout_turns() > 0) {
             best_move.move = attacker_move;
             best_move.damage = damage;
+            best_move.potential_damage = damage;
             best_move.times_to_hit = 1;
             attacker_state.set_chosen_move(std::move(best_move));
             return attacker_state.get_chosen_move();
@@ -498,6 +502,7 @@ BestMove BattleState::choose_move_against_defender(
         ) {
             best_move.move = attacker_move;
             best_move.damage = damage;
+            best_move.potential_damage = damage;
             best_move.times_to_hit = times_to_hit;
             break;
         }
@@ -516,6 +521,7 @@ BestMove BattleState::choose_move_against_defender(
                 BestMove{
                     .move = attacker_move,
                     .damage = damage,
+                    .potential_damage = damage,
                     .times_to_hit = times_to_hit
                 }
             );
@@ -547,16 +553,19 @@ BestMove BattleState::choose_move_against_defender(
 
         if ((passes_priority_check && passes_charge_check)) {
             best_move.damage = damage;
+            best_move.potential_damage = damage;
             best_move.move = attacker_move;
             best_move.times_to_hit = times_to_hit;
             best_move_must_charge = move_must_charge;
             if (attacker_move->type == PokemonType::FIRE) {
                 best_fire_move.move = attacker_move;
                 best_fire_move.damage = damage;
+                best_fire_move.potential_damage = damage;
                 best_fire_move.times_to_hit = times_to_hit;
             } else if (attacker_move->type == PokemonType::WATER) {
                 best_water_move.move = attacker_move;
                 best_water_move.damage = damage;
+                best_water_move.potential_damage = damage;
                 best_water_move.times_to_hit = times_to_hit;
             }
         } else if (best_move.move == nullptr) {
@@ -758,6 +767,7 @@ BestMove BattleState::choose_move_against_defender(
                             if (hits_to_defender > turns_for_double_boost) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.potential_damage = 0;
                                 best_move.times_to_hit = 1;
                             }
                         } else if (move->move == Move::Meditate ||
@@ -769,6 +779,7 @@ BestMove BattleState::choose_move_against_defender(
                             if (hits_to_defender > turns_for_single_boost) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.potential_damage = 0;
                                 best_move.times_to_hit = 1;
                             }
                         }
@@ -780,6 +791,7 @@ BestMove BattleState::choose_move_against_defender(
                             if (hits_to_defender > turns_for_double_boost) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.potential_damage = 0;
                                 best_move.times_to_hit = 1;
                             }
                         }
@@ -787,6 +799,7 @@ BestMove BattleState::choose_move_against_defender(
                             if (hits_to_defender > turns_for_single_boost) {
                                 best_move.move = move;
                                 best_move.damage = 0;
+                                best_move.potential_damage = 0;
                                 best_move.times_to_hit = 1;
                             }
                         }
@@ -855,12 +868,13 @@ BestMove BattleState::choose_move_against_defender(
                     potential_hp_gain = -potential_hp_gain;
                 }
                 if (attacker_health < attacker_state.max_health / 2 &&
-                    defenders_last_used_move.damage < attacker_state.
-                    max_health
-                    / 2
+                    defenders_last_used_move.damage <
+                    attacker_state.max_health / 2 &&
+                    potential_hp_gain > 0
                 ) {
                     best_move.move = move;
                     best_move.damage = damage;
+                    best_move.potential_damage = damage;
                     best_move.times_to_hit = 1;
                 }
             }
@@ -890,6 +904,7 @@ BestMove BattleState::choose_move_against_defender(
                 ) {
                     best_move.move = move;
                     best_move.damage = 0;
+                    best_move.potential_damage = 0;
                     best_move.times_to_hit = 1;
                 }
             }
@@ -946,6 +961,7 @@ BestMove BattleState::choose_move_against_defender(
                         if (hits_to_ko_if_fire > hits_to_defender + 1) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -954,6 +970,7 @@ BestMove BattleState::choose_move_against_defender(
                         if (hits_to_defender > 1) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -966,6 +983,7 @@ BestMove BattleState::choose_move_against_defender(
                         ) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -983,6 +1001,7 @@ BestMove BattleState::choose_move_against_defender(
                         if (new_hits_to_KO > hits_to_defender + 1) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -995,6 +1014,7 @@ BestMove BattleState::choose_move_against_defender(
                         if (hits_to_ko_if_water > hits_to_defender + 1) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -1007,6 +1027,7 @@ BestMove BattleState::choose_move_against_defender(
                         ) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -1024,6 +1045,7 @@ BestMove BattleState::choose_move_against_defender(
                         if (new_hits_to_KO > hits_to_defender + 1) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -1044,6 +1066,7 @@ BestMove BattleState::choose_move_against_defender(
                         ) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -1064,6 +1087,7 @@ BestMove BattleState::choose_move_against_defender(
                         ) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -1076,6 +1100,7 @@ BestMove BattleState::choose_move_against_defender(
                         ) {
                             best_move.move = move;
                             best_move.damage = 0;
+                            best_move.potential_damage = 0;
                             best_move.times_to_hit = 1;
                         }
                     }
@@ -1110,6 +1135,7 @@ BestMove BattleState::choose_move_against_defender(
             BestMove{
                 .move = attackers_last_used_move.move,
                 .damage = 0,
+                .potential_damage = 0,
                 .times_to_hit = attackers_last_used_move.times_to_hit
             }
         );
@@ -1125,6 +1151,7 @@ BestMove BattleState::choose_move_against_defender(
                     BestMove{
                         .move = move,
                         .damage = 0,
+                        .potential_damage = 0,
                         .times_to_hit =
                         get_times_to_hit(attacker_is_player, move)
                     }
@@ -1266,6 +1293,7 @@ void BattleState::execute_move(
             BestMove{
                 .move = defender_chosen_move.move,
                 .damage = 0,
+                .potential_damage = 0,
                 .times_to_hit = 1
             }
         );
@@ -1274,6 +1302,7 @@ void BattleState::execute_move(
             BestMove{
                 .move = nullptr,
                 .damage = 0,
+                .potential_damage = 0,
                 .times_to_hit = 0
             }
         );
@@ -1431,6 +1460,7 @@ void BattleState::execute_move(
                             BestMove{
                                 .move = &temp,
                                 .damage = 0,
+                                .potential_damage = 0,
                                 .times_to_hit = 1
                             },
                             weather,
@@ -1438,6 +1468,8 @@ void BattleState::execute_move(
                         );
                         attacker_chosen_move.damage +=
                             attacker_state.get_chosen_move().damage;
+                        attacker_chosen_move.potential_damage +=
+                            attacker_chosen_move.potential_damage;
                         attacker_chosen_move.move = backup;
                     }
                 }
@@ -1469,7 +1501,7 @@ void BattleState::execute_move(
                 defender_ability != Ability::Multitype &&
                 attacker_state.try_set_item(defender_state.get_item())
             ) {
-                if (defender_state.get_item() == Item::StickyBarb ||
+                if (defender_state.get_item() == Item::StickyBarb &&
                     attacker_move == Move::Thief ||
                     attacker_move == Move::Covet
                 ) {
@@ -1499,12 +1531,14 @@ void BattleState::execute_move(
                     attacker_chosen_move.move->category;
                 if (defender_chosen_move.move->move == Move::Counter) {
                     if (attacker_move_category == Category::PHYSICAL) {
+                        const auto damage = static_cast<uint16_t>(
+                            attacker_chosen_move.damage * 2
+                        );
                         defender_state.set_chosen_move(
                             BestMove{
                                 .move = defender_chosen_move.move,
-                                .damage = static_cast<uint16_t>(
-                                    attacker_chosen_move.damage * 2
-                                ),
+                                .damage = damage,
+                                .potential_damage = damage,
                                 .times_to_hit = 1
                             }
                         );
@@ -1513,12 +1547,14 @@ void BattleState::execute_move(
                     defender_chosen_move.move->move == Move::MirrorCoat
                 ) {
                     if (attacker_move_category == Category::SPECIAL) {
+                        const auto damage = static_cast<uint16_t>(
+                            attacker_chosen_move.damage * 2
+                        );
                         defender_state.set_chosen_move(
                             BestMove{
                                 .move = defender_chosen_move.move,
-                                .damage = static_cast<uint16_t>(
-                                    attacker_chosen_move.damage * 2
-                                ),
+                                .damage = damage,
+                                .potential_damage = damage,
                                 .times_to_hit = 1
                             }
                         );
@@ -1543,6 +1579,7 @@ void BattleState::execute_move(
                         attacker_chosen_move.damage +
                         defender_state.get_health()
                     ),
+                    .potential_damage = attacker_chosen_move.potential_damage,
                     .times_to_hit = 1
                 }
             );
@@ -2268,10 +2305,10 @@ void BattleState::apply_post_move_effects(
 
 BattleResultEntry BattleState::battle() {
     std::vector<
-        std::pair<Move, int>
+        std::tuple<Move, int, int>
     > player_moves{};
     std::vector<
-        std::pair<Move, int>
+        std::tuple<Move, int, int>
     > opponent_moves{};
     bool player_goes_first = player_state.outspeeds(
         opponent_state,
@@ -2293,14 +2330,6 @@ BattleResultEntry BattleState::battle() {
             false
         );
 
-        if (player_state.pokemon.ability == Ability::Trace &&
-            player_state.pokemon.name == Pokemon::Gardevoir
-            && opponent_state.pokemon.ability == Ability::Blaze &&
-            opponent_state.pokemon.name == Pokemon::Torchic
-        ) {
-            volatile int a;
-        }
-
         opponent_move = choose_move_against_defender(
             false,
             false,
@@ -2317,14 +2346,6 @@ BattleResultEntry BattleState::battle() {
             player_move.move,
             get_weather()
         );
-
-        if (player_state.pokemon.ability == Ability::SwiftSwim &&
-            player_state.pokemon.name == Pokemon::Kingdra
-            && opponent_state.pokemon.ability == Ability::Download &&
-            opponent_state.pokemon.name == Pokemon::PorygonZ
-        ) {
-            volatile int a;
-        }
 
         if (player_goes_first) {
             execute_move(
@@ -2431,29 +2452,32 @@ BattleResultEntry BattleState::battle() {
         player_state.apply_damage(player_state.max_health / 4);
     }
 
-    if (opponent_moves.size() == 0 && player_moves.size() != 1 &&
-        !(player_goes_first &&
-            player_moves.size() == 2 &&
-            player_moves[0].first == Move::FakeOut) &&
-        !(player_moves[0].first == Move::FakeOut &&
-            opponent_state.get_ability() == Ability::Truant) &&
-        (opponent_move.move->move != Move::SolarBeam)
-    ) {
-        throw std::runtime_error("Opponent could not attack");
+    if (player_moves.size() > 0) {
+        if (const auto first_player_move = std::get<0>(player_moves[0]);
+            opponent_moves.size() == 0 && player_moves.size() != 1 &&
+            !(player_goes_first &&
+                player_moves.size() == 2 &&
+                first_player_move == Move::FakeOut) &&
+            !(first_player_move == Move::FakeOut &&
+                opponent_state.get_ability() == Ability::Truant) &&
+            (opponent_move.move->move != Move::SolarBeam)
+        ) {
+            throw std::runtime_error("Opponent could not attack");
+        }
     }
 
     if (player_state.get_health() > 0) {
         return {
-            &player_state.pokemon,
-            &opponent_state.pokemon,
+            std::make_shared<CustomPokemon>(player_state.pokemon),
+            std::make_shared<CustomPokemon>(opponent_state.pokemon),
             true,
             std::move(player_moves),
             std::move(opponent_moves)
         };
     }
     return {
-        &player_state.pokemon,
-        &opponent_state.pokemon,
+        std::make_shared<CustomPokemon>(player_state.pokemon),
+        std::make_shared<CustomPokemon>(opponent_state.pokemon),
         false,
         std::move(player_moves),
         std::move(opponent_moves)

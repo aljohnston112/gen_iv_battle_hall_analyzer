@@ -77,7 +77,7 @@ const MoveInfo* parse_move(
                 extract_right_int(line);
         }
     }
-    MOVE_INFO_MAP[static_cast<int>(move_info.move)] = move_info;
+    MOVE_INFO_MAP[static_cast<int>(move_info.move)] = std::move(move_info);
     return &MOVE_INFO_MAP[static_cast<int>(move_info.move)];
 }
 

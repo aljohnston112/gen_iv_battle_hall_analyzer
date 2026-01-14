@@ -107,7 +107,7 @@ enum class Item {
     None
 };
 
-static const std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [] {
+static constexpr std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [] {
     std::array<bool, static_cast<int>(Item::None) + 1> array{};
     array.fill(false);
     array[static_cast<int>(Item::ApicotBerry)] = true;
@@ -122,7 +122,7 @@ static const std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [] {
     return array;
 }();
 
-static const std::unordered_set STAT_BERRIES = {
+inline const std::unordered_set STAT_BERRIES = {
     Item::ApicotBerry,
     Item::GanlonBerry,
     Item::LiechiBerry,
@@ -151,8 +151,9 @@ static const std::array<
     return array;
 }();
 
-static constexpr std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS
-    = [] {
+static constexpr
+std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS =
+    [] {
         std::array<bool, static_cast<int>(Item::None) + 1> array{};
         array.fill(false);
         array[static_cast<int>(Item::FistPlate)] = true;
@@ -176,7 +177,7 @@ static constexpr std::array<bool, static_cast<int>(Item::None) + 1> PLATE_ITEMS
 
 static constexpr std::array<
     PokemonType,
-static_cast<int>(Item::None) + 1
+    static_cast<int>(Item::None) + 1
 > PLATE_ITEM_TYPES = [] {
     std::array<PokemonType, static_cast<int>(Item::None) + 1> array{};
     array.fill(PokemonType::NORMAL);
@@ -199,13 +200,13 @@ static_cast<int>(Item::None) + 1
     return array;
 }();
 
-static const std::unordered_set CHOICE_ITEMS = {
+inline const std::unordered_set CHOICE_ITEMS = {
     Item::ChoiceBand,
     Item::ChoiceScarf,
     Item::ChoiceSpecs,
 };
 
-static const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
+inline const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Apicot Berry", Item::ApicotBerry},
     {"Big Root", Item::BigRoot},
     {"Black Belt", Item::BlackBelt},

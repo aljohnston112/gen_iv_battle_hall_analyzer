@@ -11,13 +11,14 @@
 #include "nature.h"
 #include "serebii_pokemon_data_source.h"
 
-static constexpr uint8_t NUMBER_OF_GROUPS = 4;
-static constexpr uint8_t MAX_RANK = 10;
+inline constexpr uint8_t NUMBER_OF_GROUPS = 4;
+inline constexpr uint8_t MAX_RANK = 10;
 
-constexpr uint8_t NUMBER_OF_MOVES = 4;
-constexpr uint8_t NUMBER_OF_EVS = 6;
+inline constexpr uint8_t NUMBER_OF_MOVES = 4;
+inline constexpr uint8_t NUMBER_OF_EVS = 6;
 
-constexpr uint8_t NUMBER_OF_TYPES = static_cast<uint8_t>(PokemonType::COUNT);
+inline constexpr uint8_t NUMBER_OF_TYPES =
+    static_cast<uint8_t>(PokemonType::COUNT);
 const std::map<uint8_t, std::set<uint8_t>> GROUP_TO_RANKS = {
     {1, {1, 2, 3, 4, 5}},
     {2, {3, 4, 5, 6, 7, 8}},

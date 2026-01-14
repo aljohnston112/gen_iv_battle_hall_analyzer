@@ -513,7 +513,7 @@ enum class Pokemon {
     Count
 };
 
-static const std::unordered_map<std::string, Pokemon> STRING_TO_POKEMON = {
+inline const std::unordered_map<std::string, Pokemon> STRING_TO_POKEMON = {
     {"Abomasnow", Pokemon::Abomasnow},
     {"Abra", Pokemon::Abra},
     {"Absol", Pokemon::Absol},

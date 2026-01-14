@@ -67,7 +67,7 @@ namespace thread_pool {
             class DataContainer,
             class ParameterType
         >
-        std::vector<PromiseResult> createAndRunTasks(
+        auto createAndRunTasks(
             std::function<
                 void(const ParameterType&, std::promise<PromiseResult>&&)
             >&& function,
@@ -85,6 +85,36 @@ namespace thread_pool {
             for (auto& future : futures) {
                 auto result = future.get();
                 results.emplace_back(std::move(result));
+            }
+            return results;
+        }
+
+        template <
+            class PromiseResult,
+            class DataContainer,
+            class ParameterType
+        >
+        auto runTasksAndFlatten(
+            std::function<
+                void(
+                    const ParameterType&,
+                    std::promise<std::vector<PromiseResult>>&&
+                )
+            >&& function,
+            const DataContainer& allData
+        ) {
+            std::vector<PromiseResult> results{};
+            std::vector<std::future<std::vector<PromiseResult>>> futures;
+            for (const ParameterType& data : allData) {
+                submit(
+                    futures,
+                    function,
+                    data
+                );
+            }
+            for (auto& future : futures) {
+                auto result = future.get();
+                results.append_range(std::move(result));
             }
             return results;
         }

@@ -9,7 +9,7 @@
 #include "moves.h"
 #include "nature.h"
 
-static std::array<
+inline std::array<
     MoveInfo,
     static_cast<int>(Move::Count)
 > MOVE_INFO_MAP{};

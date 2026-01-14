@@ -39,6 +39,7 @@ enum class FieldLocation {
 struct BestMove {
     const MoveInfo* move = nullptr;
     uint16_t damage = 0;
+    uint16_t potential_damage = 0;
     uint16_t times_to_hit = 1;
 };
 
@@ -270,8 +271,7 @@ public:
         is_player(is_player),
         pokemon(pokemon),
         level(pokemon.level),
-        max_health(pokemon.stats[HEALTH_INDEX])
-    {
+        max_health(pokemon.stats[HEALTH_INDEX]) {
         power_points.fill(0);
         for (const auto& move : moves) {
             power_points[static_cast<int>(move->move)] = move->power_points;
@@ -502,9 +502,9 @@ public:
         const auto ability = get_ability();
         if (weather != Weather::CLEAR &&
             ((ability == Ability::Chlorophyll &&
-                weather == Weather::SUN) ||
-            (ability == Ability::SwiftSwim &&
-                weather == Weather::RAIN)) ||
+                    weather == Weather::SUN) ||
+                (ability == Ability::SwiftSwim &&
+                    weather == Weather::RAIN)) ||
             (ability == Ability::Unburden && unburdened)
         ) {
             speed = speed * 2;
@@ -519,7 +519,7 @@ public:
         if (status == Status::PARALYZED &&
             ability != Ability::QuickFeet
         ) {
-            speed = speed  / 4;
+            speed = speed / 4;
         }
         return speed;
     }
@@ -629,8 +629,8 @@ public:
             !(status == Status::FROZEN && ability == Ability::MagmaArmor) &&
             !(weather == Weather::SUN && ability == Ability::LeafGuard) ||
             !((status == Status::BURN ||
-                status == Status::POISON ||
-                status != Status::BADLY_POISONED) &&
+                    status == Status::POISON ||
+                    status != Status::BADLY_POISONED) &&
                 safeguard_turns > 0)
         ) {
             this->status = status;
@@ -861,12 +861,14 @@ public:
             last_used_move = BestMove{
                 .move = chosen_move.move,
                 .damage = chosen_move.damage,
+                .potential_damage = chosen_move.potential_damage,
                 .times_to_hit = 1
             };
         } else {
             last_used_move = BestMove{
                 .move = nullptr,
                 .damage = 0,
+                .potential_damage = 0,
                 .times_to_hit = 0
             };
         }
@@ -1212,7 +1214,7 @@ public:
 
     [[nodiscard]] bool has_power_points() const {
         bool result = false;
-// #pragma omp parallel for reduction(|:result) num_threads(NUMBER_OF_THREADS)
+        // #pragma omp parallel for reduction(|:result) num_threads(NUMBER_OF_THREADS)
         for (size_t i = 0; i < moves.size(); ++i) {
             result |= has_power_points(moves[i]->move);
         }
@@ -1242,6 +1244,7 @@ inline bool check_transform(PokemonState& attacker_state) {
             BestMove{
                 .move = all_attacker_moves[0],
                 .damage = 0,
+                .potential_damage = 0,
                 .times_to_hit = 1
             }
         );
@@ -1262,16 +1265,18 @@ inline void recalculate_chosen_move_damage(
     ) {
         return;
     }
+    const auto damage = attacker_state.get_damage_of_attacker_move(
+        attacker_state.get_item_for_effect(),
+        attacker_chosen_move.move,
+        defender_state,
+        weather,
+        is_mid_turn
+    );
     attacker_state.set_chosen_move(
         BestMove{
             .move = attacker_chosen_move.move,
-            .damage = attacker_state.get_damage_of_attacker_move(
-                attacker_state.get_item_for_effect(),
-                attacker_chosen_move.move,
-                defender_state,
-                weather,
-                is_mid_turn
-            ),
+            .damage = damage,
+            .potential_damage = damage,
             .times_to_hit = attacker_chosen_move.times_to_hit
         }
     );
@@ -1389,6 +1394,7 @@ inline bool check_fake_out(
             BestMove{
                 .move = attacker_move,
                 .damage = damage,
+                .potential_damage = damage,
                 .times_to_hit = 1
             }
         );
@@ -2106,6 +2112,12 @@ inline int16_t apply_damage_modifiers(
     return static_cast<int16_t>(std::floor(damage));
 }
 
+inline std::array<int16_t, LEVEL + 1> DAMAGE_CACHE = [] {
+    std::array<int16_t, LEVEL + 1> array{};
+    array.fill(-1.0);
+    return array;
+}();
+
 inline uint16_t PokemonState::get_damage_of_attacker_move(
     const Item attacker_item,
     const MoveInfo* attacker_move_info,
@@ -2130,15 +2142,10 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
         return damage;
     }
 
-    static std::array<int16_t, LEVEL + 1> cache = [] {
-        std::array<int16_t, LEVEL + 1> array{};
-        array.fill(-1.0);
-        return array;
-    }();
-    damage = cache[level];
+    damage = DAMAGE_CACHE[level];
     if (damage < 0) {
         damage = static_cast<int16_t>(std::floor(2 * level / 5) + 2);
-        cache[level] = damage;
+        DAMAGE_CACHE[level] = damage;
     }
 
     const auto defender_ability = defender_state.get_ability();

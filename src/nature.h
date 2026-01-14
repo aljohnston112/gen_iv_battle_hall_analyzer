@@ -7,7 +7,8 @@
 
 #include "moves.h"
 
-static const std::unordered_map<std::string, PokemonType> pokemon_type_map{
+inline const
+std::unordered_map<std::string, PokemonType> pokemon_type_map{
     {"normal", PokemonType::NORMAL},
     {"fighting", PokemonType::FIGHTING},
     {"flying", PokemonType::FLYING},

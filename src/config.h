@@ -2,12 +2,16 @@
 #define CONFIG_H
 
 #include <cstdint>
+#include <thread>
 
 #include "battle_hall_data_source.h"
 #include "serebii_pokemon_data_source.h"
 
 constexpr bool MULTI_THREADED = true;
-constexpr int NUMBER_OF_THREADS = MULTI_THREADED ? 8 : 1;
+constexpr int NUMBER_OF_THREADS =
+    MULTI_THREADED
+        ? 8
+        : 1;
 
 constexpr uint8_t LEVEL = 60;
 constexpr bool SKIP_RANKS = false;
@@ -188,8 +192,8 @@ inline std::vector<
                 // "Mr. Mime", "Torchic"
             };
             if (!skip_names.contains(serebii_pokemon.name)
-                 // && (serebii_pokemon.name == "Happiny" ||
-                 //     serebii_pokemon.name == "Ursaring")
+                // && (serebii_pokemon.name == "Happiny" ||
+                //     serebii_pokemon.name == "Ursaring")
             ) {
                 pokemon_forms.push_back(
                     convert_serebii_to_custom(
