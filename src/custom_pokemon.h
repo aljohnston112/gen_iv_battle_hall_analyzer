@@ -26,6 +26,7 @@ constexpr uint bits_for_level =
     std::bit_width(static_cast<uint>(Ability::Disabled));
 constexpr uint bits_for_stat =
     std::bit_width(static_cast<uint>(Stat::NO_STAT));
+
 struct CustomPokemonHash {
     std::size_t operator()(const CustomPokemon* p) const {
         return (static_cast<int>(p->name) << (bits_for_ability + bits_for_level)) |

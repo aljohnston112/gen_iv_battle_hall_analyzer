@@ -12,6 +12,231 @@
 #include "serebii_pokemon_data_source.h"
 #include "thread_pool.h"
 
+inline const std::unordered_set skipped = {
+    Pokemon::Bulbasaur,
+    Pokemon::Ivysaur,
+    Pokemon::Charmander,
+    Pokemon::Charmeleon,
+    Pokemon::Squirtle,
+    Pokemon::Wartortle,
+    Pokemon::Caterpie,
+    Pokemon::Metapod,
+    Pokemon::Weedle,
+    Pokemon::Kakuna,
+    Pokemon::Pidgey,
+    Pokemon::Pidgeotto,
+    Pokemon::Rattata,
+    Pokemon::Spearow,
+    Pokemon::Ekans,
+    Pokemon::Pikachu,
+    Pokemon::Sandshrew,
+    Pokemon::NidoranF,
+    Pokemon::Nidorina,
+    Pokemon::NidoranM,
+    Pokemon::Nidorino,
+    Pokemon::Clefairy,
+    Pokemon::Vulpix,
+    Pokemon::Jigglypuff,
+    Pokemon::Zubat,
+    Pokemon::Golbat,
+    Pokemon::Oddish,
+    Pokemon::Gloom,
+    Pokemon::Paras,
+    Pokemon::Venonat,
+    Pokemon::Diglett,
+    Pokemon::Meowth,
+    Pokemon::Psyduck,
+    Pokemon::Mankey,
+    Pokemon::Growlithe,
+    Pokemon::Poliwag,
+    Pokemon::Poliwhirl,
+    Pokemon::Abra,
+    Pokemon::Kadabra,
+    Pokemon::Machop,
+    Pokemon::Machoke,
+    Pokemon::Bellsprout,
+    Pokemon::Weepinbell,
+    Pokemon::Tentacool,
+    Pokemon::Geodude,
+    Pokemon::Graveler,
+    Pokemon::Ponyta,
+    Pokemon::Slowpoke,
+    Pokemon::Magnemite,
+    Pokemon::Magneton,
+    Pokemon::Doduo,
+    Pokemon::Seel,
+    Pokemon::Grimer,
+    Pokemon::Shellder,
+    Pokemon::Gastly,
+    Pokemon::Haunter,
+    Pokemon::Onix,
+    Pokemon::Drowzee,
+    Pokemon::Krabby,
+    Pokemon::Voltorb,
+    Pokemon::Exeggcute,
+    Pokemon::Cubone,
+    Pokemon::Lickitung,
+    Pokemon::Koffing,
+    Pokemon::Rhyhorn,
+    Pokemon::Rhydon,
+    Pokemon::Chansey,
+    Pokemon::Tangela,
+    Pokemon::Horsea,
+    Pokemon::Seadra,
+    Pokemon::Goldeen,
+    Pokemon::Staryu,
+    Pokemon::Scyther,
+    Pokemon::Electabuzz,
+    Pokemon::Magmar,
+    Pokemon::Magikarp,
+    Pokemon::Eevee,
+    Pokemon::Porygon,
+    Pokemon::Omanyte,
+    Pokemon::Kabuto,
+    Pokemon::Dratini,
+    Pokemon::Chikorita,
+    Pokemon::Bayleef,
+    Pokemon::Cyndaquil,
+    Pokemon::Quilava,
+    Pokemon::Totodile,
+    Pokemon::Croconaw,
+    Pokemon::Sentret,
+    Pokemon::Hoothoot,
+    Pokemon::Ledyba,
+    Pokemon::Spinarak,
+    Pokemon::Chinchou,
+    Pokemon::Pichu,
+    Pokemon::Cleffa,
+    Pokemon::Igglybuff,
+    Pokemon::Togepi,
+    Pokemon::Togetic,
+    Pokemon::Natu,
+    Pokemon::Mareep,
+    Pokemon::Flaaffy,
+    Pokemon::Marill,
+    Pokemon::Hoppip,
+    Pokemon::Skiploom,
+    Pokemon::Aipom,
+    Pokemon::Sunkern,
+    Pokemon::Yanma,
+    Pokemon::Wooper,
+    Pokemon::Murkrow,
+    Pokemon::Misdreavus,
+    Pokemon::Pineco,
+    Pokemon::Gligar,
+    Pokemon::Snubbull,
+    Pokemon::Sneasel,
+    Pokemon::Teddiursa,
+    Pokemon::Slugma,
+    Pokemon::Swinub,
+    Pokemon::Remoraid,
+    Pokemon::Houndour,
+    Pokemon::Phanpy,
+    Pokemon::Porygon2,
+    Pokemon::Tyrogue,
+    Pokemon::Smoochum,
+    Pokemon::Elekid,
+    Pokemon::Magby,
+    Pokemon::Larvitar,
+    Pokemon::Treecko,
+    Pokemon::Grovyle,
+    Pokemon::Torchic,
+    Pokemon::Combusken,
+    Pokemon::Mudkip,
+    Pokemon::Marshtomp,
+    Pokemon::Poochyena,
+    Pokemon::Zigzagoon,
+    Pokemon::Wurmple,
+    Pokemon::Silcoon,
+    Pokemon::Cascoon,
+    Pokemon::Lotad,
+    Pokemon::Lombre,
+    Pokemon::Seedot,
+    Pokemon::Nuzleaf,
+    Pokemon::Taillow,
+    Pokemon::Wingull,
+    Pokemon::Ralts,
+    Pokemon::Kirlia,
+    Pokemon::Surskit,
+    Pokemon::Shroomish,
+    Pokemon::Slakoth,
+    Pokemon::Nincada,
+    Pokemon::Whismur,
+    Pokemon::Loudred,
+    Pokemon::Makuhita,
+    Pokemon::Azumarill,
+    Pokemon::Nosepass,
+    Pokemon::Skitty,
+    Pokemon::Aron,
+    Pokemon::Lairon,
+    Pokemon::Meditite,
+    Pokemon::Electrike,
+    Pokemon::Roselia,
+    Pokemon::Gulpin,
+    Pokemon::Carvanha,
+    Pokemon::Wailmer,
+    Pokemon::Numel,
+    Pokemon::Spoink,
+    Pokemon::Trapinch,
+    Pokemon::Vibrava,
+    Pokemon::Cacnea,
+    Pokemon::Swablu,
+    Pokemon::Barboach,
+    Pokemon::Corphish,
+    Pokemon::Baltoy,
+    Pokemon::Lileep,
+    Pokemon::Anorith,
+    Pokemon::Feebas,
+    Pokemon::Shuppet,
+    Pokemon::Duskull,
+    Pokemon::Dusclops,
+    Pokemon::Wynaut,
+    Pokemon::Snorunt,
+    Pokemon::Spheal,
+    Pokemon::Sealeo,
+    Pokemon::Clamperl,
+    Pokemon::Bagon,
+    Pokemon::Beldum,
+    Pokemon::Turtwig,
+    Pokemon::Grotle,
+    Pokemon::Chimchar,
+    Pokemon::Monferno,
+    Pokemon::Piplup,
+    Pokemon::Prinplup,
+    Pokemon::Starly,
+    Pokemon::Staravia,
+    Pokemon::Bidoof,
+    Pokemon::Kricketot,
+    Pokemon::Shinx,
+    Pokemon::Luxio,
+    Pokemon::Budew,
+    Pokemon::Cranidos,
+    Pokemon::Shieldon,
+    Pokemon::Burmy,
+    Pokemon::Combee,
+    Pokemon::Buizel,
+    Pokemon::Cherubi,
+    Pokemon::Shellos,
+    Pokemon::Drifloon,
+    Pokemon::Buneary,
+    Pokemon::Glameow,
+    Pokemon::Chingling,
+    Pokemon::Stunky,
+    Pokemon::Bronzor,
+    Pokemon::Bonsly,
+    Pokemon::MimeJr,
+    Pokemon::Happiny,
+    Pokemon::Gible,
+    Pokemon::Munchlax,
+    Pokemon::Riolu,
+    Pokemon::Hippopotas,
+    Pokemon::Skorupi,
+    Pokemon::Croagunk,
+    Pokemon::Finneon,
+    Pokemon::Mantyke,
+    Pokemon::Snover
+};
+
 inline const std::unordered_set banned = {
     Pokemon::Palkia,
     Pokemon::Arceus,
@@ -35,7 +260,6 @@ inline const std::unordered_set banned = {
     Pokemon::Metagross,
     Pokemon::Garchomp,
     Pokemon::Zapdos,
-    Pokemon::Flygon,
     Pokemon::Dragonite,
     Pokemon::Articuno,
     Pokemon::Zapdos,
@@ -87,6 +311,7 @@ inline std::unordered_map<
         SerebiiPokemon
     >& name_to_serebii_pokemon
 ) {
+    uint64_t forms = 0;
     std::unordered_map<
         std::pair<Pokemon, Ability>,
         std::vector<CustomPokemon>,
@@ -99,23 +324,30 @@ inline std::unordered_map<
              pokemon_forms | std::views::values
         ) {
             for (const auto& pokemon : pokemon_variants) {
-                if (!banned.contains(pokemon.name)) {
+                if (!banned.contains(pokemon.name) &&
+                    !skipped.contains(pokemon.name)
+                ) {
                     pokemon_to_forms[
                         std::make_pair(pokemon.name, pokemon.ability)
                     ].emplace_back(pokemon);
+                    forms++;
                 }
             }
         }
-        // if (pokemon_to_forms.size() > 1) {
+        // if (pokemon_to_forms.size() > 70) {
         //     break;
         // }
     }
+    std::cout << "Forms: " << forms << std::endl;
+
     return pokemon_to_forms;
 }
 
 struct BattleEntry {
-    CustomPokemon& player;
-    CustomPokemon& opponent;
+    size_t player_index;
+    CustomPokemon player;
+    size_t opponent_index;
+    CustomPokemon opponent;
 };
 
 const std::unordered_set team = {
@@ -127,15 +359,15 @@ const std::unordered_set team = {
     Pokemon::Starmie,
 };
 
-inline void change_stats(CustomPokemon& pokemon) {
-    if (const auto& name = pokemon.name;
+inline void change_stats(CustomPokemon* pokemon) {
+    if (const auto& name = pokemon->name;
         name == Pokemon::Kingdra
     ) {
-        pokemon.stats[static_cast<int>(Stat::ATTACK)] = 171;
-        pokemon.stats[static_cast<int>(Stat::DEFENSE)] = 125;
+        pokemon->stats[static_cast<int>(Stat::ATTACK)] = 171;
+        pokemon->stats[static_cast<int>(Stat::DEFENSE)] = 125;
         // pokemon.stats[static_cast<int>(Stat::SPECIAL_ATTACK)] = 107;
-        pokemon.stats[static_cast<int>(Stat::SPECIAL_DEFENSE)] = 107;
-        pokemon.stats[static_cast<int>(Stat::SPEED)] = 114;
+        pokemon->stats[static_cast<int>(Stat::SPECIAL_DEFENSE)] = 107;
+        pokemon->stats[static_cast<int>(Stat::SPEED)] = 114;
     } else if (name == Pokemon::Kangaskhan) {
         //
     } else if (name == Pokemon::Gallade) {
@@ -146,59 +378,6 @@ inline void change_stats(CustomPokemon& pokemon) {
         //
     } else if (name == Pokemon::Staraptor) {
         //
-    }
-}
-
-inline void get_battle_entries(
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<CustomPokemon>,
-        PokemonPairHash
-    >& pokemon_to_forms,
-    std::vector<
-        std::pair<
-            std::pair<Pokemon, Ability>,
-            std::vector<BattleEntry>
-        >
-    >& pokemon_to_battles
-) {
-    pokemon_to_battles.reserve(
-        pokemon_to_forms.size() * pokemon_to_forms.size()
-    );
-    for (auto& player_pokemon_forms :
-         pokemon_to_forms | std::views::values
-    ) {
-        for (auto& player_pokemon : player_pokemon_forms) {
-            auto player_name = player_pokemon.name;
-            if (TEAM_ONLY && !team.contains(player_name)) {
-                continue;
-            }
-            if (TEAM_ONLY) {
-                change_stats(player_pokemon);
-            }
-            std::vector<BattleEntry> battles_for_player{};
-            for (auto& opponent_pokemon_forms :
-                 pokemon_to_forms | std::views::values
-            ) {
-                for (auto& opponent_pokemon : opponent_pokemon_forms) {
-                    battles_for_player.emplace_back(
-                        BattleEntry{
-                            .player = player_pokemon,
-                            .opponent = opponent_pokemon,
-                        }
-                    );
-                }
-            }
-            pokemon_to_battles.push_back(
-                std::make_pair(
-                    std::make_pair(
-                        player_name,
-                        player_pokemon.ability
-                    ),
-                    battles_for_player
-                )
-            );
-        }
     }
 }
 
@@ -222,16 +401,8 @@ struct MoveSetHash {
 };
 
 inline void get_battle_entries(
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<CustomPokemon>,
-        PokemonPairHash
-    >& player_pokemon_to_forms,
-    std::unordered_map<
-        std::pair<Pokemon, Ability>,
-        std::vector<CustomPokemon>,
-        PokemonPairHash
-    >& opponent_pokemon_to_forms,
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
@@ -240,56 +411,63 @@ inline void get_battle_entries(
     >& pokemon_to_battles
 ) {
     pokemon_to_battles.reserve(
-        player_pokemon_to_forms.size() * opponent_pokemon_to_forms.size()
+        players.size() + opponents.size()
     );
-    for (auto& player_pokemon_forms :
-         player_pokemon_to_forms | std::views::values
+    for (auto [
+             player_index,
+             player_pokemon
+         ] : std::views::enumerate(players)
     ) {
-        for (auto& player_pokemon : player_pokemon_forms) {
-            auto player_name = player_pokemon.name;
-            if (TEAM_ONLY && !team.contains(player_name)) {
-                continue;
-            }
-            if (TEAM_ONLY) {
-                change_stats(player_pokemon);
-            }
-            std::vector<BattleEntry> battles_for_player{};
-            for (auto& opponent_pokemon_forms :
-                 opponent_pokemon_to_forms | std::views::values
-            ) {
-                for (auto& opponent_pokemon : opponent_pokemon_forms) {
-                    battles_for_player.emplace_back(
-                        BattleEntry{
-                            .player = player_pokemon,
-                            .opponent = opponent_pokemon,
-                        }
-                    );
+        auto player_name = player_pokemon->name;
+        if (TEAM_ONLY && !team.contains(player_name)) {
+            continue;
+        }
+        if (TEAM_ONLY) {
+            change_stats(player_pokemon);
+        }
+        std::vector<BattleEntry> battles_for_player{};
+        for (const auto [
+                 opponent_index,
+                 opponent_pokemon
+             ] : std::views::enumerate(opponents)
+        ) {
+            battles_for_player.emplace_back(
+                BattleEntry{
+                    .player_index = static_cast<size_t>(player_index),
+                    .player = *player_pokemon,
+                    .opponent_index = static_cast<size_t>(opponent_index),
+                    .opponent = *opponent_pokemon,
                 }
-            }
-            pokemon_to_battles.push_back(
-                std::make_pair(
-                    std::make_pair(
-                        player_name,
-                        player_pokemon.ability
-                    ),
-                    battles_for_player
-                )
             );
         }
+        pokemon_to_battles.push_back(
+            std::make_pair(
+                std::make_pair(
+                    player_name,
+                    player_pokemon->ability
+                ),
+                battles_for_player
+            )
+        );
     }
 }
 
 inline void battle_all(
-    const BattleEntry& battle_entry,
+    BattleEntry& battle_entry,
     std::promise<BattleResultEntry>&& promise
 ) {
     promise.set_value(
-        battle(battle_entry.player, battle_entry.opponent)
+        battle(
+            battle_entry.player_index,
+            &battle_entry.player,
+            battle_entry.opponent_index,
+            &battle_entry.opponent
+        )
     );
 }
 
 inline void do_battles(
-    const std::vector<
+    std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
             std::vector<BattleEntry>
@@ -317,7 +495,7 @@ inline void do_battles(
     //     }
 
     for (size_t i = 0; i < pokemon_to_battles.size(); ++i) {
-        const auto& [
+        auto& [
             pokemon,
             battles
         ] = pokemon_to_battles[i];
@@ -329,7 +507,7 @@ inline void do_battles(
                 BattleEntry
             >(battle_all, battles);
         pokemon_to_battle_result_entries.push_back(
-            std::pair(pokemon, battle_result_entries)
+            std::pair(pokemon, std::move(battle_result_entries))
         );
     }
 }
@@ -445,7 +623,7 @@ inline void get_player_pokemon_with_top_3_moves(
 }
 
 inline void do_round_robin_with_best_moves(
-    const std::vector<
+    std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
             std::vector<BattleEntry>
@@ -482,17 +660,20 @@ inline void get_evs_needed_for_diff(
 }
 
 inline void do_battles_with_updated_evs(
+    const std::vector<CustomPokemon*>& opponents,
     const std::pair<Pokemon, Ability>& pokemon,
+    const size_t player_index,
     CustomPokemon* player_pokemon,
     std::vector<std::tuple<Stat, int, bool>>& evs,
+    const size_t opponent_index,
     CustomPokemon* const opponent,
-    const std::vector<CustomPokemon*>& losses_to_beat,
+    const std::vector<size_t>& losses_to_beat,
     std::unordered_map<
         std::pair<Pokemon, Ability>,
         std::vector<
             std::pair<
                 std::vector<std::tuple<Stat, int, bool>>,
-                std::unordered_set<CustomPokemon*>
+                std::unordered_set<size_t>
             >
         >,
         PokemonPairHash
@@ -501,11 +682,16 @@ inline void do_battles_with_updated_evs(
     if (evs.empty()) {
         return;
     }
-    if (battle(*player_pokemon, *opponent).won) {
+    if (battle(player_index, player_pokemon, opponent_index, opponent).won) {
         std::vector<BattleEntry> battles{};
-        for (const auto o : losses_to_beat) {
+        for (const auto o_index : losses_to_beat) {
             battles.emplace_back(
-                BattleEntry{*player_pokemon, *o}
+                BattleEntry{
+                    player_index,
+                    *player_pokemon,
+                    o_index,
+                    *opponents[o_index]
+                }
             );
         }
         const auto battle_result_entries =
@@ -515,12 +701,12 @@ inline void do_battles_with_updated_evs(
                 std::vector<BattleEntry>,
                 BattleEntry
             >(battle_all, battles);
-        std::unordered_set<CustomPokemon*> losses_beaten{};
+        std::unordered_set<size_t> losses_beaten{};
         for (auto& results :
              battle_result_entries
         ) {
             if (results.won) {
-                losses_beaten.insert(results.opponent.get());
+                losses_beaten.insert(results.opponent_index);
             }
         }
         if (losses_beaten.size() > 0) {
@@ -545,6 +731,16 @@ struct EVSet {
     int special_defense;
     int speed;
     Stat nature_stat;
+
+    bool is_less_than(const EVSet& b) const {
+        return (nature_stat == b.nature_stat || nature_stat == Stat::NO_STAT) &&
+            health <= b.health &&
+            attack <= b.attack &&
+            defense <= b.defense &&
+            special_attack <= b.special_attack &&
+            special_defense <= b.special_defense &&
+            speed <= b.speed;
+    }
 };
 
 struct EVSetHash {
@@ -616,26 +812,29 @@ inline bool next_stat_permutation(
 }
 
 inline std::pair<bool, bool> get_attack_evs(
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::vector<
         std::pair<
             EVSet,
-            std::shared_ptr<CustomPokemon>>
+            const size_t>
     >& evs,
-    const BattleResultEntry& battle_results,
+    BattleResultEntry& battle_results,
     const uint16_t evs_left,
     const bool nature_used,
     const EVSet& evs_used
-
 ) {
     std::pair won{false, false};
-    const auto& [
-        original_player,
-        opponent,
+    auto& [
+        original_player_index,
+        opponent_index,
         _,
         player_moves,
         opponent_moves
     ] = battle_results;
     // TODO get exact EV
+    const auto original_player =
+        players[original_player_index];
     CustomPokemon current_player = *original_player;
     const auto original_player_attack =
         original_player->stats[static_cast<int>(Stat::ATTACK)];
@@ -643,11 +842,16 @@ inline std::pair<bool, bool> get_attack_evs(
         current_player.stats[
             static_cast<int>(Stat::ATTACK)
         ] = original_player_attack + (252 / 4) * 0.6;
+        auto opponent = opponents[opponent_index];
         BattleState new_battle_state{
-            current_player,
-            *opponent
+            &current_player,
+            opponent
         };
-        if (const auto new_battle_results = new_battle_state.battle();
+        if (const auto new_battle_results =
+                new_battle_state.battle_indices(
+                    original_player_index,
+                    opponent_index
+                );
             new_battle_results.won
         ) {
             won.first = true;
@@ -661,18 +865,22 @@ inline std::pair<bool, bool> get_attack_evs(
                     .speed = evs_used.speed,
                     .nature_stat = evs_used.nature_stat
                 },
-                opponent.get()
+                opponent_index
             );
         }
         if (!nature_used) {
             current_player.stats[
                 static_cast<int>(Stat::ATTACK)
-            ] = original_player_attack + (252 / 4) * 0.6 * 1.1;
+            ] = original_player_attack + (252 / 4) * (LEVEL / 100.0) * 1.1;
             BattleState new_battle_state{
-                current_player,
-                *opponent
+                &current_player,
+                opponent
             };
-            if (const auto new_battle_results = new_battle_state.battle();
+            if (const auto new_battle_results =
+                    new_battle_state.battle_indices(
+                        original_player_index,
+                        opponent_index
+                    );
                 new_battle_results.won
             ) {
                 won.second = true;
@@ -686,7 +894,7 @@ inline std::pair<bool, bool> get_attack_evs(
                         .speed = evs_used.speed,
                         .nature_stat = Stat::ATTACK
                     },
-                    opponent.get()
+                    opponent_index
                 );
             }
         }
@@ -695,10 +903,12 @@ inline std::pair<bool, bool> get_attack_evs(
 }
 
 inline std::pair<bool, bool> get_defense_evs(
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::vector<
         std::pair<
             EVSet,
-            std::shared_ptr<CustomPokemon>>
+            const size_t>
     >& evs,
     const BattleResultEntry& battle_results,
     const uint16_t evs_left,
@@ -707,25 +917,31 @@ inline std::pair<bool, bool> get_defense_evs(
 ) {
     std::pair won{false, false};
     const auto& [
-        original_player,
-        opponent,
+        original_player_index,
+        opponent_index,
         _,
         player_moves,
         opponent_moves
     ] = battle_results;
     // TODO get exact EV
+    const auto original_player = players[original_player_index];
+    const auto opponent = opponents[opponent_index];
     CustomPokemon current_player = *original_player;
     const auto original_player_attack =
         original_player->stats[static_cast<int>(Stat::DEFENSE)];
     if (evs_left >= 252) {
         current_player.stats[
             static_cast<int>(Stat::DEFENSE)
-        ] = original_player_attack + (252 / 4) * 0.6;
+        ] = original_player_attack + (252 / 4) * (LEVEL / 100.0);
         BattleState new_battle_state{
-            current_player,
-            *opponent
+            &current_player,
+            opponent
         };
-        if (const auto new_battle_results = new_battle_state.battle();
+        if (const auto new_battle_results =
+                new_battle_state.battle_indices(
+                    original_player_index,
+                    opponent_index
+                );
             new_battle_results.won
         ) {
             won.first = true;
@@ -739,18 +955,22 @@ inline std::pair<bool, bool> get_defense_evs(
                     .speed = evs_used.speed,
                     .nature_stat = evs_used.nature_stat
                 },
-                opponent.get()
+                opponent_index
             );
         }
         if (!nature_used) {
             current_player.stats[
                 static_cast<int>(Stat::DEFENSE)
-            ] = original_player_attack + (252 / 4) * 0.6 * 1.1;
+            ] = original_player_attack + (252 / 4) * (LEVEL / 100.0) * 1.1;
             BattleState new_battle_state{
-                current_player,
-                *opponent
+                &current_player,
+                opponent
             };
-            if (const auto new_battle_results = new_battle_state.battle();
+            if (const auto new_battle_results =
+                    new_battle_state.battle_indices(
+                        original_player_index,
+                        opponent_index
+                    );
                 new_battle_results.won
             ) {
                 won.second = true;
@@ -764,7 +984,7 @@ inline std::pair<bool, bool> get_defense_evs(
                         .speed = evs_used.speed,
                         .nature_stat = Stat::DEFENSE
                     },
-                    opponent.get()
+                    opponent_index
                 );
             }
         }
@@ -773,10 +993,12 @@ inline std::pair<bool, bool> get_defense_evs(
 }
 
 inline std::pair<bool, bool> get_special_attack_evs(
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::vector<
         std::pair<
             EVSet,
-            std::shared_ptr<CustomPokemon>>
+            const size_t>
     >& evs,
     const BattleResultEntry& battle_results,
     const uint16_t evs_left,
@@ -785,25 +1007,31 @@ inline std::pair<bool, bool> get_special_attack_evs(
 ) {
     std::pair won{false, false};
     const auto& [
-        original_player,
-        opponent,
+        original_player_index,
+        opponent_index,
         _,
         player_moves,
         opponent_moves
     ] = battle_results;
     // TODO get exact EV
+    const auto original_player = players[original_player_index];
+    const auto opponent = opponents[opponent_index];
     CustomPokemon current_player = *original_player;
     const auto original_player_attack =
         original_player->stats[static_cast<int>(Stat::SPECIAL_ATTACK)];
     if (evs_left >= 252) {
         current_player.stats[
             static_cast<int>(Stat::SPECIAL_ATTACK)
-        ] = original_player_attack + (252 / 4) * 0.6;
+        ] = original_player_attack + (252 / 4) * (LEVEL / 100.0);
         BattleState new_battle_state{
-            current_player,
-            *opponent
+            &current_player,
+            opponent
         };
-        if (const auto new_battle_results = new_battle_state.battle();
+        if (const auto new_battle_results =
+                new_battle_state.battle_indices(
+                    original_player_index,
+                    opponent_index
+                );
             new_battle_results.won
         ) {
             won.first = true;
@@ -817,18 +1045,22 @@ inline std::pair<bool, bool> get_special_attack_evs(
                     .speed = evs_used.speed,
                     .nature_stat = evs_used.nature_stat
                 },
-                opponent.get()
+                opponent_index
             );
         }
         if (!nature_used) {
             current_player.stats[
                 static_cast<int>(Stat::SPECIAL_ATTACK)
-            ] = original_player_attack + (252 / 4) * 0.6 * 1.1;
+            ] = original_player_attack + (252 / 4) * (LEVEL / 100.0) * 1.1;
             BattleState new_battle_state{
-                current_player,
-                *opponent
+                &current_player,
+                opponent
             };
-            if (const auto new_battle_results = new_battle_state.battle();
+            if (const auto new_battle_results =
+                    new_battle_state.battle_indices(
+                        original_player_index,
+                        opponent_index
+                    );
                 new_battle_results.won
             ) {
                 won.second = true;
@@ -842,7 +1074,7 @@ inline std::pair<bool, bool> get_special_attack_evs(
                         .speed = evs_used.speed,
                         .nature_stat = Stat::SPECIAL_ATTACK
                     },
-                    opponent.get()
+                    opponent_index
                 );
             }
         }
@@ -851,10 +1083,12 @@ inline std::pair<bool, bool> get_special_attack_evs(
 }
 
 inline std::pair<bool, bool> get_special_defense_evs(
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::vector<
         std::pair<
             EVSet,
-            std::shared_ptr<CustomPokemon>>
+            const size_t>
     >& evs,
     const BattleResultEntry& battle_results,
     const uint16_t evs_left,
@@ -863,25 +1097,31 @@ inline std::pair<bool, bool> get_special_defense_evs(
 ) {
     std::pair won{false, false};
     const auto& [
-        original_player,
-        opponent,
+        original_player_index,
+        opponent_index,
         _,
         player_moves,
         opponent_moves
     ] = battle_results;
     // TODO get exact EV
+    const auto original_player = players[original_player_index];
+    const auto opponent = opponents[opponent_index];
     CustomPokemon current_player = *original_player;
     const auto original_player_attack =
         original_player->stats[static_cast<int>(Stat::SPECIAL_DEFENSE)];
     if (evs_left >= 252) {
         current_player.stats[
             static_cast<int>(Stat::SPECIAL_DEFENSE)
-        ] = original_player_attack + (252 / 4) * 0.6;
+        ] = original_player_attack + ((252 / 4) * (LEVEL / 100.0));
         BattleState new_battle_state{
-            current_player,
-            *opponent
+            &current_player,
+            opponent
         };
-        if (const auto new_battle_results = new_battle_state.battle();
+        if (const auto new_battle_results =
+                new_battle_state.battle_indices(
+                    original_player_index,
+                    opponent_index
+                );
             new_battle_results.won
         ) {
             won.first = true;
@@ -895,18 +1135,22 @@ inline std::pair<bool, bool> get_special_defense_evs(
                     .speed = evs_used.speed,
                     .nature_stat = evs_used.nature_stat
                 },
-                opponent.get()
+                opponent_index
             );
         }
         if (!nature_used) {
             current_player.stats[
                 static_cast<int>(Stat::SPECIAL_DEFENSE)
-            ] = original_player_attack + (252 / 4) * 0.6 * 1.1;
+            ] = (original_player_attack + ((252 / 4) * (LEVEL / 100.0))) * 1.1;
             BattleState new_battle_state{
-                current_player,
-                *opponent
+                &current_player,
+                opponent
             };
-            if (const auto new_battle_results = new_battle_state.battle();
+            if (const auto new_battle_results =
+                    new_battle_state.battle_indices(
+                        original_player_index,
+                        opponent_index
+                    );
                 new_battle_results.won
             ) {
                 won.second = true;
@@ -920,7 +1164,7 @@ inline std::pair<bool, bool> get_special_defense_evs(
                         .speed = evs_used.speed,
                         .nature_stat = Stat::SPECIAL_DEFENSE
                     },
-                    opponent.get()
+                    opponent_index
                 );
             }
         }
@@ -929,10 +1173,12 @@ inline std::pair<bool, bool> get_special_defense_evs(
 }
 
 inline std::pair<bool, bool> get_speed_evs(
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::vector<
         std::pair<
             EVSet,
-            std::shared_ptr<CustomPokemon>>
+            const size_t>
     >& evs,
     const BattleResultEntry& battle_results,
     const uint16_t evs_left,
@@ -941,50 +1187,73 @@ inline std::pair<bool, bool> get_speed_evs(
 ) {
     std::pair won{false, false};
     const auto& [
-        original_player,
-        opponent,
+        original_player_index,
+        opponent_index,
         _,
         player_moves,
         opponent_moves
     ] = battle_results;
-    // TODO get exact EV
+    const auto original_player = players[original_player_index];
+    const auto opponent = opponents[opponent_index];
     CustomPokemon current_player = *original_player;
-    const auto original_player_attack =
+    const auto original_player_speed =
         original_player->stats[static_cast<int>(Stat::SPEED)];
-    if (evs_left >= 252) {
-        current_player.stats[
-            static_cast<int>(Stat::SPEED)
-        ] = original_player_attack + (252 / 4) * 0.6;
-        BattleState new_battle_state{
-            current_player,
-            *opponent
-        };
-        if (const auto new_battle_results = new_battle_state.battle();
-            new_battle_results.won
-        ) {
-            won.first = true;
-            evs.emplace_back(
-                EVSet{
-                    .health = evs_used.health,
-                    .attack = evs_used.attack,
-                    .defense = evs_used.defense,
-                    .special_attack = evs_used.special_attack,
-                    .special_defense = evs_used.special_defense,
-                    .speed = 252,
-                    .nature_stat = evs_used.nature_stat
-                },
-                opponent.get()
-            );
-        }
-        if (!nature_used) {
+    const auto speed_diff =
+        opponent->stats.at(static_cast<int>(Stat::SPEED)) -
+        original_player_speed + 1;
+    if (speed_diff > 0) {
+        int speed_evs;
+        int speed_nature_evs;
+        get_evs_needed_for_diff(
+            original_player_speed,
+            speed_diff,
+            speed_evs,
+            speed_nature_evs
+        );
+        if (speed_evs <= evs_left) {
             current_player.stats[
                 static_cast<int>(Stat::SPEED)
-            ] = original_player_attack + (252 / 4) * 0.6 * 1.1;
+            ] = original_player_speed + (speed_evs / 4) * (LEVEL / 100.0);
             BattleState new_battle_state{
-                current_player,
-                *opponent
+                &current_player,
+                opponent
             };
-            if (const auto new_battle_results = new_battle_state.battle();
+            if (const auto new_battle_results =
+                    new_battle_state.battle_indices(
+                        original_player_index,
+                        opponent_index
+                    );
+                new_battle_results.won
+            ) {
+                won.first = true;
+                evs.emplace_back(
+                    EVSet{
+                        .health = evs_used.health,
+                        .attack = evs_used.attack,
+                        .defense = evs_used.defense,
+                        .special_attack = evs_used.special_attack,
+                        .special_defense = evs_used.special_defense,
+                        .speed = speed_evs,
+                        .nature_stat = evs_used.nature_stat
+                    },
+                    opponent_index
+                );
+            }
+        }
+        if (!nature_used && speed_nature_evs <= evs_left) {
+            current_player.stats[
+                    static_cast<int>(Stat::SPEED)
+                ] = original_player_speed +
+                ((speed_nature_evs / 4) * (LEVEL / 100.0)) * 1.1;
+            BattleState new_battle_state{
+                &current_player,
+                opponent
+            };
+            if (const auto new_battle_results =
+                    new_battle_state.battle_indices(
+                        original_player_index,
+                        opponent_index
+                    );
                 new_battle_results.won
             ) {
                 won.second = true;
@@ -995,10 +1264,10 @@ inline std::pair<bool, bool> get_speed_evs(
                         .defense = evs_used.defense,
                         .special_attack = evs_used.special_attack,
                         .special_defense = evs_used.special_defense,
-                        .speed = 252,
+                        .speed = speed_nature_evs,
                         .nature_stat = Stat::SPEED
                     },
-                    opponent
+                    opponent_index
                 );
             }
         }
@@ -1166,10 +1435,12 @@ constexpr auto max_stat_diff_nature =
     ((252 / 4) * (LEVEL / 100.0)) * 1.1;
 
 inline std::pair<bool, bool> get_health_evs(
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::vector<
         std::pair<
             EVSet,
-            std::shared_ptr<CustomPokemon>>
+            const size_t>
     >& evs,
     const BattleResultEntry& battle_results,
     const uint16_t evs_left,
@@ -1177,12 +1448,14 @@ inline std::pair<bool, bool> get_health_evs(
     const EVSet& evs_used
 ) {
     const auto& [
-        original_player,
-        opponent,
+        original_player_index,
+        opponent_index,
         _,
         player_moves,
         opponent_moves
     ] = battle_results;
+    const auto original_player = players[original_player_index];
+    const auto opponent = opponents[opponent_index];
     const auto p_hp =
         original_player->stats[static_cast<int>(Stat::HEALTH)];
     const auto hp_diff =
@@ -1209,17 +1482,21 @@ inline std::pair<bool, bool> get_health_evs(
             static_cast<int>(Stat::HEALTH)
         ] = (p_hp + hp_diff);
         BattleState new_battle_state{
-            current_player,
-            *opponent
+            &current_player,
+            opponent
         };
-        if (original_player.get()->name == Pokemon::Illumise &&
-            original_player.get()->ability == Ability::TintedLens &&
-            opponent.get()->name == Pokemon::Venonat &&
-            opponent.get()->ability == Ability::Compoundeyes
+        if (original_player->name == Pokemon::Illumise &&
+            original_player->ability == Ability::TintedLens &&
+            opponent->name == Pokemon::Venonat &&
+            opponent->ability == Ability::Compoundeyes
         ) {
             volatile int a;
         }
-        const auto new_battle_results = new_battle_state.battle();
+        const auto new_battle_results =
+            new_battle_state.battle_indices(
+                original_player_index,
+                opponent_index
+            );
         if (new_battle_results.won) {
             won.first = true;
             evs.emplace_back(
@@ -1232,7 +1509,7 @@ inline std::pair<bool, bool> get_health_evs(
                     .speed = evs_used.speed,
                     .nature_stat = evs_used.nature_stat
                 },
-                opponent.get()
+                opponent_index
             );
             return won;
         }
@@ -1259,12 +1536,9 @@ inline std::pair<bool, bool> get_health_evs(
             assert(new_hp_diff < 0);
             if (new_hp_evs <= evs_left) {
                 // Opponent used different moves
-                new_battle_results.player->stats[
-                    static_cast<int>(Stat::HEALTH)
-                ] = battle_results.player->stats.at(
-                    static_cast<int>(Stat::HEALTH)
-                );
                 return get_health_evs(
+                    players,
+                    opponents,
                     evs,
                     new_battle_results,
                     evs_left,
@@ -1290,31 +1564,35 @@ inline uint16_t get_number_of_evs(const EVSet& evs) {
 }
 
 struct EvOptimizerInput {
-    const BattleResultEntry& battle_result;
+    const std::vector<CustomPokemon*>& players;
+    const std::vector<CustomPokemon*>& opponents;
+    BattleResultEntry& battle_result;
     const StatPermutationState& state;
 };
 
 inline void optimize_evs_for_battle(
-    const EvOptimizerInput& input,
+    EvOptimizerInput& input,
     std::promise<
         std::vector<
             std::pair<
                 EVSet,
-                std::shared_ptr<CustomPokemon>>
+                const size_t>
         >
     >&& ev_sets_promise
 ) {
-    const BattleResultEntry& battle_result = input.battle_result;
+    const auto& players = input.players;
+    const auto& opponents = input.opponents;
+    BattleResultEntry& battle_result = input.battle_result;
     const StatPermutationState& state = input.state;
     std::vector<
         std::pair<
             EVSet,
-            std::shared_ptr<CustomPokemon>>
+            const size_t>
     > ev_sets_to_beaten{};
     std::vector<
         std::pair<
             EVSet,
-            std::unique_ptr<CustomPokemon>>
+            const CustomPokemon*>
     > current_pokemon_evs_and_losses_beaten{};
     current_pokemon_evs_and_losses_beaten.emplace_back(
         EVSet{
@@ -1330,111 +1608,152 @@ inline void optimize_evs_for_battle(
     );
     int current_index = 0;
     std::pair won = {false, false};
+    auto player = *players[battle_result.player_index];
+    auto players_for_updated_player = std::vector<CustomPokemon*>{players.size()};
+    players_for_updated_player.reserve(players.size());
+    players_for_updated_player.insert(
+        players_for_updated_player.begin() + battle_result.player_index,
+        &player
+    );
+    auto original_player = players[battle_result.player_index];
+    const auto original_player_stats =
+        original_player->stats;
     while (current_index < static_cast<int>(Stat::NO_STAT) &&
         (!won.first || !won.second)
     ) {
         std::vector<
             std::pair<
                 EVSet,
-                std::unique_ptr<CustomPokemon>>
+                const CustomPokemon*>
         > temp = std::move(current_pokemon_evs_and_losses_beaten);
         current_pokemon_evs_and_losses_beaten.clear();
         current_pokemon_evs_and_losses_beaten.reserve(12 * temp.size());
-        const auto original_player_stats =
-            battle_result.player->stats;
         for (const auto& [ev_set, _] : temp) {
             const uint16_t evs_left = std::min(
                 508 - get_number_of_evs(ev_set),
                 252
             );
+            assert(ev_set.health >= 0 && ev_set.health < 253);
+            assert(ev_set.health >= 0 && ev_set.attack < 253);
+            assert(ev_set.health >= 0 && ev_set.defense < 253);
+            assert(ev_set.health >= 0 && ev_set.special_attack < 253);
+            assert(ev_set.health >= 0 && ev_set.special_defense < 253);
+            assert(ev_set.health >= 0 && ev_set.speed < 253);
             if (ev_set.health > 0) {
-                battle_result.player->stats[
+                player.stats[
                         static_cast<int>(Stat::HEALTH)
                     ] = original_player_stats[static_cast<int>(Stat::HEALTH)] +
-                    ((ev_set.health / 4) * 0.6);
+                    ((ev_set.health / 4) * (LEVEL / 100.0));
             }
             if (ev_set.attack > 0) {
                 if (ev_set.nature_stat == Stat::ATTACK) {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::ATTACK)
-                    ] = original_player_stats[
+                    ] = std::floor(original_player_stats[
                         static_cast<int>(Stat::ATTACK)
-                    ] + ((ev_set.attack / 4) * 1.1 * 0.6);
+                    ] + (ev_set.speed / 4) * (LEVEL / 100.0)) * 1.1;
                 } else {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::ATTACK)
                     ] = original_player_stats[
                         static_cast<int>(Stat::ATTACK)
-                    ] + ((ev_set.attack / 4) * 0.6);
+                    ] + ((ev_set.attack / 4) * (LEVEL / 100.0));
                 }
             }
             if (ev_set.defense > 0) {
                 if (ev_set.nature_stat == Stat::DEFENSE) {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::DEFENSE)
-                    ] = original_player_stats[
+                    ] = std::floor(original_player_stats[
                         static_cast<int>(Stat::DEFENSE)
-                    ] + ((ev_set.defense / 4) * 1.1 * 0.6);
+                    ] + (ev_set.speed / 4) * (LEVEL / 100.0)) * 1.1;
                 } else {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::DEFENSE)
                     ] = original_player_stats[
                         static_cast<int>(Stat::DEFENSE)
-                    ] + ((ev_set.defense / 4) * 0.6);
+                    ] + ((ev_set.defense / 4) * (LEVEL / 100.0));
                 }
             }
             if (ev_set.special_attack > 0) {
                 if (ev_set.nature_stat == Stat::SPECIAL_ATTACK) {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::SPECIAL_ATTACK)
-                    ] = original_player_stats[
+                    ] = std::floor(original_player_stats[
                         static_cast<int>(Stat::SPECIAL_ATTACK)
-                    ] + ((ev_set.special_attack / 4) * 1.1 * 0.6);
+                    ] + (ev_set.speed / 4) * (LEVEL / 100.0)) * 1.1;
                 } else {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::SPECIAL_ATTACK)
                     ] = original_player_stats[
                         static_cast<int>(Stat::SPECIAL_ATTACK)
-                    ] + ((ev_set.special_attack / 4) * 0.6);
+                    ] + ((ev_set.special_attack / 4) * (LEVEL / 100.0));
                 }
             }
             if (ev_set.special_defense > 0) {
                 if (ev_set.nature_stat == Stat::SPECIAL_DEFENSE) {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::SPECIAL_DEFENSE)
-                    ] = original_player_stats[
+                    ] = std::floor(original_player_stats[
                         static_cast<int>(Stat::SPECIAL_DEFENSE)
-                    ] + ((ev_set.special_defense / 4) * 1.1 * 0.6);
+                    ] + (ev_set.speed / 4) * (LEVEL / 100.0)) * 1.1;
                 } else {
-                    battle_result.player->stats[
+                    player.stats[
                         static_cast<int>(Stat::SPECIAL_DEFENSE)
                     ] = original_player_stats[
                         static_cast<int>(Stat::SPECIAL_DEFENSE)
-                    ] + ((ev_set.special_defense / 4) * 0.6);
+                    ] + ((ev_set.special_defense / 4) * (LEVEL / 100.0));
                 }
             }
             if (ev_set.speed > 0) {
                 if (ev_set.nature_stat == Stat::SPEED) {
-                    battle_result.player->stats[
-                            static_cast<int>(Stat::SPEED)
-                        ] = original_player_stats[static_cast<int>(Stat::SPEED)]
-                        + ((ev_set.speed / 4) * 1.1 * 0.6);
+                    player.stats[
+                        static_cast<int>(Stat::SPEED)
+                    ] = std::floor(original_player_stats[
+                        static_cast<int>(Stat::SPEED)
+                    ] + (ev_set.speed / 4) * (LEVEL / 100.0)) * 1.1;
                 } else {
-                    battle_result.player->stats[
+                    player.stats[
                             static_cast<int>(Stat::SPEED)
                         ] = original_player_stats[static_cast<int>(Stat::SPEED)]
-                        + ((ev_set.speed / 4) * 0.6);
+                        + ((ev_set.speed / 4) * (LEVEL / 100.0));
                 }
             }
+            assert(
+                player.stats[static_cast<int>(Stat::HEALTH)] < 414 &&
+                player.stats[static_cast<int>(Stat::HEALTH)] > 81
+            );
+            assert(
+                player.stats[static_cast<int>(Stat::ATTACK)] < 284 &&
+                player.stats[static_cast<int>(Stat::ATTACK)] > 8
+            );
+            assert(
+                player.stats[static_cast<int>(Stat::DEFENSE)] < 350 &&
+                player.stats[static_cast<int>(Stat::DEFENSE)] > 8
+            );
+            assert(
+                player.stats[static_cast<int>(Stat::SPECIAL_ATTACK)] < 284 &&
+                player.stats[static_cast<int>(Stat::SPECIAL_ATTACK)] > 14
+            );
+            assert(
+                player.stats[static_cast<int>(Stat::SPECIAL_DEFENSE)] < 350 &&
+                player.stats[static_cast<int>(Stat::SPECIAL_DEFENSE)] > 25
+            );
+            assert(
+                player.stats[static_cast<int>(Stat::SPEED)] < 284 &&
+                player.stats[static_cast<int>(Stat::SPEED)] > 8
+            );
 
             const Stat nature_stat = ev_set.nature_stat;
             bool nature_used = nature_stat != Stat::NO_STAT;
             if (evs_left > 0 &&
-                battle_result.player.get()->name != Pokemon::Shedinja
+                player.name != Pokemon::Shedinja
             ) {
                 switch (state[current_index]) {
                 case Stat::HEALTH:
                     won = get_health_evs(
+                        players_for_updated_player,
+                        opponents,
                         ev_sets_to_beaten,
                         battle_result,
                         evs_left,
@@ -1451,6 +1770,8 @@ inline void optimize_evs_for_battle(
                     break;
                 case Stat::ATTACK:
                     won = get_attack_evs(
+                        players_for_updated_player,
+                        opponents,
                         ev_sets_to_beaten,
                         battle_result,
                         evs_left,
@@ -1476,6 +1797,8 @@ inline void optimize_evs_for_battle(
                     break;
                 case Stat::DEFENSE:
                     won = get_defense_evs(
+                        players_for_updated_player,
+                        opponents,
                         ev_sets_to_beaten,
                         battle_result,
                         evs_left,
@@ -1500,6 +1823,8 @@ inline void optimize_evs_for_battle(
                     break;
                 case Stat::SPECIAL_ATTACK:
                     won = get_special_attack_evs(
+                        players_for_updated_player,
+                        opponents,
                         ev_sets_to_beaten,
                         battle_result,
                         evs_left,
@@ -1525,6 +1850,8 @@ inline void optimize_evs_for_battle(
                     break;
                 case Stat::SPECIAL_DEFENSE:
                     won = get_special_defense_evs(
+                        players_for_updated_player,
+                        opponents,
                         ev_sets_to_beaten,
                         battle_result,
                         evs_left,
@@ -1550,6 +1877,8 @@ inline void optimize_evs_for_battle(
                     break;
                 case Stat::SPEED:
                     won = get_speed_evs(
+                        players_for_updated_player,
+                        opponents,
                         ev_sets_to_beaten,
                         battle_result,
                         evs_left,
@@ -1580,22 +1909,25 @@ inline void optimize_evs_for_battle(
             }
         }
         current_index++;
+        player.stats = original_player->stats;
     }
     ev_sets_promise.set_value(ev_sets_to_beaten);
 }
 
 inline void get_stat_spreads(
+    const std::vector<CustomPokemon*>& players,
+    const std::vector<CustomPokemon*>& opponents,
     std::unordered_map<
         std::pair<Pokemon, Ability>,
         std::vector<
             std::pair<
                 EVSet,
-                std::shared_ptr<CustomPokemon>>
+                const size_t>
         >,
         PokemonPairHash
     >& pokemon_and_ability_to_evs_and_losses_beaten,
     const std::pair<Pokemon, Ability>& pokemon,
-    const std::vector<BattleResultEntry>& battle_results
+    std::vector<BattleResultEntry>& battle_results
 ) {
     if (!pokemon_and_ability_to_evs_and_losses_beaten.contains(pokemon)) {
         pokemon_and_ability_to_evs_and_losses_beaten.try_emplace(pokemon);
@@ -1604,9 +1936,11 @@ inline void get_stat_spreads(
     std::vector<EvOptimizerInput> ev_optimizer_inputs{};
     StatPermutationState state = create_initial_stat_permutation_state();
     do {
-        for (const auto& battle_result : battle_results) {
+        for (auto& battle_result : battle_results) {
             ev_optimizer_inputs.push_back(
                 {
+                    .players = players,
+                    .opponents = opponents,
                     .battle_result = battle_result,
                     .state = state
                 }
@@ -1620,10 +1954,12 @@ inline void get_stat_spreads(
         runTasksAndFlatten<
             std::pair<
                 EVSet,
-                std::shared_ptr<CustomPokemon>>,
+                const size_t>,
             std::vector<EvOptimizerInput>,
-            const EvOptimizerInput&>(optimize_evs_for_battle,
-                                     ev_optimizer_inputs);
+            EvOptimizerInput&>(
+            optimize_evs_for_battle,
+            ev_optimizer_inputs
+        );
 
     pokemon_and_ability_to_evs_and_losses_beaten
         .at(pokemon)
@@ -1642,13 +1978,36 @@ inline void round_robin(
         PokemonPairHash
     > pokemon_to_forms =
         get_all_pokemon_to_analyze(pokemon_name_to_serebii_pokemon);
+
+    std::vector<CustomPokemon*> players{};
+    std::unordered_map<CustomPokemon*, uint16_t> player_indices;
+    for (auto& player_pokemon_forms :
+         pokemon_to_forms | std::views::values
+    ) {
+        for (auto& player_pokemon : player_pokemon_forms) {
+            player_indices[&player_pokemon] = players.size();
+            players.emplace_back(&player_pokemon);
+        }
+    }
+
+    std::vector<CustomPokemon*> opponents{};
+    std::unordered_map<CustomPokemon*, uint16_t> opponent_indices;
+    for (auto& opponent_pokemon_forms :
+         pokemon_to_forms | std::views::values
+    ) {
+        for (auto& opponent_pokemon : opponent_pokemon_forms) {
+            opponent_indices[&opponent_pokemon] = opponents.size();
+            opponents.emplace_back(&opponent_pokemon);
+        }
+    }
+
     std::vector<
         std::pair<
             std::pair<Pokemon, Ability>,
             std::vector<BattleEntry>
         >
     > pokemon_to_battles{};
-    get_battle_entries(pokemon_to_forms, pokemon_to_battles);
+    get_battle_entries(players, opponents, pokemon_to_battles);
 
     std::vector<
         std::pair<
@@ -1672,6 +2031,16 @@ inline void round_robin(
         pokemon_to_battle_result_entries,
         player_pokemon_to_forms
     );
+    std::vector<CustomPokemon*> better_players{};
+    std::unordered_map<CustomPokemon*, uint16_t> better_player_indices;
+    for (auto& player_pokemon_forms :
+         player_pokemon_to_forms | std::views::values
+    ) {
+        for (auto& player_pokemon : player_pokemon_forms) {
+            better_player_indices[&player_pokemon] = better_players.size();
+            better_players.emplace_back(&player_pokemon);
+        }
+    }
 
     std::vector<
         std::pair<
@@ -1680,8 +2049,8 @@ inline void round_robin(
         >
     > best_move_pokemon_to_battles{};
     get_battle_entries(
-        player_pokemon_to_forms,
-        pokemon_to_forms,
+        better_players,
+        opponents,
         best_move_pokemon_to_battles
     );
     std::vector<
@@ -1700,14 +2069,12 @@ inline void round_robin(
         std::vector<
             std::pair<
                 EVSet,
-                std::shared_ptr<CustomPokemon>>
+                const size_t>
         >,
         PokemonPairHash
     > pokemon_and_ability_to_evs_and_losses_beaten{};
-    for (const auto& [
-             pokemon,
-             battle_results
-         ] : best_moves_pokemon_to_battle_result_entries
+    for (const auto& battle_results :
+         best_moves_pokemon_to_battle_result_entries | std::views::values
     ) {
         std::unordered_map<
             std::pair<Pokemon, Ability>,
@@ -1716,8 +2083,8 @@ inline void round_robin(
         > pokemon_to_battle_losses{};
         for (const auto& battle_result : battle_results) {
             const auto& [
-                original_player,
-                original_opponent,
+                original_player_index,
+                original_opponent_index,
                 won,
                 player_moves,
                 opponent_moves
@@ -1725,6 +2092,8 @@ inline void round_robin(
             if (won) {
                 continue;
             }
+            const auto& original_player =
+                better_players[original_player_index];
             pokemon_to_battle_losses[
                 std::make_pair(
                     original_player->name,
@@ -1732,12 +2101,14 @@ inline void round_robin(
                 )
             ].emplace_back(battle_result);
         }
-        for (const auto& [
+        for (auto& [
                  pair,
                  losses
              ] : pokemon_to_battle_losses
         ) {
             get_stat_spreads(
+                better_players,
+                opponents,
                 pokemon_and_ability_to_evs_and_losses_beaten,
                 pair,
                 losses
@@ -1745,8 +2116,50 @@ inline void round_robin(
         }
         // (0.6 * nature) increase per 4 EVs
         // (stat * 1.1) for ability
-
     }
+
+    constexpr size_t BITSET_SIZE =
+        static_cast<size_t>(Pokemon::Count) *
+        static_cast<size_t>(Ability::Disabled);
+    std::unordered_map<
+        std::pair<Pokemon, Ability>,
+        std::vector<
+            std::pair<
+                EVSet,
+                std::bitset<BITSET_SIZE>
+            >
+        >,
+        PokemonPairHash
+    > pokemon_and_ability_to_evs_to_all_losses_beaten{};
+    for (const auto& [
+             p,
+             ev_sets
+         ] : pokemon_and_ability_to_evs_and_losses_beaten) {
+        std::cout << ev_sets.size() << std::endl;
+        for (const auto& [
+                 ev_set,
+                 beaten_opponent
+             ] : ev_sets
+        ) {
+            std::bitset<BITSET_SIZE> beaten_opponents{};
+            beaten_opponents.set(beaten_opponent);
+            for (const auto& [
+                     ev_set2,
+                     beaten_opponent2
+                 ] : ev_sets
+            ) {
+                if (ev_set2.is_less_than(ev_set)) {
+                    beaten_opponents.set(beaten_opponent2);
+                }
+            }
+            pokemon_and_ability_to_evs_to_all_losses_beaten[p].emplace_back(
+                ev_set,
+                beaten_opponents
+            );
+        }
+    }
+
+
     printf("");
 }
 

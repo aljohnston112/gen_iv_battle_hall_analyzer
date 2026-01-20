@@ -38,9 +38,9 @@ enum class FieldLocation {
 
 struct BestMove {
     const MoveInfo* move = nullptr;
-    uint16_t damage = 0;
-    uint16_t potential_damage = 0;
-    uint16_t times_to_hit = 1;
+    uint32_t damage = 0;
+    uint32_t potential_damage = 0;
+    uint32_t times_to_hit = 1;
 };
 
 inline uint16_t calculate_stat_based_on_stage(
@@ -247,38 +247,38 @@ class PokemonState {
 
 public:
     const bool is_player;
-    CustomPokemon& pokemon;
+    CustomPokemon* pokemon;
     const uint8_t level;
     const uint16_t max_health;
 
-    PokemonState(CustomPokemon& pokemon, const bool is_player) :
-        moves(pokemon.moves),
-        types(pokemon.types),
-        ability(pokemon.ability),
-        pounds(pokemon.pounds),
-        item(pokemon.item),
+    PokemonState(CustomPokemon* pokemon, const bool is_player) :
+        moves(pokemon->moves),
+        types(pokemon->types),
+        ability(pokemon->ability),
+        pounds(pokemon->pounds),
+        item(pokemon->item),
         current_stats(
             {
-                static_cast<int16_t>(pokemon.stats[HEALTH_INDEX]),
-                static_cast<int16_t>(pokemon.stats[ATTACK_INDEX]),
-                static_cast<int16_t>(pokemon.stats[DEFENSE_INDEX]),
-                static_cast<int16_t>(pokemon.stats[SPECIAL_ATTACK_INDEX]),
-                static_cast<int16_t>(pokemon.stats[SPECIAL_DEFENSE_INDEX]),
-                static_cast<int16_t>(pokemon.stats[SPEED_INDEX])
+                static_cast<int16_t>(pokemon->stats[HEALTH_INDEX]),
+                static_cast<int16_t>(pokemon->stats[ATTACK_INDEX]),
+                static_cast<int16_t>(pokemon->stats[DEFENSE_INDEX]),
+                static_cast<int16_t>(pokemon->stats[SPECIAL_ATTACK_INDEX]),
+                static_cast<int16_t>(pokemon->stats[SPECIAL_DEFENSE_INDEX]),
+                static_cast<int16_t>(pokemon->stats[SPEED_INDEX])
             }
         ),
         grounded(item == Item::IronBall),
         is_player(is_player),
         pokemon(pokemon),
-        level(pokemon.level),
-        max_health(pokemon.stats[HEALTH_INDEX]) {
+        level(pokemon->level),
+        max_health(pokemon->stats[HEALTH_INDEX]) {
         power_points.fill(0);
         for (const auto& move : moves) {
             power_points[static_cast<int>(move->move)] = move->power_points;
         }
         if (ability == Ability::Multitype &&
             PLATE_ITEMS[static_cast<int>(item)] &&
-            pokemon.name == Pokemon::Arceus
+            pokemon->name == Pokemon::Arceus
         ) {
             types = {
                 PLATE_ITEM_TYPES[static_cast<int>(item)],
@@ -344,7 +344,7 @@ public:
             grounded = this->item == Item::IronBall;
             if (ability == Ability::Multitype &&
                 PLATE_ITEMS[static_cast<int>(item)] &&
-                pokemon.name == Pokemon::Arceus
+                pokemon->name == Pokemon::Arceus
             ) {
                 types = {
                     PLATE_ITEM_TYPES[static_cast<int>(item)],
@@ -364,10 +364,10 @@ public:
         item = Item::None;
         grounded = false;
         if (PLATE_ITEMS[static_cast<int>(item)] &&
-            pokemon.name == Pokemon::Arceus &&
+            pokemon->name == Pokemon::Arceus &&
             ability == Ability::Multitype
         ) {
-            types = pokemon.types;
+            types = pokemon->types;
         }
     }
 
@@ -576,7 +576,7 @@ public:
         current_stats[index] =
             static_cast<int16_t>(
                 calculate_stat_based_on_stage(
-                    pokemon.stats[index],
+                    pokemon->stats[index],
                     stat_stages[index]
                 )
             );
@@ -590,7 +590,7 @@ public:
                 current_stats[i] =
                     static_cast<int16_t>(
                         calculate_stat_based_on_stage(
-                            pokemon.stats[i],
+                            pokemon->stats[i],
                             stat_stages[i]
                         )
                     );
@@ -968,7 +968,7 @@ public:
         return damage;
     }
 
-    uint16_t get_damage_of_attacker_move(
+    uint32_t get_damage_of_attacker_move(
         Item attacker_item,
         const MoveInfo* attacker_move_info,
         PokemonState& defender_state,
@@ -1024,7 +1024,7 @@ public:
         }
         if (ability == Ability::IceBody &&
             weather == Weather::HAIL &&
-            ability == pokemon.ability
+            ability == pokemon->ability
         ) {
             heal(max_health / 8);
         }
@@ -1712,8 +1712,8 @@ inline int16_t get_power_based_on_move(
         }
     } else if (attacker_move == Move::GyroBall) {
         power = std::min(
-            static_cast<int16_t>(150),
-            static_cast<int16_t>(
+            150,
+            static_cast<int32_t>(
                 std::floor(
                     25 * defender_state.get_speed(weather) /
                     attacker_state.get_speed(weather)
@@ -1722,8 +1722,8 @@ inline int16_t get_power_based_on_move(
         );
     } else if (attacker_move == Move::Punishment) {
         power = std::min(
-            static_cast<int16_t>(200),
-            static_cast<int16_t>(
+            200,
+            static_cast<int32_t>(
                 std::floor(
                     60 + 20 * (
                         defender_state.get_attack_stage() +
@@ -1865,7 +1865,7 @@ inline int16_t apply_item_power_modifiers(
     ) {
         power = std::floor(power * 1.2);
     } else if (attacker_item == Item::LightBall &&
-        attacker_state.pokemon.name == Pokemon::Pikachu
+        attacker_state.pokemon->name == Pokemon::Pikachu
     ) {
         power = static_cast<int16_t>(power * 2);
     }
@@ -1986,13 +1986,13 @@ inline uint16_t get_move_power(
     return power;
 }
 
-inline int16_t apply_damage_modifiers(
+inline int32_t apply_damage_modifiers(
     const PokemonState& attacker_state,
     const MoveInfo* attacker_move_info,
     const PokemonType move_type,
     const PokemonState& defender_state,
     const Weather weather,
-    int16_t damage,
+    int32_t damage,
     double effectiveness
 ) {
     const auto attacker_ability = attacker_state.get_ability();
@@ -2007,7 +2007,7 @@ inline int16_t apply_damage_modifiers(
 
     // Random
     if (attacker_state.is_player && attacker_move_info->move != Move::SpitUp) {
-        damage = static_cast<int16_t>(std::floor(damage * 85 / 100));
+        damage = static_cast<int32_t>(std::floor(damage * 85 / 100));
     }
 
     // Type effectiveness
@@ -2109,7 +2109,7 @@ inline int16_t apply_damage_modifiers(
         damage *= 2;
     }
 
-    return static_cast<int16_t>(std::floor(damage));
+    return static_cast<int32_t>(std::floor(damage));
 }
 
 inline std::array<int16_t, LEVEL + 1> DAMAGE_CACHE = [] {
@@ -2118,7 +2118,7 @@ inline std::array<int16_t, LEVEL + 1> DAMAGE_CACHE = [] {
     return array;
 }();
 
-inline uint16_t PokemonState::get_damage_of_attacker_move(
+inline uint32_t PokemonState::get_damage_of_attacker_move(
     const Item attacker_item,
     const MoveInfo* attacker_move_info,
     PokemonState& defender_state,
@@ -2194,8 +2194,9 @@ inline uint16_t PokemonState::get_damage_of_attacker_move(
         return 0;
     }
 
+    assert(defender_defense > 0);
     damage = std::floor(damage * power * attacker_attack / defender_defense);
-    damage = static_cast<int16_t>(std::floor(damage / 50) + 2);
+    damage = static_cast<int32_t>(std::floor(damage / 50) + 2);
 
     auto defender_types = defender_state.get_types();
     if (defender_state.is_grounded() &&

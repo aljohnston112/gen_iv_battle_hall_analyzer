@@ -42,9 +42,9 @@ namespace thread_pool {
         void submit(
             std::vector<std::future<PromiseResult>>& futures,
             const std::function<
-                void(const ParameterType&, std::promise<PromiseResult>&&)
+                void(ParameterType&, std::promise<PromiseResult>&&)
             >& function,
-            const ParameterType& data
+            ParameterType& data
         ) {
             auto promise = std::promise<PromiseResult>{};
             futures.emplace_back(promise.get_future());
@@ -69,13 +69,13 @@ namespace thread_pool {
         >
         auto createAndRunTasks(
             std::function<
-                void(const ParameterType&, std::promise<PromiseResult>&&)
+                void(ParameterType&, std::promise<PromiseResult>&&)
             >&& function,
-            const DataContainer& allData
+            DataContainer& allData
         ) {
             std::vector<PromiseResult> results{};
             std::vector<std::future<PromiseResult>> futures;
-            for (const ParameterType& data : allData) {
+            for (ParameterType& data : allData) {
                 submit(
                     futures,
                     function,
@@ -97,15 +97,15 @@ namespace thread_pool {
         auto runTasksAndFlatten(
             std::function<
                 void(
-                    const ParameterType&,
+                    ParameterType&,
                     std::promise<std::vector<PromiseResult>>&&
                 )
             >&& function,
-            const DataContainer& allData
+            DataContainer& allData
         ) {
             std::vector<PromiseResult> results{};
             std::vector<std::future<std::vector<PromiseResult>>> futures;
-            for (const ParameterType& data : allData) {
+            for (ParameterType& data : allData) {
                 submit(
                     futures,
                     function,

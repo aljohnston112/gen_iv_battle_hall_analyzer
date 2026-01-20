@@ -17,8 +17,8 @@ struct MoveDamagePairHash {
 };
 
 struct BattleResultEntry {
-    std::shared_ptr<CustomPokemon> player;
-    std::shared_ptr<CustomPokemon> opponent;
+    size_t player_index;
+    size_t opponent_index;
     bool won;
     std::vector<
         std::tuple<Move, int, int>
@@ -28,14 +28,14 @@ struct BattleResultEntry {
     > opponent_moves;
 
     BattleResultEntry(
-        std::shared_ptr<CustomPokemon> player_,
-        std::shared_ptr<CustomPokemon> opponent_,
+        const size_t player_,
+        const size_t opponent_,
         const bool won_,
         std::vector<std::tuple<Move, int, int>> player_moves_,
         std::vector<std::tuple<Move, int, int>> opponent_moves_
     )
-        : player(std::move(player_)),
-          opponent(std::move(opponent_)),
+        : player_index(player_),
+          opponent_index(opponent_),
           won(won_),
           player_moves(std::move(player_moves_)),
           opponent_moves(std::move(opponent_moves_)) {}
@@ -44,12 +44,8 @@ struct BattleResultEntry {
         won(other.won),
         player_moves(other.player_moves),
         opponent_moves(other.opponent_moves) {
-        if (other.player) {
-            player = std::make_shared<CustomPokemon>(*other.player);
-        }
-        if (other.opponent) {
-            opponent = std::make_shared<CustomPokemon>(*other.opponent);
-        }
+        player_index = other.player_index;
+        opponent_index = other.opponent_index;
     }
 
     BattleResultEntry& operator=(const BattleResultEntry& other) {
@@ -59,13 +55,8 @@ struct BattleResultEntry {
         player_moves = other.player_moves;
         opponent_moves = other.opponent_moves;
 
-        player = other.player
-            ? std::make_shared<CustomPokemon>(*other.player)
-            : nullptr;
-        opponent = other.opponent
-            ? std::make_shared<CustomPokemon>(*other.opponent)
-            : nullptr;
-
+        player_index = other.player_index;
+        opponent_index = other.opponent_index;
         return *this;
     }
 
@@ -74,8 +65,10 @@ struct BattleResultEntry {
 };
 
 BattleResultEntry battle(
-    CustomPokemon& player,
-    CustomPokemon& opponent
+    size_t player_index,
+    CustomPokemon* player,
+    size_t opponent_index,
+    CustomPokemon* opponent
 );
 
 inline void check_download(PokemonState& state0, PokemonState& state1) {
@@ -277,8 +270,8 @@ class BattleState {
 
 public:
     BattleState(
-        CustomPokemon& player_pokemon,
-        CustomPokemon& opponent_pokemon
+        CustomPokemon* player_pokemon,
+        CustomPokemon* opponent_pokemon
     ) :
         player_state{player_pokemon, true},
         opponent_state{opponent_pokemon, false} {}
@@ -327,7 +320,10 @@ public:
         return opponent_state;
     }
 
-    BattleResultEntry battle();
+    BattleResultEntry battle_indices(
+        size_t player_index,
+        size_t opponent_index
+    );
 };
 
 

@@ -6,11 +6,11 @@
 #include "src/round_robin.h"
 
 int main() {
-if (MULTI_THREADED) {
-    printf("OpenMP version: %d\n", _OPENMP);
-} else {
-    printf("OpenMP is not enabled.\n");
-}
+    // if (MULTI_THREADED) {
+    //     printf("OpenMP version: %d\n", _OPENMP);
+    // } else {
+    //     printf("OpenMP is not enabled.\n");
+    // }
 
     const auto start =
         std::chrono::high_resolution_clock::now();

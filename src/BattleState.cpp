@@ -425,16 +425,16 @@ BestMove BattleState::choose_move_against_defender(
     for (const auto& attacker_move :
          attacker_state.get_moves()
     ) {
-        if (attacker_state.pokemon.ability == Ability::SwiftSwim &&
-            attacker_state.pokemon.name == Pokemon::Magikarp &&
-            defender_state.pokemon.ability == Ability::SwiftSwim &&
-            defender_state.pokemon.name == Pokemon::Magikarp &&
-            attacker_state.is_player &&
-            (attacker_move->move == Move::Flail ||
-                attacker_move->move == Move::SecretPower)
-        ) {
-            volatile int a = 0;
-        }
+        // if (attacker_state.pokemon->ability == Ability::SwiftSwim &&
+        //     attacker_state.pokemon->name == Pokemon::Magikarp &&
+        //     defender_state.pokemon->ability == Ability::SwiftSwim &&
+        //     defender_state.pokemon->name == Pokemon::Magikarp &&
+        //     attacker_state.is_player &&
+        //     (attacker_move->move == Move::Flail ||
+        //         attacker_move->move == Move::SecretPower)
+        // ) {
+        //     volatile int a = 0;
+        // }
 
         if (has_choice_item &&
             attacker_state.is_choiced() &&
@@ -649,15 +649,15 @@ BestMove BattleState::choose_move_against_defender(
     if (damage_to_defender != 0) {
         hits_to_defender = defender_health / damage_to_defender;
     } else {
-        auto attacker_name = attacker_pokemon.name;
-        auto defender_name = defender_state.pokemon.name;
+        auto attacker_name = attacker_pokemon->name;
+        auto defender_name = defender_state.pokemon->name;
         if (((attacker_name == Pokemon::Wobbuffet ||
                 attacker_name == Pokemon::Wynaut)) ||
             ((attacker_name == Pokemon::Lanturn ||
                     attacker_name == Pokemon::Chinchou ||
                     attacker_name == Pokemon::Rotom ||
                     attacker_name == Pokemon::Drifblim) &&
-                (defender_state.pokemon.ability == Ability::MotorDrive)) ||
+                (defender_state.pokemon->ability == Ability::MotorDrive)) ||
             ((attacker_name == Pokemon::Houndoom) &&
                 (defender_ability == Ability::FlashFire)) ||
             ((attacker_name == Pokemon::Zigzagoon ||
@@ -744,7 +744,7 @@ BestMove BattleState::choose_move_against_defender(
 
     // Check if it is better to use a status move
     if (!has_choice_item) {
-        for (const auto& move : attacker_pokemon.moves) {
+        for (const auto& move : attacker_pokemon->moves) {
             if (should_skip_move(
                     attacker_state,
                     move,
@@ -828,7 +828,7 @@ BestMove BattleState::choose_move_against_defender(
     // Healing may be better too
     const auto defenders_last_used_move =
         defender_state.get_last_used_move();
-    for (const auto& move : attacker_pokemon.moves) {
+    for (const auto& move : attacker_pokemon->moves) {
         if (should_skip_move(
                 attacker_state,
                 move,
@@ -912,7 +912,7 @@ BestMove BattleState::choose_move_against_defender(
     }
 
     // Weather
-    for (const auto& move : attacker_pokemon.moves) {
+    for (const auto& move : attacker_pokemon->moves) {
         if (should_skip_move(
                 attacker_state,
                 move,
@@ -2303,7 +2303,10 @@ void BattleState::apply_post_move_effects(
     }
 }
 
-BattleResultEntry BattleState::battle() {
+BattleResultEntry BattleState::battle_indices(
+    size_t player_index,
+    size_t opponent_index
+) {
     std::vector<
         std::tuple<Move, int, int>
     > player_moves{};
@@ -2468,16 +2471,16 @@ BattleResultEntry BattleState::battle() {
 
     if (player_state.get_health() > 0) {
         return {
-            std::make_shared<CustomPokemon>(player_state.pokemon),
-            std::make_shared<CustomPokemon>(opponent_state.pokemon),
+            player_index,
+            opponent_index,
             true,
             std::move(player_moves),
             std::move(opponent_moves)
         };
     }
     return {
-        std::make_shared<CustomPokemon>(player_state.pokemon),
-        std::make_shared<CustomPokemon>(opponent_state.pokemon),
+        player_index,
+        opponent_index,
         false,
         std::move(player_moves),
         std::move(opponent_moves)
@@ -2485,9 +2488,11 @@ BattleResultEntry BattleState::battle() {
 }
 
 BattleResultEntry battle(
-    CustomPokemon& player,
-    CustomPokemon& opponent
+    const size_t player_index,
+    CustomPokemon* player,
+    const size_t opponent_index,
+    CustomPokemon* opponent
 ) {
     BattleState battle_state{player, opponent};
-    return std::move(battle_state.battle());
+    return std::move(battle_state.battle_indices(player_index, opponent_index));
 }
