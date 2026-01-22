@@ -14,7 +14,7 @@ option(ENABLE_LIBSTDCXX_DEBUG "Enable _GLIBCXX_DEBUG for debug builds" OFF)
 if (ENABLE_LIBSTDCXX_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 endif()
-option(ENABLE_ADDRESS_SANITIZER "Enable address sanitizer" ON)
+option(ENABLE_ADDRESS_SANITIZER "Enable address sanitizer" OFF)
 if(ENABLE_ADDRESS_SANITIZER)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,undefined")
 endif()
@@ -25,7 +25,9 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fopenmp")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp")
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-add_executable(gen_iv_battle_hall_team_builder main.cpp
+add_executable(
+        gen_iv_battle_hall_team_builder
+        main.cpp
         src/battle_hall_data_source.cpp
         src/battle_hall_data_source.h
         src/serebii_pokemon_data_source.cpp
@@ -47,6 +49,9 @@ add_executable(gen_iv_battle_hall_team_builder main.cpp
         src/round_robin.h
         src/thread_pool.cpp
         src/thread_pool.h
+        src/EVOptimizer.cpp
+        src/EVOptimizer.h
+        src/EVSet.h
 )
 target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
 

@@ -1,10 +1,18 @@
 #ifndef BATTLE_SIMULATOR_H
 #define BATTLE_SIMULATOR_H
 
+#include <future>
 #include <memory>
 
 #include "custom_pokemon.h"
 #include "PokemonState.h"
+
+struct PokemonPairHash {
+    std::size_t operator()(const std::pair<Pokemon, Ability>& p) const {
+        return (static_cast<int>(p.first) << bits_for_ability) |
+            static_cast<int>(p.second);
+    }
+};
 
 struct MoveDamagePairHash {
     std::size_t operator()(
@@ -14,6 +22,13 @@ struct MoveDamagePairHash {
         const std::size_t h2 = std::hash<int>{}(p.second);
         return h1 ^ (h2 << 8);
     }
+};
+
+struct BattleEntry {
+    size_t player_index;
+    CustomPokemon player;
+    size_t opponent_index;
+    CustomPokemon opponent;
 };
 
 struct BattleResultEntry {
@@ -71,6 +86,20 @@ BattleResultEntry battle(
     CustomPokemon* opponent
 );
 
+inline void battle_all(
+    BattleEntry& battle_entry,
+    std::promise<BattleResultEntry>&& promise
+) {
+    promise.set_value(
+        battle(
+            battle_entry.player_index,
+            &battle_entry.player,
+            battle_entry.opponent_index,
+            &battle_entry.opponent
+        )
+    );
+}
+
 inline void check_download(PokemonState& state0, PokemonState& state1) {
     if (const auto ability0 = state0.get_ability();
         ability0 == Ability::Download
@@ -123,7 +152,9 @@ inline void check_trace(
 }
 
 class BattleState {
+    size_t player_index;
     PokemonState player_state;
+    size_t opponent_index;
     PokemonState opponent_state;
 
     bool first_turn = true;
@@ -270,10 +301,14 @@ class BattleState {
 
 public:
     BattleState(
+        size_t player_index,
         CustomPokemon* player_pokemon,
+        size_t opponent_index,
         CustomPokemon* opponent_pokemon
     ) :
+        player_index{player_index},
         player_state{player_pokemon, true},
+        opponent_index{opponent_index},
         opponent_state{opponent_pokemon, false} {}
 
     void check_abilities(const bool player_goes_first) {
@@ -320,10 +355,7 @@ public:
         return opponent_state;
     }
 
-    BattleResultEntry battle_indices(
-        size_t player_index,
-        size_t opponent_index
-    );
+    BattleResultEntry battle_loop();
 };
 
 

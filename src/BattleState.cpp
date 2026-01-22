@@ -2303,10 +2303,7 @@ void BattleState::apply_post_move_effects(
     }
 }
 
-BattleResultEntry BattleState::battle_indices(
-    size_t player_index,
-    size_t opponent_index
-) {
+BattleResultEntry BattleState::battle_loop() {
     std::vector<
         std::tuple<Move, int, int>
     > player_moves{};
@@ -2493,6 +2490,11 @@ BattleResultEntry battle(
     const size_t opponent_index,
     CustomPokemon* opponent
 ) {
-    BattleState battle_state{player, opponent};
-    return std::move(battle_state.battle_indices(player_index, opponent_index));
+    BattleState battle_state{
+        player_index,
+        player,
+        opponent_index,
+        opponent
+    };
+    return std::move(battle_state.battle_loop());
 }

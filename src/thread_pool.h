@@ -94,17 +94,17 @@ namespace thread_pool {
             class DataContainer,
             class ParameterType
         >
-        auto runTasksAndFlatten(
+        auto runTasksAndFlattenMaps(
             std::function<
                 void(
                     ParameterType&,
-                    std::promise<std::vector<PromiseResult>>&&
+                    std::promise<PromiseResult>&&
                 )
             >&& function,
             DataContainer& allData
         ) {
-            std::vector<PromiseResult> results{};
-            std::vector<std::future<std::vector<PromiseResult>>> futures;
+            PromiseResult results{};
+            std::vector<std::future<PromiseResult>> futures;
             for (ParameterType& data : allData) {
                 submit(
                     futures,
@@ -114,7 +114,9 @@ namespace thread_pool {
             }
             for (auto& future : futures) {
                 auto result = future.get();
-                results.append_range(std::move(result));
+                for (const auto& [k, v]: result) {
+                    results[std::move(k)] = std::move(v);
+                }
             }
             return results;
         }
