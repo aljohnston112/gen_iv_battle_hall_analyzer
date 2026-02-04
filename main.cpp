@@ -1,9 +1,11 @@
 #include <chrono>
 #include <iostream>
 
+#include "src/battle_hall_analyzer.h"
 #include "src/battle_hall_data_source.h"
 #include "src/config.h"
 #include "src/round_robin.h"
+#include "src/battle_factory/factory_data_source.h"
 
 int main() {
     // if (MULTI_THREADED) {
@@ -15,10 +17,26 @@ int main() {
     const auto start =
         std::chrono::high_resolution_clock::now();
 
-    const auto all_serebii_pokemon =
-        get_all_serebii_pokemon();
-    round_robin(all_serebii_pokemon);
+    const auto battle_factory_pokemon_p =
+        get_custom_batle_factory_pokemon();
+    const auto battle_factory_pokemon_o =
+        get_custom_batle_factory_pokemon();
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
+    > pokemon_to_battle_result_entries = do_round_robin(
+        battle_factory_pokemon_p,
+        battle_factory_pokemon_o
+    );
 
+
+    // const auto all_serebii_pokemon =
+    //     get_all_serebii_pokemon();
+    //
+    // // round_robin(all_serebii_pokemon);
+    //
     // const auto all_moves =
     //     get_all_pokemon_moves(
     //         all_serebii_pokemon
@@ -27,7 +45,7 @@ int main() {
     //     get_all_battle_hall_pokemon(
     //         all_moves
     //     );
-    // const auto group_to_rank_to_over_2 =
+    // auto group_to_rank_to_over_2 =
     //     get_all_custom_hall_pokemon(
     //         all_serebii_pokemon,
     //         all_battle_hall_pokemon,
@@ -38,9 +56,9 @@ int main() {
     // //     group_to_rank_to_over_2
     // // );
     //
-    // const auto player_pokemon_forms =
+    // auto player_pokemon_forms =
     //     get_pokemon_forms(all_serebii_pokemon);
-    // for (const auto& pokemon_form :
+    // for (auto& pokemon_form :
     //      player_pokemon_forms
     // ) {
     //     if (SKIP_RANKS) {

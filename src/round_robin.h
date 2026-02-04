@@ -1215,6 +1215,90 @@ inline std::vector<
     return pokemon_to_battle_result_entries;
 }
 
+inline
+std::vector<
+    std::pair<
+        std::pair<Pokemon, Ability>,
+        std::vector<BattleEntry>
+    >
+> get_battle_entries(
+    std::vector<CustomPokemon>& players,
+    std::vector<CustomPokemon>& opponents
+) {
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleEntry>
+        >
+    > pokemon_to_battles{};
+    pokemon_to_battles.reserve(
+        players.size() + opponents.size()
+    );
+    for (auto [
+             player_index,
+             player_pokemon
+         ] : std::views::enumerate(players)
+    ) {
+        auto player_name = player_pokemon.name;
+        if constexpr (TEAM_ONLY && !team.contains(player_name)) {
+            continue;
+        }
+        if (TEAM_ONLY) {
+            change_stats(&player_pokemon);
+        }
+        std::vector<BattleEntry> battles_for_player{};
+        for (const auto [
+                 opponent_index,
+                 opponent_pokemon
+             ] : std::views::enumerate(opponents)
+        ) {
+            battles_for_player.emplace_back(
+                BattleEntry{
+                    .player_index = static_cast<size_t>(player_index),
+                    .player = player_pokemon,
+                    .opponent_index = static_cast<size_t>(opponent_index),
+                    .opponent = opponent_pokemon,
+                }
+            );
+        }
+        pokemon_to_battles.push_back(
+            std::make_pair(
+                std::make_pair(
+                    player_name,
+                    player_pokemon.ability
+                ),
+                battles_for_player
+            )
+        );
+    }
+    return pokemon_to_battles;
+}
+
+inline std::vector<
+    std::pair<std::pair<Pokemon, Ability>,
+              std::vector<BattleResultEntry>>
+> do_round_robin(
+    std::vector<CustomPokemon> players,
+    std::vector<CustomPokemon> opponents
+) {
+    // The CustomPokemon in the BattleEntry are unique copies
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleEntry>
+        >
+    > pokemon_to_battles = get_battle_entries(players, opponents);
+
+    // BattleResultEntry only holds indices to CustomPokemon
+    std::vector<
+        std::pair<
+            std::pair<Pokemon, Ability>,
+            std::vector<BattleResultEntry>
+        >
+    > pokemon_to_battle_result_entries = do_battles(pokemon_to_battles);
+    return pokemon_to_battle_result_entries;
+}
+
 inline void round_robin(
     const std::unordered_map<
         std::string,

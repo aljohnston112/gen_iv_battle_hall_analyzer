@@ -13,12 +13,13 @@ constexpr int NUMBER_OF_THREADS =
         ? 8
         : 1;
 
+constexpr uint8_t BATTLE_FACTORY_LEVEL = 50;
 constexpr uint8_t LEVEL = 60;
 constexpr bool SKIP_RANKS = false;
 constexpr bool ALL_MOVES = false;
 constexpr bool USE_HIGHEST_RANK_FOR_WALLS = true;
-constexpr bool ANALYZE_ALL = true;
-constexpr bool FULL_PRINT = false;
+constexpr bool ANALYZE_ALL = false;
+constexpr bool FULL_PRINT = true;
 constexpr bool SKIP_COUNTER_AND_MIRROR_COAT = true;
 constexpr bool TEAM_ONLY = false;
 
@@ -207,7 +208,7 @@ inline std::vector<
     } else {
         pokemon_forms.push_back(
             convert_serebii_to_custom(
-                all_serebii_pokemon.at("Azurill"),
+                all_serebii_pokemon.at("Kangaskhan"),
                 true,
                 true
             )
@@ -221,9 +222,9 @@ inline std::vector<
                 // Move::Detect,
                 // Move::CloseCombat,
                 Move::Return,
-                Move::Waterfall,
-                Move::KnockOff,
-                Move::Surf,
+                Move::FakeOut,
+                Move::Earthquake,
+                Move::SuckerPunch,
             };
             for (auto& p : p_list) {
                 std::vector<const MoveInfo*> moves{};
@@ -241,14 +242,14 @@ inline std::vector<
                     }
                 }
                 p.moves = moves;
-                p.stats[0] = 70;
-                p.stats[1] = 38;
-                p.stats[2] = 32;
-                p.stats[3] = 15;
-                p.stats[4] = 29;
-                p.stats[5] = 33;
-                p.item = Item::FocusSash;
-                p.ability = Ability::HugePower;
+                p.stats[0] = 196;
+                p.stats[1] = 127;
+                p.stats[2] = 101;
+                p.stats[3] = 53;
+                p.stats[4] = 138;
+                p.stats[5] = 143;
+                p.item = Item::None;
+                p.ability = Ability::Scrappy;
             }
         }
     }

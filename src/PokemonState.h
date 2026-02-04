@@ -143,6 +143,9 @@ class PokemonState {
     BestMove last_used_move{};
     BestMove chosen_move{};
 
+    uint substitute = 0;
+    bool had_sub_ = false;
+
     void apply_berry() {
         bool eaten = false;
         if (const auto berry = get_item_for_effect();
@@ -206,6 +209,26 @@ class PokemonState {
                     static_cast<int16_t>(max_health),
                     static_cast<int16_t>(current_health + max_health / 4)
                 );
+            eaten = true;
+        } else if (berry == Item::CheriBerry) {
+            if (status == Status::PARALYZED) {
+                status = Status::NONE;
+            }
+            eaten = true;
+        } else if (berry == Item::AspearBerry) {
+            if (status == Status::FROZEN) {
+                status = Status::NONE;
+            }
+            eaten = true;
+        } else if (berry == Item::PechaBerry) {
+            if (status == Status::POISON || status == Status::BADLY_POISONED) {
+                status = Status::NONE;
+            }
+            eaten = true;
+        } else if (berry == Item::RawstBerry) {
+            if (status == Status::BURN) {
+                status = Status::NONE;
+            }
             eaten = true;
         }
         if (!eaten) {
@@ -285,6 +308,10 @@ public:
                 PokemonType::COUNT
             };
         }
+    }
+
+    [[nodiscard]] uint get_subs_health() const {
+        return substitute;
     }
 
     [[nodiscard]] const std::vector<const MoveInfo*>& get_moves() {
@@ -385,9 +412,16 @@ public:
                 );
             const bool eats_status_berry =
                 (item == Item::ChestoBerry && status == Status::SLEEP) ||
+                (item == Item::CheriBerry && status == Status::PARALYZED) ||
+                (item == Item::RawstBerry && status == Status::BURN) ||
+                (item == Item::AspearBerry && status == Status::FROZEN) ||
                 (item == Item::PersimBerry && confused) ||
                 (item == Item::LumBerry &&
                     (status != Status::NONE || confused)
+                ) ||
+                (item == Item::PechaBerry &&
+                    (status == Status::POISON ||
+                        status == Status::BADLY_POISONED)
                 );
             const bool eats_sitrus =
                 item == Item::SitrusBerry && less_than_half_health;
@@ -447,6 +481,13 @@ public:
         ) {
             stat = stat / 2;
         }
+        if (const auto item = get_item_for_effect();
+            (pokemon->name == Pokemon::Cubone ||
+                pokemon->name == Pokemon::Marowak
+            ) && item == Item::ThickClub
+        ) {
+            stat *= 2;
+        }
         return stat;
     }
 
@@ -473,6 +514,10 @@ public:
         ) {
             stat = std::floor(stat * 1.5);
         }
+        if (const auto item = get_item_for_effect();
+            pokemon->name == Pokemon::Clamperl && item == Item::DeepSeaTooth) {
+            stat *= 2;
+        }
         return stat;
     }
 
@@ -485,6 +530,10 @@ public:
             weather == Weather::SUN
         ) {
             stat = std::floor(stat * 1.5);
+        }
+        if (const auto item = get_item_for_effect();
+            pokemon->name == Pokemon::Clamperl && item == Item::DeepSeaScale) {
+            stat *= 2;
         }
         return stat;
     }
@@ -1098,6 +1147,11 @@ public:
         if (item == Item::FlameOrb && !has_type(PokemonType::FIRE)) {
             try_apply_status(Status::BURN, weather, defender_state);
         }
+        if (item == Item::ToxicOrb &&
+            (!has_type(PokemonType::STEEL) && !has_type(PokemonType::POISON))
+        ) {
+            try_apply_status(Status::BADLY_POISONED, weather, defender_state);
+        }
     }
 
     void try_apply_trap_damage(const Ability ability) {
@@ -1143,6 +1197,10 @@ public:
         if (ability == Ability::Truant) {
             truant = !truant;
             recharging = false;
+        }
+
+        if (substitute == 0) {
+            had_sub_ = false;
         }
     }
 
@@ -1229,8 +1287,28 @@ public:
         return power_points[static_cast<int>(move)];
     }
 
-    void set_field_location(FieldLocation field_location) {
+    void set_field_location(const FieldLocation field_location) {
         this->field_location = field_location;
+    }
+
+    bool had_sub() const {
+        return had_sub_;
+    }
+
+    void apply_substitute() {
+        assert(get_health() > max_health / 4);
+        apply_damage(max_health / 4);
+        assert(substitute == 0);
+        substitute = max_health / 4;
+        had_sub_ = true;
+        if (trapped_counter > 0) {
+            trapped_counter = 0;
+        }
+    }
+
+    void apply_damage_to_sub(const int32_t damage) {
+        assert(substitute > 0);
+        substitute = std::max(0, static_cast<int>(substitute) - damage);
     }
 };
 
@@ -1405,11 +1483,13 @@ inline bool check_fake_out(
 
 inline bool does_zero_damage(
     const PokemonState& defender_state,
-    const Move attacker_move
+    const Move attacker_move,
+    const bool attacker_faster
 ) {
-    if (const auto defender_field_position = defender_state.get_field_location()
-        ;
-        defender_field_position != FieldLocation::ON_FIELD
+    if (const auto defender_field_position =
+            defender_state.get_field_location();
+        defender_field_position != FieldLocation::ON_FIELD &&
+        attacker_faster
     ) {
         if ((defender_field_position == FieldLocation::IN_AIR &&
                 !move_has_flag(
@@ -1475,7 +1555,8 @@ inline int check_for_fixed_damage(
     const auto defender_chosen_move_info = defender_chosen_move.move;
     if (attacker_move == Move::Counter) {
         if (defender_chosen_move_info != nullptr &&
-            defender_chosen_move_info->category == Category::PHYSICAL
+            defender_chosen_move_info->category == Category::PHYSICAL &&
+            defender_state.get_subs_health() == 0
         ) {
             return defender_chosen_move.damage * 2;
         }
@@ -1483,13 +1564,16 @@ inline int check_for_fixed_damage(
     }
     if (attacker_move == Move::MirrorCoat) {
         if (defender_chosen_move_info != nullptr &&
-            defender_chosen_move_info->category == Category::SPECIAL
+            defender_chosen_move_info->category == Category::SPECIAL &&
+            defender_state.get_subs_health() == 0
         ) {
             return defender_chosen_move.damage * 2;
         }
         return 0;
     }
-    if (attacker_move == Move::MetalBurst) {
+    if (attacker_move == Move::MetalBurst &&
+        defender_state.get_subs_health() == 0
+    ) {
         if (attacker_hit && defender_chosen_move.damage > 0) {
             return defender_chosen_move.damage * 2;
         }
@@ -1556,15 +1640,28 @@ inline int16_t check_for_zero_or_fixed_damage(
     const PokemonState& attacker_state,
     const MoveInfo* attacker_move_info,
     const PokemonType move_type,
-    const PokemonState& defender_state
+    const PokemonState& defender_state,
+    const bool attacker_faster
 ) {
     auto const attacker_move = attacker_move_info->move;
-    if (does_zero_damage(defender_state, attacker_move)) {
+    if (does_zero_damage(defender_state, attacker_move, attacker_faster)) {
         return 0;
     }
 
     const auto attacker_health = attacker_state.get_health();
     if (type_nullified_by_ability(defender_state.get_ability(), move_type)) {
+        return 0;
+    }
+
+    if (attacker_state.is_player && attacker_move == Move::Present) {
+        return 0;
+    }
+
+    if (attacker_move == Move::Sing ||
+        attacker_move == Move::Toxic ||
+        attacker_move == Move::Metronome ||
+        attacker_move == Move::Refresh
+    ) {
         return 0;
     }
 
@@ -1675,6 +1772,8 @@ inline int16_t get_power_based_on_move(
             power = 10;
         } else if (attacker_item == Item::StickyBarb) {
             power = 80;
+        } else if (attacker_item == Item::IronBall) {
+            power = 130;
         } else if (attacker_item == Item::SpellTag ||
             attacker_item == Item::RazorFang
         ) {
@@ -1787,6 +1886,10 @@ inline int16_t get_power_based_on_move(
         } else if (attacker_move == Move::Submission) {
             power = 96;
         }
+    }
+
+    if (!attacker_state.is_player && attacker_move == Move::Present) {
+        return 120;
     }
     return power;
 }
@@ -2011,7 +2114,6 @@ inline int32_t apply_damage_modifiers(
     }
 
     // Type effectiveness
-
     const auto attacker_move = attacker_move_info->move;
     if (attacker_move == Move::HiddenPower) {
         if (attacker_state.is_player) {
@@ -2046,11 +2148,11 @@ inline int32_t apply_damage_modifiers(
         return 0;
     }
     damage = std::floor(damage * effectiveness);
-    if (const auto item = attacker_state.get_item_for_effect();
-        item == Item::ExpertBelt && effectiveness >= 2
+    if (const auto attacker_item = attacker_state.get_item_for_effect();
+        attacker_item == Item::ExpertBelt && effectiveness >= 2
     ) {
         damage = std::floor(damage * 1.2);
-    } else if (item == Item::LifeOrb) {
+    } else if (attacker_item == Item::LifeOrb) {
         damage = std::floor(damage * 1.3);
     }
 
@@ -2109,6 +2211,15 @@ inline int32_t apply_damage_modifiers(
         damage *= 2;
     }
 
+    // Berries that reduce damage
+    if (const auto defender_item = defender_state.get_item_for_effect();
+        DAMAGE_REDUCING_BERRIES.contains(defender_item) &&
+        DAMAGE_REDUCING_BERRIES.at(defender_item) == attacker_move_info->type &&
+        defender_state.get_subs_health() == 0
+    ) {
+        damage /= 2;
+    }
+
     return static_cast<int32_t>(std::floor(damage));
 }
 
@@ -2132,11 +2243,19 @@ inline uint32_t PokemonState::get_damage_of_attacker_move(
         attacker_ability,
         weather
     );
+
+    const bool attacker_faster = outspeeds(
+        defender_state,
+        defender_state.get_chosen_move().move,
+        attacker_move_info,
+        weather
+    );
     int32_t damage = check_for_zero_or_fixed_damage(
         *this,
         attacker_move_info,
         move_type,
-        defender_state
+        defender_state,
+        attacker_faster
     );
     if (damage != -1) {
         return damage;

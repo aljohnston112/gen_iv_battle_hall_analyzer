@@ -316,5 +316,11 @@ uint16_t get_stat(
     Nature nature
 );
 
+inline int get_iv_for_battle_factory(const int round_number) {
+    if (round_number == 0) return 0;
+    const int iv = (round_number - 1) * 4;
+    return (round_number < 8) ? iv : 31;
+}
+
 
 #endif //NATURE_H

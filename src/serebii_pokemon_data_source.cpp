@@ -774,3 +774,29 @@ std::unordered_map<
     }
     return customs;
 }
+
+std::vector<const MoveInfo*> get_all_pokemon_moves(
+    const std::unordered_map<std::string, SerebiiPokemon>& pokedex
+) {
+    std::vector<const MoveInfo*> all_moves{
+        static_cast<int>(Move::Count),
+        nullptr
+    };
+    for (const auto& serebii_pokemon :
+         pokedex | std::ranges::views::values
+    ) {
+        std::unordered_map<
+            std::string,
+            std::unordered_map<Move, const MoveInfo*>
+        > form_to_moves =
+            get_moves_for_serebii_pokemon(serebii_pokemon);
+        for (const auto& moves : form_to_moves |
+             std::ranges::views::values
+        ) {
+            for (const auto& [move_enum, move] : moves) {
+                all_moves[static_cast<int>(move_enum)] = move;
+            }
+        }
+    }
+    return all_moves;
+}

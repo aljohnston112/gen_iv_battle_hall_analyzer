@@ -193,7 +193,8 @@ inline void check_unimplemented_moves(
             move != Move::GrassKnot &&
             move != Move::Transform &&
             move != Move::FakeOut &&
-            move != Move::FutureSight && // TODO probably useless
+            move != Move::FutureSight &&
+            // TODO probably useless (substitute takes this damage)
             move != Move::Bide && // TODO also probably useless
             move != Move::Snore && // TODO ignored for now
             move != Move::WringOut &&
@@ -231,6 +232,12 @@ inline void check_unimplemented_moves(
             move != Move::Splash &&
             move != Move::Safeguard &&
             move != Move::Struggle &&
+            move != Move::Present &&
+            move != Move::Substitute &&
+            move != Move::Sing && // TODO
+            move != Move::Toxic && // TODO
+            move != Move::Metronome && // TODO
+            move != Move::Refresh && // TODO
             !move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) &&
             (move_has_flag(
                     move,
@@ -376,6 +383,29 @@ BestMove BattleState::choose_move_against_defender(
         defender_state.set_chosen_move(std::move(backup));
     } else {
         damage_from_defender = defender_chosen_move.damage;
+    }
+
+    // Substitute has no downside as far as I can tell in this case
+    if (!attacker_state.is_choiced() &&
+        attacker_state.get_subs_health() == 0 &&
+        attacker_state.get_health() > attacker_state.max_health / 4 &&
+        attacker_state.get_health() / 4 > defender_chosen_move.damage
+    ) {
+        for (const auto& attacker_move :
+             attacker_state.get_moves()
+        ) {
+            if (attacker_move->move == Move::Substitute) {
+                attacker_state.set_chosen_move(
+                    BestMove{
+                        .move = attacker_move,
+                        .damage = 0,
+                        .potential_damage = 0,
+                        .times_to_hit = 1
+                    }
+                );
+                return attacker_state.get_chosen_move();
+            }
+        }
     }
 
     const auto attacker_health = attacker_state.get_health();
@@ -1419,6 +1449,13 @@ void BattleState::execute_move(
         attacker_state.clear_metronome();
     }
 
+    // Substitute
+    if (attacker_move == Move::Substitute) {
+        attacker_state.apply_substitute();
+        attacker_state.update_last_used_move(false, defender_ability);
+        return;
+    }
+
     // Do the damage
     if (attacker_state.get_field_location() == FieldLocation::ON_FIELD &&
         (move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
@@ -1427,22 +1464,34 @@ void BattleState::execute_move(
         !(defender_state.get_field_location() != FieldLocation::ON_FIELD &&
             attacker_chosen_move.damage == 0)
     ) {
+        const bool had_sub = defender_state.had_sub();
         // Apply the damage
         if ((defender_ability == Ability::VoltAbsorb &&
                 attacker_chosen_move.move->type == PokemonType::ELECTRIC) ||
             ((defender_ability == Ability::WaterAbsorb ||
                     defender_ability == Ability::DrySkin) &&
-                attacker_chosen_move.move->type == PokemonType::WATER)
+                attacker_chosen_move.move->type == PokemonType::WATER) ||
+            (attacker_is_player && attacker_move == Move::Present)
         ) {
             defender_state.heal(
                 defender_state.max_health / 4
             );
         } else {
+            // Move does damage
             const bool sashed =
                 defender_state.max_health == defender_state.get_health() &&
                 defender_state.get_item_for_effect() == Item::FocusSash;
             for (int i = 0; i < attacker_chosen_move.times_to_hit; i++) {
-                defender_state.apply_damage(attacker_chosen_move.damage);
+                const bool defender_has_sub =
+                    defender_state.get_subs_health() > 0;
+                if (defender_state.get_subs_health() == 0) {
+                    defender_state.apply_damage(attacker_chosen_move.damage);
+                } else {
+                    defender_state.apply_damage_to_sub(
+                        attacker_chosen_move.damage
+                    );
+                }
+
                 if (move_has_flag(
                         attacker_move,
                         MoveFlag::HITS_MULTIPLE_TIMES)
@@ -1476,7 +1525,7 @@ void BattleState::execute_move(
                 if (is_mid_turn &&
                     defender_state.get_last_used_move().move != nullptr &&
                     defender_state.get_last_used_move().move->move ==
-                    Move::Rage
+                    Move::Rage && !defender_has_sub
                 ) {
                     defender_state.change_stat_stage(
                         Stat::ATTACK,
@@ -1485,13 +1534,14 @@ void BattleState::execute_move(
                     );
                 }
             }
+
             if (sashed && defender_state.get_health() <= 0) {
                 defender_state.apply_damage(
                     defender_state.get_health() - 1
                 );
                 defender_state.clear_item();
             }
-            if (attacker_move == Move::FakeOut) {
+            if (attacker_move == Move::FakeOut && !had_sub) {
                 defender_state.set_flinched();
             }
             if ((attacker_move == Move::Thief ||
@@ -1499,6 +1549,7 @@ void BattleState::execute_move(
                     attacker_move == Move::Covet) &&
                 defender_ability != Ability::StickyHold &&
                 defender_ability != Ability::Multitype &&
+                !had_sub &&
                 attacker_state.try_set_item(defender_state.get_item())
             ) {
                 if (defender_state.get_item() == Item::StickyBarb &&
@@ -1510,19 +1561,32 @@ void BattleState::execute_move(
                 }
                 defender_state.clear_item(true);
             }
+            // Berries that reduce damage
+            if (const auto defender_item = defender_state.get_item_for_effect();
+                DAMAGE_REDUCING_BERRIES.contains(defender_item) &&
+                DAMAGE_REDUCING_BERRIES.at(defender_item) ==
+                attacker_chosen_move.move->type && !had_sub
+            ) {
+                defender_state.clear_item();
+            }
         }
 
         if (attacker_chosen_move.damage > 0) {
-            defender_state.set_was_hit();
-            if (move_has_flag(attacker_move, MoveFlag::CONTINUES)) {
-                if (attacker_state.is_player) {
+            if (!had_sub) {
+                defender_state.set_was_hit();
+            }
+            if (move_has_flag(attacker_move, MoveFlag::CONTINUES) && !had_sub) {
+                if (attacker_state.is_player &&
+                    attacker_item != Item::GripClaw
+                ) {
                     defender_state.set_trapped_counter(2);
                 } else {
                     defender_state.set_trapped_counter(5);
                 }
             }
             if (attacker_move == Move::WakeUpSlap &&
-                defender_state.get_status() == Status::SLEEP) {
+                defender_state.get_status() == Status::SLEEP && !had_sub
+            ) {
                 defender_state.clear_status();
             }
 
@@ -1603,10 +1667,12 @@ void BattleState::apply_post_move_effects(
     const auto attacker_ability = attacker_state.get_ability();
     const auto defender_ability = defender_state.get_ability();
 
-    const bool apply_effect = defender_ability != Ability::ShieldDust;
+    const bool had_sub = defender_state.had_sub();
+    const bool does_not_have_shield_dust = defender_ability !=
+        Ability::ShieldDust;
 
     if (defender_ability == Ability::FlashFire &&
-        attacker_move.move->type == PokemonType::FIRE
+        attacker_move.move->type == PokemonType::FIRE && !had_sub
     ) {
         defender_state.set_flash_fire();
     } else if (defender_ability == Ability::MotorDrive &&
@@ -1615,7 +1681,7 @@ void BattleState::apply_post_move_effects(
         defender_state.change_stat_stage(Stat::SPEED, 1, true);
     }
 
-    // Protect
+    // Protect TODO this should not be here
     if (move_has_flag(move, MoveFlag::BREAKS_PROTECT)) {
         defender_state.clear_protect();
     }
@@ -1665,13 +1731,16 @@ void BattleState::apply_post_move_effects(
                 attacker_state.heal(attacker_state.max_health / 4);
             }
         }
-        if (attacker_state.get_item_for_effect() == Item::ShellBell) {
+        if (attacker_state.get_item_for_effect() == Item::ShellBell &&
+            !had_sub
+        ) {
             attacker_state.heal(attacker_move.damage / 8);
         }
     }
+
     if (defender_ability == Ability::DrySkin &&
         move_has_flag(move, MoveFlag::HAS_POWER) &&
-        attacker_move.move->type == PokemonType::WATER
+        attacker_move.move->type == PokemonType::WATER && !had_sub
     ) {
         attacker_state.heal(attacker_state.max_health / 4);
     }
@@ -1698,7 +1767,7 @@ void BattleState::apply_post_move_effects(
         }
     }
 
-    if (move == Move::Uproar) {
+    if (move == Move::Uproar && !had_sub) {
         if (defender_state.get_status() == Status::SLEEP) {
             defender_state.clear_status();
         }
@@ -1712,7 +1781,7 @@ void BattleState::apply_post_move_effects(
         }
     }
 
-    if (move == Move::BugBite || move == Move::Pluck) {
+    if ((move == Move::BugBite || move == Move::Pluck) && !had_sub) {
         if (BERRIES[
                 static_cast<int>(defender_state.get_item_for_effect())
             ] &&
@@ -1766,20 +1835,22 @@ void BattleState::apply_post_move_effects(
     if (move_has_flag(move, MoveFlag::MAKES_CONTACT)) {
         if (attacker_state.is_player) {
             if (defender_state.get_status() == Status::NONE) {
-                if (defender_ability == Ability::EffectSpore ||
-                    defender_ability == Ability::PoisonPoint
-                ) {
-                    defender_state.try_apply_status(
-                        Status::POISON,
-                        weather,
-                        attacker_state
-                    );
-                } else if (defender_ability == Ability::FlameBody) {
-                    defender_state.try_apply_status(
-                        Status::BURN,
-                        weather,
-                        attacker_state
-                    );
+                if (!had_sub) {
+                    if (defender_ability == Ability::EffectSpore ||
+                        defender_ability == Ability::PoisonPoint
+                    ) {
+                        defender_state.try_apply_status(
+                            Status::POISON,
+                            weather,
+                            attacker_state
+                        );
+                    } else if (defender_ability == Ability::FlameBody) {
+                        defender_state.try_apply_status(
+                            Status::BURN,
+                            weather,
+                            attacker_state
+                        );
+                    }
                 }
             }
         }
@@ -1789,8 +1860,8 @@ void BattleState::apply_post_move_effects(
         if (defender_state.get_item_for_effect() == Item::RockyHelmet) {
             attacker_state.apply_damage(attacker_state.max_health / 6);
         } else if (defender_state.get_item_for_effect() == Item::StickyBarb
-            &&
-            attacker_state.try_set_item(Item::StickyBarb)
+            && !had_sub
+            && attacker_state.try_set_item(Item::StickyBarb)
         ) {
             defender_state.clear_item();
         }
@@ -1812,7 +1883,9 @@ void BattleState::apply_post_move_effects(
 
     // Burn application
     const bool is_fling = move == Move::Fling;
-    if (!defender_state.has_type(PokemonType::FIRE) && apply_effect) {
+    if (!defender_state.has_type(PokemonType::FIRE) && does_not_have_shield_dust
+        && !had_sub
+    ) {
         const bool flung_flame_orb =
         (is_fling && attacker_state.get_item_for_effect() ==
             Item::FlameOrb);
@@ -1839,7 +1912,8 @@ void BattleState::apply_post_move_effects(
 
     // Poison application
     if (!defender_state.has_type(PokemonType::POISON) &&
-        !defender_state.has_type(PokemonType::STEEL) && apply_effect
+        !defender_state.has_type(PokemonType::STEEL) &&
+        does_not_have_shield_dust && !had_sub
     ) {
         const bool flung_poison_barb = is_fling &&
             attacker_state.get_item_for_effect() == Item::PoisonBarb;
@@ -1865,29 +1939,35 @@ void BattleState::apply_post_move_effects(
                 );
             }
         }
-    }
 
-    // Bad poison application
-    if (move_has_flag(move, MoveFlag::BADLY_POISONS) && apply_effect) {
-        if (defender_state.is_player) {
-            defender_state.try_apply_status(
-                Status::BADLY_POISONED,
-                weather,
-                attacker_state
-            );
-        }
-        if (move == Move::Toxic) {
-            defender_state.try_apply_status(
-                Status::BADLY_POISONED,
-                weather,
-                attacker_state
-            );
+
+        // Bad poison application
+        const bool flung_toxic_orb = is_fling &&
+            attacker_state.get_item_for_effect() == Item::ToxicOrb;
+        if ((move_has_flag(move, MoveFlag::BADLY_POISONS) || flung_toxic_orb)
+            && !had_sub
+        ) {
+            if (defender_state.is_player) {
+                defender_state.try_apply_status(
+                    Status::BADLY_POISONED,
+                    weather,
+                    attacker_state
+                );
+            }
+            if (move == Move::Toxic) {
+                defender_state.try_apply_status(
+                    Status::BADLY_POISONED,
+                    weather,
+                    attacker_state
+                );
+            }
         }
     }
 
     // Other status
-    if (move == Move::TriAttack && defender_state.is_player &&
-        apply_effect) {
+    if (move == Move::TriAttack && defender_state.is_player
+        && does_not_have_shield_dust && !had_sub
+    ) {
         defender_state.try_apply_status(
             Status::POISON,
             weather,
@@ -1925,7 +2005,7 @@ void BattleState::apply_post_move_effects(
         }
         if (!attacker_state.is_player &&
             (move == Move::MeteorMash ||
-                move == Move::MetalClaw) && apply_effect
+                move == Move::MetalClaw) && does_not_have_shield_dust
         ) {
             attacker_state.change_stat_stage(
                 Stat::ATTACK,
@@ -1943,7 +2023,7 @@ void BattleState::apply_post_move_effects(
         );
     }
 
-    if (move_has_flag(move, MoveFlag::RAISES_DEFENDER_ATTACK)) {
+    if (move_has_flag(move, MoveFlag::RAISES_DEFENDER_ATTACK) && !had_sub) {
         defender_state.change_stat_stage(
             Stat::ATTACK,
             2,
@@ -1951,7 +2031,7 @@ void BattleState::apply_post_move_effects(
         );
     }
 
-    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK)) {
+    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) && !had_sub) {
         if (move == Move::Tickle ||
             move == Move::Growl
         ) {
@@ -1972,7 +2052,7 @@ void BattleState::apply_post_move_effects(
             );
         }
         if (defender_state.is_player &&
-            move == Move::AuroraBeam && apply_effect
+            move == Move::AuroraBeam && does_not_have_shield_dust
         ) {
             defender_state.change_stat_stage(
                 Stat::ATTACK,
@@ -1991,7 +2071,7 @@ void BattleState::apply_post_move_effects(
             move == Move::DefendOrder ||
             (move == Move::SteelWing &&
                 !attacker_state.is_player &&
-                apply_effect)
+                does_not_have_shield_dust)
         ) {
             attacker_state.change_stat_stage(
                 Stat::DEFENSE,
@@ -2017,7 +2097,7 @@ void BattleState::apply_post_move_effects(
         );
     }
 
-    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_DEFENSE)) {
+    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_DEFENSE) && !had_sub) {
         if (defender_state.is_player &&
             (move == Move::IronTail ||
                 move == Move::Crunch ||
@@ -2080,7 +2160,9 @@ void BattleState::apply_post_move_effects(
         );
     }
 
-    if (move_has_flag(move, MoveFlag::RAISES_DEFENDER_SPECIAL_ATTACK)) {
+    if (move_has_flag(move, MoveFlag::RAISES_DEFENDER_SPECIAL_ATTACK) &&
+        !had_sub
+    ) {
         defender_state.change_stat_stage(
             Stat::SPECIAL_ATTACK,
             2,
@@ -2088,7 +2170,9 @@ void BattleState::apply_post_move_effects(
         );
     }
 
-    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPECIAL_ATTACK)) {
+    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPECIAL_ATTACK) &&
+        !had_sub
+    ) {
         if (defender_state.is_player &&
             move == Move::MistBall
         ) {
@@ -2138,7 +2222,7 @@ void BattleState::apply_post_move_effects(
 
     if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPECIAL_DEFENSE)) {
         if (move == Move::MetalSound ||
-            move == Move::FakeTears
+            move == Move::FakeTears && !had_sub
         ) {
             defender_state.change_stat_stage(
                 Stat::SPECIAL_DEFENSE,
@@ -2164,7 +2248,7 @@ void BattleState::apply_post_move_effects(
                 move == Move::FocusBlast ||
                 move == Move::EnergyBall ||
                 move == Move::EarthPower ||
-                move == Move::FlashCannon)
+                move == Move::FlashCannon) && !had_sub
         ) {
             defender_state.change_stat_stage(
                 Stat::SPECIAL_DEFENSE,
@@ -2202,7 +2286,7 @@ void BattleState::apply_post_move_effects(
         );
     }
 
-    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPEED)) {
+    if (move_has_flag(move, MoveFlag::LOWERS_DEFENDER_SPEED) && !had_sub) {
         if (move == Move::IcyWind ||
             move == Move::RockTomb ||
             move == Move::MudShot
@@ -2268,14 +2352,13 @@ void BattleState::apply_post_move_effects(
         );
     }
 
-    if (is_fling) {
+    if (is_fling && !had_sub) {
         // TODO other items
         if (attacker_state.get_item_for_effect() == Item::KingsRock ||
             attacker_state.get_item_for_effect() == Item::RazorFang
         ) {
             defender_state.set_flinched();
-        } else if (attacker_state.get_item_for_effect() ==
-            Item::LightBall) {
+        } else if (attacker_state.get_item_for_effect() == Item::LightBall) {
             defender_state.try_apply_status(
                 Status::PARALYZED,
                 weather,
@@ -2297,7 +2380,7 @@ void BattleState::apply_post_move_effects(
     if (defender_ability == Ability::ColorChange &&
         defender_state.has_type(attacker_move.move->type) &&
         attacker_move.move->move != Move::Struggle &&
-        attacker_move.move->move != Move::PainSplit
+        attacker_move.move->move != Move::PainSplit && !had_sub
     ) {
         defender_state.change_type(attacker_move.move->type);
     }
@@ -2460,7 +2543,12 @@ BattleResultEntry BattleState::battle_loop() {
                 first_player_move == Move::FakeOut) &&
             !(first_player_move == Move::FakeOut &&
                 opponent_state.get_ability() == Ability::Truant) &&
-            (opponent_move.move->move != Move::SolarBeam)
+            (opponent_move.move->move != Move::SolarBeam) &&
+            !(first_player_move == Move::FakeOut && player_moves.size() == 3 &&
+                std::get<0>(player_moves[2]) == Move::SuckerPunch &&
+                opponent_move.move->move == Move::SkyAttack) &&
+            !(opponent_move.move->move == Move::FocusPunch &&
+                opponent_state.get_last_used_move().move == nullptr)
         ) {
             throw std::runtime_error("Opponent could not attack");
         }

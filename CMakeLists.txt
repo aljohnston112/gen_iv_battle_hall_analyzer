@@ -46,12 +46,17 @@ add_executable(
         src/PokemonState.h
         external/libhungarian/hungarian.c
         external/libhungarian/hungarian.h
+        external/simdjson.cpp
+        external/simdjson.h
         src/round_robin.h
         src/thread_pool.cpp
         src/thread_pool.h
         src/EVOptimizer.cpp
         src/EVOptimizer.h
         src/EVSet.h
+        src/battle_hall_analyzer.cpp
+        src/battle_hall_analyzer.h
+        src/battle_factory/factory_data_source.h
 )
 target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
 

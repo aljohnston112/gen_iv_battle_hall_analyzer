@@ -11,47 +11,58 @@
 /*
 Ignored:
     BrightPowder,
+    CheriBerry,
     FocusBand,
     KingsRock,
+    LansatBerry,
     LaxIncense,
     LightClay,
+    LuckyPunch,
     RazorClaw,
     RazorFang,
     ScopeLens,
     Stick,
+    Wide Lens,
     ZoomLens,
  */
 
 enum class Item {
     ApicotBerry,
+    AspearBerry,
     BigRoot,
     BlackBelt,
     BlackGlasses,
     BlackSludge,
     BrightPowder,
     Charcoal,
+    CheriBerry,
     ChestoBerry,
     ChoiceBand,
     ChoiceScarf,
     ChoiceSpecs,
     DampRock,
+    DeepSeaScale,
+    DeepSeaTooth,
     DragonFang,
     ExpertBelt,
     FlameOrb,
     FocusBand,
     FocusSash,
     GanlonBerry,
+    GripClaw,
     HardStone,
     HeatRock,
     IcyRock,
     IronBall,
     KingsRock,
+    LansatBerry,
     LaxIncense,
     Leftovers,
     LiechiBerry,
     LifeOrb,
     LightBall,
     LightClay,
+    LuckyPunch,
     LumBerry,
     Magnet,
     MentalHerb, // TODO
@@ -61,16 +72,22 @@ enum class Item {
     MuscleBand,
     MysticWater,
     NeverMeltIce,
+    OddIncense,
+    PechaBerry,
     PersimBerry,
     PetayaBerry,
     PoisonBarb,
     PowerHerb,
     QuickClaw,
     QuickPowder,
+    RawstBerry,
     RazorClaw,
     RazorFang,
+    RockIncense,
     RockyHelmet,
+    RoseIncense,
     SalacBerry,
+    SeaIncense,
     ScopeLens,
     SharpBeak,
     ShellBell,
@@ -82,8 +99,12 @@ enum class Item {
     SpellTag,
     Stick,
     StickyBarb,
+    ThickClub,
+    ToxicOrb,
     TwistedSpoon,
+    WaveIncense,
     WhiteHerb,
+    WideLens,
     WiseGlasses,
     ZoomLens,
 
@@ -104,10 +125,29 @@ enum class Item {
     DracoPlate,
     DreadPlate,
 
+    BabiriBerry,
+    ChartiBerry,
+    ChilanBerry,
+    ChopleBerry,
+    CobaBerry,
+    ColburBerry,
+    HabanBerry,
+    KasibBerry,
+    KebiaBerry,
+    OccaBerry,
+    PasshoBerry,
+    PayapaBerry,
+    RindoBerry,
+    ShucaBerry,
+    TangaBerry,
+    WacanBerry,
+    YacheBerry,
+
     None
 };
 
-static constexpr std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [] {
+static constexpr std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = [
+] {
     std::array<bool, static_cast<int>(Item::None) + 1> array{};
     array.fill(false);
     array[static_cast<int>(Item::ApicotBerry)] = true;
@@ -119,8 +159,47 @@ static constexpr std::array<bool, static_cast<int>(Item::None) + 1> BERRIES = []
     array[static_cast<int>(Item::PetayaBerry)] = true;
     array[static_cast<int>(Item::SalacBerry)] = true;
     array[static_cast<int>(Item::SitrusBerry)] = true;
+
+    array[static_cast<int>(Item::BabiriBerry)] = true;
+    array[static_cast<int>(Item::ChartiBerry)] = true;
+    array[static_cast<int>(Item::ChilanBerry)] = true;
+    array[static_cast<int>(Item::ChopleBerry)] = true;
+    array[static_cast<int>(Item::CobaBerry)] = true;
+    array[static_cast<int>(Item::ColburBerry)] = true;
+    array[static_cast<int>(Item::HabanBerry)] = true;
+    array[static_cast<int>(Item::KasibBerry)] = true;
+    array[static_cast<int>(Item::KebiaBerry)] = true;
+    array[static_cast<int>(Item::OccaBerry)] = true;
+    array[static_cast<int>(Item::PasshoBerry)] = true;
+    array[static_cast<int>(Item::PayapaBerry)] = true;
+    array[static_cast<int>(Item::RindoBerry)] = true;
+    array[static_cast<int>(Item::ShucaBerry)] = true;
+    array[static_cast<int>(Item::TangaBerry)] = true;
+    array[static_cast<int>(Item::WacanBerry)] = true;
+    array[static_cast<int>(Item::YacheBerry)] = true;
+
     return array;
 }();
+
+inline const std::unordered_map<Item, PokemonType> DAMAGE_REDUCING_BERRIES = {
+    {Item::BabiriBerry, PokemonType::STEEL},
+    {Item::ChartiBerry, PokemonType::ROCK},
+    {Item::ChilanBerry, PokemonType::NORMAL},
+    {Item::ChopleBerry, PokemonType::FIGHTING},
+    {Item::CobaBerry, PokemonType::FLYING},
+    {Item::ColburBerry, PokemonType::DARK},
+    {Item::HabanBerry, PokemonType::DRAGON},
+    {Item::KasibBerry, PokemonType::GHOST},
+    {Item::KebiaBerry, PokemonType::POISON},
+    {Item::OccaBerry, PokemonType::FIRE},
+    {Item::PasshoBerry, PokemonType::WATER},
+    {Item::PayapaBerry, PokemonType::PSYCHIC},
+    {Item::RindoBerry, PokemonType::GRASS},
+    {Item::ShucaBerry, PokemonType::GROUND},
+    {Item::TangaBerry, PokemonType::BUG},
+    {Item::WacanBerry, PokemonType::ELECTRIC},
+    {Item::YacheBerry, PokemonType::ICE}
+};
 
 inline const std::unordered_set STAT_BERRIES = {
     Item::ApicotBerry,
@@ -148,6 +227,24 @@ static const std::array<
     array[static_cast<int>(Item::PetayaBerry)] = {80, PokemonType::POISON};
     array[static_cast<int>(Item::SalacBerry)] = {80, PokemonType::FIGHTING};
     array[static_cast<int>(Item::SitrusBerry)] = {60, PokemonType::PSYCHIC};
+
+    array[static_cast<int>(Item::BabiriBerry)] = {60, PokemonType::STEEL};
+    array[static_cast<int>(Item::ChartiBerry)] = {60, PokemonType::ROCK};
+    array[static_cast<int>(Item::ChilanBerry)] = {60, PokemonType::NORMAL};
+    array[static_cast<int>(Item::ChopleBerry)] = {60, PokemonType::FIGHTING};
+    array[static_cast<int>(Item::CobaBerry)] = {60, PokemonType::FLYING};
+    array[static_cast<int>(Item::ColburBerry)] = {60, PokemonType::DARK};
+    array[static_cast<int>(Item::HabanBerry)] = {60, PokemonType::DRAGON};
+    array[static_cast<int>(Item::KasibBerry)] = {60, PokemonType::GHOST};
+    array[static_cast<int>(Item::KebiaBerry)] = {60, PokemonType::POISON};
+    array[static_cast<int>(Item::OccaBerry)] = {60, PokemonType::FIRE};
+    array[static_cast<int>(Item::PasshoBerry)] = {60, PokemonType::WATER};
+    array[static_cast<int>(Item::PayapaBerry)] = {60, PokemonType::PSYCHIC};
+    array[static_cast<int>(Item::RindoBerry)] = {60, PokemonType::GRASS};
+    array[static_cast<int>(Item::ShucaBerry)] = {60, PokemonType::GROUND};
+    array[static_cast<int>(Item::TangaBerry)] = {60, PokemonType::BUG};
+    array[static_cast<int>(Item::WacanBerry)] = {60, PokemonType::ELECTRIC};
+    array[static_cast<int>(Item::YacheBerry)] = {60, PokemonType::ICE};
     return array;
 }();
 
@@ -208,34 +305,42 @@ inline const std::unordered_set CHOICE_ITEMS = {
 
 inline const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Apicot Berry", Item::ApicotBerry},
+    {"Aspear Berry", Item::AspearBerry},
     {"Big Root", Item::BigRoot},
     {"Black Belt", Item::BlackBelt},
     {"BlackGlasses", Item::BlackGlasses},
     {"Black Sludge", Item::BlackSludge},
+    {"Brightpowder", Item::BrightPowder},
     {"BrightPowder", Item::BrightPowder},
     {"Charcoal", Item::Charcoal},
+    {"Cheri Berry", Item::CheriBerry},
     {"Chesto Berry", Item::ChestoBerry},
     {"Choice Band", Item::ChoiceBand},
     {"Choice Scarf", Item::ChoiceScarf},
     {"Choice Specs", Item::ChoiceSpecs},
     {"Damp Rock", Item::DampRock},
+    {"DeepSeaScale", Item::DeepSeaScale},
+    {"DeepSeaTooth", Item::DeepSeaTooth},
     {"Dragon Fang", Item::DragonFang},
     {"Expert Belt", Item::ExpertBelt},
     {"Flame Orb", Item::FlameOrb},
     {"Focus Band", Item::FocusBand},
     {"Focus Sash", Item::FocusSash},
     {"Ganlon Berry", Item::GanlonBerry},
+    {"Grip Claw", Item::GripClaw},
     {"Hard Stone", Item::HardStone},
     {"Heat Rock", Item::HeatRock},
     {"Icy Rock", Item::IcyRock},
     {"Iron Ball", Item::IronBall},
     {"King's Rock", Item::KingsRock},
+    {"Lansat Berry", Item::LansatBerry},
     {"Lax Incense", Item::LaxIncense},
     {"Light Ball", Item::LightBall},
     {"Leftovers", Item::Leftovers},
     {"Liechi Berry", Item::LiechiBerry},
     {"Life Orb", Item::LifeOrb},
     {"Light Clay", Item::LightClay},
+    {"Lucky Punch", Item::LuckyPunch},
     {"Lum Berry", Item::LumBerry},
     {"Magnet", Item::Magnet},
     {"Metal Coat", Item::MetalCoat},
@@ -245,16 +350,22 @@ inline const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Muscle Band", Item::MuscleBand},
     {"Mystic Water", Item::MysticWater},
     {"NeverMeltIce", Item::NeverMeltIce},
+    {"Odd Incense", Item::OddIncense},
+    {"Pecha Berry", Item::PechaBerry},
     {"Persim Berry", Item::PersimBerry},
     {"Petaya Berry", Item::PetayaBerry},
     {"Poison Barb", Item::PoisonBarb},
     {"Power Herb", Item::PowerHerb},
     {"Quick Claw", Item::QuickClaw},
     {"Quick Powder", Item::QuickPowder},
+    {"Rawst Berry", Item::RawstBerry},
     {"Razor Claw", Item::RazorClaw},
     {"Razor Fang", Item::RazorFang},
+    {"Rock Incense", Item::RockIncense},
     {"Rocky Helmet", Item::RockyHelmet},
+    {"Rose Incense", Item::RoseIncense},
     {"Salac Berry", Item::SalacBerry},
+    {"Sea Incense", Item::SeaIncense},
     {"Scope Lens", Item::ScopeLens},
     {"Sharp Beak", Item::SharpBeak},
     {"Shell Bell", Item::ShellBell},
@@ -266,10 +377,34 @@ inline const std::unordered_map<std::string, Item> STRING_TO_ITEM = {
     {"Spell Tag", Item::SpellTag},
     {"Stick", Item::Stick},
     {"Sticky Barb", Item::StickyBarb},
+    {"Thick Club", Item::ThickClub},
+    {"Toxic Orb", Item::ToxicOrb},
+    {"Twisted Spoon", Item::TwistedSpoon},
     {"TwistedSpoon", Item::TwistedSpoon},
+    {"Wave Incense", Item::WaveIncense},
     {"White Herb", Item::WhiteHerb},
+    {"Wide Lens", Item::WideLens},
     {"Wise Glasses", Item::WiseGlasses},
     {"Zoom Lens", Item::ZoomLens},
+
+    {"Babiri Berry", Item::BabiriBerry},
+    {"Charti Berry", Item::ChartiBerry},
+    {"Chilan Berry", Item::ChilanBerry},
+    {"Chople Berry", Item::ChopleBerry},
+    {"Coba Berry", Item::CobaBerry},
+    {"Colbur Berry", Item::ColburBerry},
+    {"Haban Berry", Item::HabanBerry},
+    {"Kasib Berry", Item::KasibBerry},
+    {"Kebia Berry", Item::KebiaBerry},
+    {"Occa Berry", Item::OccaBerry},
+    {"Passho Berry", Item::PasshoBerry},
+    {"Payapa Berry", Item::PayapaBerry},
+    {"Rindo Berry", Item::RindoBerry},
+    {"Shuca Berry", Item::ShucaBerry},
+    {"Tanga Berry", Item::TangaBerry},
+    {"Wacan Berry", Item::WacanBerry},
+    {"Yache Berry", Item::YacheBerry},
+
     {"", Item::None}
 };
 
@@ -327,9 +462,21 @@ static constexpr std::array<
     flags[static_cast<int>(Item::NeverMeltIce)][
         static_cast<int>(PokemonType::ICE)
     ] = true;
+    flags[static_cast<int>(Item::OddIncense)][
+        static_cast<int>(PokemonType::PSYCHIC)
+    ] = true;
     flags[static_cast<int>(Item::PoisonBarb)][
         static_cast<int>(PokemonType::POISON)
     ] = true;
+    flags[static_cast<int>(Item::RockIncense)][
+        static_cast<int>(PokemonType::ROCK)
+    ] = true;
+    flags[static_cast<int>(Item::RoseIncense)][
+        static_cast<int>(PokemonType::GRASS)
+    ] = true;
+    flags[static_cast<int>(Item::SeaIncense)][
+    static_cast<int>(PokemonType::WATER)
+] = true;
     flags[static_cast<int>(Item::SharpBeak)][
         static_cast<int>(PokemonType::FLYING)
     ] = true;
@@ -347,6 +494,9 @@ static constexpr std::array<
     ] = true;
     flags[static_cast<int>(Item::TwistedSpoon)][
         static_cast<int>(PokemonType::PSYCHIC)
+    ] = true;
+    flags[static_cast<int>(Item::WaveIncense)][
+        static_cast<int>(PokemonType::WATER)
     ] = true;
     return flags;
 }();
