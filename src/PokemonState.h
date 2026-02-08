@@ -132,6 +132,9 @@ class PokemonState {
     bool reflect = false;
     bool light_screen = false;
 
+    bool was_drowsy = false;
+    bool drowsy = false;
+
     bool flash_fired = false;
     uint8_t slow_start_count = 0;
     bool truant = false;
@@ -861,6 +864,14 @@ public:
         light_screen = false;
     }
 
+    [[nodiscard]] bool is_drowsy() const {
+        return drowsy;
+    }
+
+    void set_drowsy() {
+        drowsy = true;
+    }
+
     [[nodiscard]] bool was_flash_fired() const {
         return this->flash_fired;
     }
@@ -1025,7 +1036,8 @@ public:
         const MoveInfo* attacker_move_info,
         PokemonState& defender_state,
         const Weather weather,
-        const bool is_mid_turn
+        const bool is_mid_turn,
+        const uint predicted_damage_from_defender
     ) {
         assert(attacker_move_info->move == Move::WeatherBall);
         MoveInfo new_move = *attacker_move_info;
@@ -1058,7 +1070,8 @@ public:
                 &new_move,
                 defender_state,
                 weather,
-                is_mid_turn
+                is_mid_turn,
+                predicted_damage_from_defender
             );
         return damage;
     }
@@ -1068,7 +1081,8 @@ public:
         const MoveInfo* attacker_move_info,
         PokemonState& defender_state,
         Weather weather,
-        bool is_mid_turn
+        bool is_mid_turn,
+        const uint predicted_damage_from_defender
     );
 
     void try_apply_weather_damage(
@@ -1317,6 +1331,15 @@ public:
         // 6.15 Heal Block: "the foe pokémon's heal block wore off"
         // 6.16 Embargo
         // 6.17 Yawn
+        if (is_drowsy()) {
+            if (was_drowsy) {
+                drowsy = false;
+                was_drowsy = false;
+                try_apply_status(Status::SLEEP, weather, defender_state);
+            } else {
+                was_drowsy = true;
+            }
+        }
         // 6.18 Sticky Barb
         try_apply_sticky_barb(item, ability);
         //
@@ -1334,7 +1357,9 @@ public:
         update_end_of_turn(ability);
     }
 
-    [[nodiscard]] bool has_power_points() const {
+    [[nodiscard]]
+
+    bool has_power_points() const {
         bool result = false;
         // #pragma omp parallel for reduction(|:result) num_threads(NUMBER_OF_THREADS)
         for (size_t i = 0; i < moves.size(); ++i) {
@@ -1406,7 +1431,8 @@ inline void recalculate_chosen_move_damage(
     PokemonState& defender_state,
     const BestMove& attacker_chosen_move,
     const Weather weather,
-    const bool is_mid_turn
+    const bool is_mid_turn,
+    const uint predicted_damage_from_defender
 ) {
     if (attacker_chosen_move.move == nullptr ||
         attacker_chosen_move.move->category == Category::STATUS
@@ -1418,7 +1444,8 @@ inline void recalculate_chosen_move_damage(
         attacker_chosen_move.move,
         defender_state,
         weather,
-        is_mid_turn
+        is_mid_turn,
+        predicted_damage_from_defender
     );
     attacker_state.set_chosen_move(
         BestMove{
@@ -1562,6 +1589,9 @@ inline bool check_rest(
     const uint16_t damage_from_defender,
     const Weather weather
 ) {
+    if (attacker_move->move != Move::Rest) {
+        return false;
+    }
     if (damage_from_defender == 0) {
         return false;
     }
@@ -1642,18 +1672,35 @@ inline int check_for_fixed_damage(
     const int16_t attacker_health,
     const Move attacker_move,
     const uint16_t attacker_level,
-    const bool attacker_hit
+    const bool attacker_hit,
+    const bool attacker_faster,
+    const uint predicted_damage_from_defender
+
 ) {
+    const int16_t defender_health = defender_state.get_health();
+    if (attacker_move == Move::PainSplit) {
+        auto attacker_hp_for_pain_split = attacker_health;
+        if (!attacker_faster) {
+            attacker_hp_for_pain_split -= predicted_damage_from_defender;
+        }
+        auto pain_split_hp =
+            std::max(
+                1,
+                attacker_hp_for_pain_split + defender_health / 2
+            );
+        return pain_split_hp - defender_health;
+    }
+
     if (attacker_move == Move::Endeavor) {
         return std::max(
             0,
-            defender_state.get_health() - attacker_health
+            defender_health - attacker_health
         );
     }
     if (attacker_move == Move::SuperFang) {
         return std::max(
             1,
-            static_cast<int>(std::floor(defender_state.get_health() / 2))
+            static_cast<int>(std::floor(defender_health / 2))
         );
     }
     if (attacker_move == Move::SeismicToss ||
@@ -1758,7 +1805,8 @@ inline int16_t check_for_zero_or_fixed_damage(
     const MoveInfo* attacker_move_info,
     const PokemonType move_type,
     const PokemonState& defender_state,
-    const bool attacker_faster
+    const bool attacker_faster,
+    const uint predicted_damage_from_defender
 ) {
     auto const attacker_move = attacker_move_info->move;
     if (does_zero_damage(defender_state, attacker_move, attacker_faster)) {
@@ -1787,7 +1835,9 @@ inline int16_t check_for_zero_or_fixed_damage(
         attacker_health,
         attacker_move,
         attacker_state.level,
-        attacker_state.was_hit()
+        attacker_state.was_hit(),
+        attacker_faster,
+        predicted_damage_from_defender
     );
     return static_cast<int16_t>(damage);
 }
@@ -2351,7 +2401,8 @@ inline uint32_t PokemonState::get_damage_of_attacker_move(
     const MoveInfo* attacker_move_info,
     PokemonState& defender_state,
     const Weather weather,
-    const bool is_mid_turn
+    const bool is_mid_turn,
+    const uint predicted_damage_from_defender
 ) {
     const auto attacker_ability = get_ability();
     const PokemonType move_type = get_move_type(
@@ -2367,12 +2418,14 @@ inline uint32_t PokemonState::get_damage_of_attacker_move(
         attacker_move_info,
         weather
     );
+
     int32_t damage = check_for_zero_or_fixed_damage(
         *this,
         attacker_move_info,
         move_type,
         defender_state,
-        attacker_faster
+        attacker_faster,
+        predicted_damage_from_defender
     );
     if (damage != -1) {
         return damage;

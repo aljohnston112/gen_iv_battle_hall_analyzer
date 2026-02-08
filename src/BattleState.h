@@ -265,6 +265,26 @@ class BattleState {
         check_forecast(opponent_state);
     }
 
+    static uint predict_extra_damage(
+        const PokemonState& defender,
+        const Move move_from_attacker
+    ) {
+        uint damage = 0;
+        if (move_has_flag(move_from_attacker, MoveFlag::POISONS_DEFENDER)) {
+            damage += defender.max_health / 8;
+        }
+        return damage;
+    }
+
+    uint predict_damage_from_defender(
+        bool attacker_is_player,
+        Weather weather,
+        bool is_mid_turn,
+        const PokemonState& attacker_state,
+        PokemonState& defender_state,
+        const BestMove& defender_chosen_move
+    );
+
     BestMove choose_move_against_defender(
         bool attacker_is_player,
         bool chosen_move_only,

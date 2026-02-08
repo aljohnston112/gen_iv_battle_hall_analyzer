@@ -237,6 +237,8 @@ inline void check_unimplemented_moves(
             move != Move::LeechSeed &&
             move != Move::FuryCutter &&
             move != Move::Rest &&
+            move != Move::PainSplit &&
+            move != Move::Yawn &&
             move != Move::Curse &&
             // TODO skipped since single stage stat boosts don't seem to get picked
             move != Move::Sing && // TODO
@@ -246,6 +248,8 @@ inline void check_unimplemented_moves(
             move != Move::ConfuseRay && // Not implemented
             move != Move::Swagger && // Not implemented
             move != Move::Recycle && // Not implemented
+            move != Move::StealthRock && // Not implemented
+            move != Move::MeanLook && // Not implemented
             !move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) &&
             (move_has_flag(
                     move,
@@ -284,6 +288,41 @@ void add_last_used_move(
     }
 }
 
+uint BattleState::predict_damage_from_defender(
+    const bool attacker_is_player,
+    const Weather weather,
+    const bool is_mid_turn,
+    const PokemonState& attacker_state,
+    PokemonState& defender_state,
+    const BestMove& defender_chosen_move
+) {
+    // TODO there are many missing cases
+    uint predicted_damage_from_defender = 0;
+    if (attacker_is_player) {
+        // Since player's move is calculated first,
+        // we should predict what the opponent's next move is
+        auto backup = defender_state.get_chosen_move();
+        const auto move_against_attacker = choose_move_against_defender(
+            !attacker_is_player,
+            false,
+            weather,
+            is_mid_turn,
+            true
+        );
+        predicted_damage_from_defender = move_against_attacker.damage;
+        if (move_against_attacker.move != nullptr) {
+            predicted_damage_from_defender += predict_extra_damage(
+                attacker_state,
+                move_against_attacker.move->move
+            );
+        }
+        defender_state.set_chosen_move(std::move(backup));
+    } else {
+        predicted_damage_from_defender = defender_chosen_move.damage;
+    }
+    return predicted_damage_from_defender;
+}
+
 BestMove BattleState::choose_move_against_defender(
     bool attacker_is_player,
     const bool chosen_move_only,
@@ -317,6 +356,16 @@ BestMove BattleState::choose_move_against_defender(
         return attacker_state.get_chosen_move();
     }
 
+    const auto defender_chosen_move = defender_state.get_chosen_move();
+    uint predicted_damage_from_defender = predict_damage_from_defender(
+        attacker_is_player,
+        weather,
+        is_mid_turn,
+        attacker_state,
+        defender_state,
+        defender_chosen_move
+    );
+
     // Struggle
     const auto attacker_item = attacker_state.get_item_for_effect();
     if (!attacker_state.has_power_points()) {
@@ -335,7 +384,8 @@ BestMove BattleState::choose_move_against_defender(
             &struggle,
             defender_state,
             weather,
-            is_mid_turn
+            is_mid_turn,
+            predicted_damage_from_defender
         );
         attacker_state.set_chosen_move(
             BestMove{
@@ -356,7 +406,8 @@ BestMove BattleState::choose_move_against_defender(
             defender_state,
             attacker_chosen_move,
             weather,
-            is_mid_turn
+            is_mid_turn,
+            predicted_damage_from_defender
         );
         return attacker_state.get_chosen_move();
     }
@@ -364,7 +415,7 @@ BestMove BattleState::choose_move_against_defender(
     // Cases where a move can't be used
     BestMove best_move{};
     const auto attacker_ability = attacker_state.get_ability();
-    if (attacker_state.is_recharging() ||
+    if (!checking_future && attacker_state.is_recharging() ||
         (attacker_ability == Ability::Truant && attacker_state.is_truant())
     ) {
         attacker_state.done_recharging();
@@ -381,46 +432,28 @@ BestMove BattleState::choose_move_against_defender(
             defender_state,
             attacker_chosen_move,
             weather,
-            is_mid_turn
+            is_mid_turn,
+            predicted_damage_from_defender
         );
         return attacker_state.get_chosen_move();
     }
 
-    const auto defender_chosen_move = defender_state.get_chosen_move();
     const bool attacker_faster = attacker_state.outspeeds(
         defender_state,
         nullptr,
         nullptr,
         weather
     );
-    uint damage_from_defender;
-    if (attacker_is_player) {
-        // Since player's move is calculated first,
-        // we should predict what the opponent's next move is
-        auto backup = defender_state.get_chosen_move();
-        auto move_against_attacker = choose_move_against_defender(
-            !attacker_is_player,
-            false,
-            weather,
-            is_mid_turn,
-            true
-        );
-        damage_from_defender = move_against_attacker.damage;
-        damage_from_defender += get_extra_damage(move_against_attacker);
-        defender_state.set_chosen_move(std::move(backup));
-    } else {
-        damage_from_defender = defender_chosen_move.damage;
-    }
 
     // Substitute has no downside as far as I can tell in this case
     if (!attacker_state.is_choiced() &&
         defender_chosen_move.move != nullptr &&
         attacker_state.get_subs_health() == 0 &&
         attacker_state.get_health() > attacker_state.max_health / 4 &&
-        attacker_state.max_health / 4 > damage_from_defender * 2 &&
+        attacker_state.max_health / 4 > predicted_damage_from_defender * 2 &&
         (attacker_faster ||
             (attacker_state.max_health / 4 <
-                attacker_state.get_health() - damage_from_defender)
+                attacker_state.get_health() - predicted_damage_from_defender)
         )
     ) {
         for (const auto& attacker_move :
@@ -439,6 +472,30 @@ BestMove BattleState::choose_move_against_defender(
             }
         }
     }
+
+    // Yawn has no downside as far as I can tell
+    if (!attacker_state.is_choiced() &&
+        defender_chosen_move.move != nullptr &&
+        attacker_state.get_health() > predicted_damage_from_defender * 2
+        // TODO opponent may do more damage the second turn
+    ) {
+        for (const auto& attacker_move :
+             attacker_state.get_moves()
+        ) {
+            if (attacker_move->move == Move::Yawn) {
+                attacker_state.set_chosen_move(
+                    BestMove{
+                        .move = attacker_move,
+                        .damage = 0,
+                        .potential_damage = 0,
+                        .times_to_hit = 1
+                    }
+                );
+                return attacker_state.get_chosen_move();
+            }
+        }
+    }
+
 
     const auto attacker_health = attacker_state.get_health();
     const auto defender_health = defender_state.get_health();
@@ -534,7 +591,8 @@ BestMove BattleState::choose_move_against_defender(
                 attacker_move,
                 defender_state,
                 weather,
-                is_mid_turn
+                is_mid_turn,
+                predicted_damage_from_defender
             );
         } else {
             damage = attacker_state.get_damage_of_attacker_move(
@@ -542,7 +600,8 @@ BestMove BattleState::choose_move_against_defender(
                 attacker_move,
                 defender_state,
                 weather,
-                is_mid_turn
+                is_mid_turn,
+                predicted_damage_from_defender
             );
         }
 
@@ -563,7 +622,7 @@ BestMove BattleState::choose_move_against_defender(
                 attacker_state,
                 defender_state,
                 attacker_move,
-                damage_from_defender,
+                predicted_damage_from_defender,
                 weather
             )
         ) {
@@ -575,7 +634,8 @@ BestMove BattleState::choose_move_against_defender(
 
         if ((attacker_move->move == Move::Rollout ||
                 attacker_move->move == Move::IceBall) &&
-            attacker_state.get_rollout_turns() > 0) {
+            attacker_state.get_rollout_turns() > 0
+        ) {
             best_move.move = attacker_move;
             best_move.damage = damage;
             best_move.potential_damage = damage;
@@ -621,7 +681,7 @@ BestMove BattleState::choose_move_against_defender(
         // TODO rollout and ice ball
         const bool passes_priority_check =
             (attacker_move_priority < defender_move_priority &&
-                damage_from_defender < attacker_health) ||
+                predicted_damage_from_defender < attacker_health) ||
             attacker_move_priority >= 0 ||
             best_move.move == nullptr;
         bool move_must_charge =
@@ -634,9 +694,10 @@ BestMove BattleState::choose_move_against_defender(
                     damage > best_move.damage / 2) ||
                 (move_must_charge && attacker_faster &&
                     damage > best_move.damage * 2 &&
-                    ((damage_from_defender < attacker_health &&
+                    ((predicted_damage_from_defender < attacker_health &&
                             attacker_faster) ||
-                        (damage_from_defender < attacker_health / 2) ||
+                        (predicted_damage_from_defender < attacker_health / 2)
+                        ||
                         best_move.damage == 0))) &&
             !(move_must_charge &&
                 attacker_ability == Ability::Truant));
@@ -729,7 +790,8 @@ BestMove BattleState::choose_move_against_defender(
                     &temp,
                     defender_state,
                     weather,
-                    is_mid_turn
+                    is_mid_turn,
+                    predicted_damage_from_defender
                 );
         }
     }
@@ -842,7 +904,8 @@ BestMove BattleState::choose_move_against_defender(
                 &fury_cutter,
                 defender_state,
                 weather,
-                is_mid_turn
+                is_mid_turn,
+                predicted_damage_from_defender
             );
             fury_cutter.power = std::min(fury_cutter.power * 2, 160);
         }
@@ -857,7 +920,8 @@ BestMove BattleState::choose_move_against_defender(
                     &fury_cutter,
                     defender_state,
                     weather,
-                    is_mid_turn
+                    is_mid_turn,
+                    predicted_damage_from_defender
                 );
                 best_move.damage = damage;
                 best_move.potential_damage = damage;
@@ -984,7 +1048,8 @@ BestMove BattleState::choose_move_against_defender(
                         move,
                         defender_state,
                         weather,
-                        is_mid_turn
+                        is_mid_turn,
+                        predicted_damage_from_defender
                     );
 
                 potential_hp_gain = damage / 2;
@@ -1074,7 +1139,8 @@ BestMove BattleState::choose_move_against_defender(
                                     &temp,
                                     defender_state,
                                     weather,
-                                    is_mid_turn
+                                    is_mid_turn,
+                                    predicted_damage_from_defender
                                 );
                         }
                     }
@@ -1122,7 +1188,8 @@ BestMove BattleState::choose_move_against_defender(
                                 weather_ball,
                                 defender_state,
                                 Weather::SUN,
-                                is_mid_turn
+                                is_mid_turn,
+                                predicted_damage_from_defender
                             );
                         const auto new_hits_to_KO =
                             defender_health / damage;
@@ -1166,7 +1233,8 @@ BestMove BattleState::choose_move_against_defender(
                                 weather_ball,
                                 defender_state,
                                 Weather::RAIN,
-                                is_mid_turn
+                                is_mid_turn,
+                                predicted_damage_from_defender
                             );
                         const auto new_hits_to_KO =
                             defender_health / damage;
@@ -1186,7 +1254,8 @@ BestMove BattleState::choose_move_against_defender(
                                 weather_ball,
                                 defender_state,
                                 Weather::HAIL,
-                                is_mid_turn
+                                is_mid_turn,
+                                predicted_damage_from_defender
                             );
                         if (const auto new_hits_to_KO =
                                 defender_health / damage;
@@ -1207,7 +1276,8 @@ BestMove BattleState::choose_move_against_defender(
                                 weather_ball,
                                 defender_state,
                                 Weather::SANDSTORM,
-                                is_mid_turn
+                                is_mid_turn,
+                                predicted_damage_from_defender
                             );
                         if (const auto new_hits_to_KO =
                                 defender_health / damage;
@@ -1438,6 +1508,15 @@ void BattleState::execute_move(
         attacker_move = attacker_chosen_move.move->move;
     }
 
+    const auto predicted_damage_from_defender = predict_damage_from_defender(
+        attacker_is_player,
+        weather,
+        is_mid_turn,
+        attacker_state,
+        defender_state,
+        defender_chosen_move
+    );
+
     // Brick break
     if (attacker_move == Move::BrickBreak) {
         defender_state.break_reflect();
@@ -1447,7 +1526,8 @@ void BattleState::execute_move(
             defender_state,
             attacker_chosen_move,
             weather,
-            is_mid_turn
+            is_mid_turn,
+            predicted_damage_from_defender
         );
     }
 
@@ -1499,7 +1579,8 @@ void BattleState::execute_move(
             attacker_state,
             defender_chosen_move,
             weather,
-            is_mid_turn
+            is_mid_turn,
+            predicted_damage_from_defender
         );
     } else if (attacker_vanished) {
         recalculate_chosen_move_damage(
@@ -1507,7 +1588,8 @@ void BattleState::execute_move(
             attacker_state,
             defender_chosen_move,
             weather,
-            is_mid_turn
+            is_mid_turn,
+            predicted_damage_from_defender
         );
     }
 
@@ -1529,7 +1611,8 @@ void BattleState::execute_move(
             defender_state,
             attacker_chosen_move,
             weather,
-            is_mid_turn
+            is_mid_turn,
+            predicted_damage_from_defender
         );
         attacker_chosen_move = attacker_state.get_chosen_move();
         attacker_move = attacker_chosen_move.move->move;
@@ -1564,6 +1647,39 @@ void BattleState::execute_move(
         );
         attacker_state.update_last_used_move(false, defender_ability);
         return;
+    }
+
+    // Pain Split
+    if (attacker_move == Move::PainSplit) {
+        const auto attacker_health = attacker_state.get_health();
+        const auto defender_health = defender_state.get_health();
+        const auto pain_split_hp =
+            std::max(
+                1,
+                attacker_health + defender_health / 2
+            );
+
+        if (const int health_gained = pain_split_hp - attacker_health;
+            health_gained > 0
+        ) {
+            attacker_state.heal(health_gained);
+        } else {
+            attacker_state.apply_damage(health_gained);
+        }
+
+        if (const int defender_hp_gained = pain_split_hp - defender_health;
+            defender_hp_gained > 0
+        ) {
+            attacker_chosen_move.damage = defender_hp_gained;
+        } else {
+            defender_state.heal(defender_hp_gained);
+            attacker_state.update_last_used_move(false, defender_ability);
+            return;
+        }
+    }
+
+    if (attacker_move == Move::Yawn) {
+        defender_state.set_drowsy();
     }
 
     // Do the damage
@@ -1623,7 +1739,8 @@ void BattleState::execute_move(
                                 .times_to_hit = 1
                             },
                             weather,
-                            is_mid_turn
+                            is_mid_turn,
+                            predicted_damage_from_defender
                         );
                         attacker_chosen_move.damage +=
                             attacker_state.get_chosen_move().damage;
@@ -1750,7 +1867,8 @@ void BattleState::execute_move(
                         attacker_state,
                         defender_chosen_move,
                         weather,
-                        is_mid_turn
+                        is_mid_turn,
+                        predicted_damage_from_defender
                     );
                 }
             }
