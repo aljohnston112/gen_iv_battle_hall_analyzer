@@ -234,10 +234,18 @@ inline void check_unimplemented_moves(
             move != Move::Struggle &&
             move != Move::Present &&
             move != Move::Substitute &&
+            move != Move::LeechSeed &&
+            move != Move::FuryCutter &&
+            move != Move::Rest &&
+            move != Move::Curse &&
+            // TODO skipped since single stage stat boosts don't seem to get picked
             move != Move::Sing && // TODO
             move != Move::Toxic && // TODO
             move != Move::Metronome && // TODO
             move != Move::Refresh && // TODO
+            move != Move::ConfuseRay && // Not implemented
+            move != Move::Swagger && // Not implemented
+            move != Move::Recycle && // Not implemented
             !move_has_flag(move, MoveFlag::LOWERS_DEFENDER_ATTACK) &&
             (move_has_flag(
                     move,
@@ -285,11 +293,22 @@ BestMove BattleState::choose_move_against_defender(
 ) {
     PokemonState& attacker_state =
         attacker_is_player ? player_state : opponent_state;
+    if (attacker_state.get_status() == Status::SLEEP) {
+        attacker_state.set_chosen_move(
+            BestMove{
+                .move = nullptr,
+                .damage = 0,
+                .potential_damage = 0,
+                .times_to_hit = 0
+            }
+        );
+        return attacker_state.get_chosen_move();
+    }
+
     PokemonState& defender_state =
         attacker_is_player ? opponent_state : player_state;
 
     const auto attacker_chosen_move = attacker_state.get_chosen_move();
-    const auto defender_chosen_move = defender_state.get_chosen_move();
     if (attacker_state.is_charging()) {
         return attacker_chosen_move;
     }
@@ -367,19 +386,27 @@ BestMove BattleState::choose_move_against_defender(
         return attacker_state.get_chosen_move();
     }
 
+    const auto defender_chosen_move = defender_state.get_chosen_move();
+    const bool attacker_faster = attacker_state.outspeeds(
+        defender_state,
+        nullptr,
+        nullptr,
+        weather
+    );
     uint damage_from_defender;
     if (attacker_is_player) {
         // Since player's move is calculated first,
         // we should predict what the opponent's next move is
         auto backup = defender_state.get_chosen_move();
-        damage_from_defender =
-            choose_move_against_defender(
-                !attacker_is_player,
-                false,
-                weather,
-                is_mid_turn,
-                true
-            ).damage;
+        auto move_against_attacker = choose_move_against_defender(
+            !attacker_is_player,
+            false,
+            weather,
+            is_mid_turn,
+            true
+        );
+        damage_from_defender = move_against_attacker.damage;
+        damage_from_defender += get_extra_damage(move_against_attacker);
         defender_state.set_chosen_move(std::move(backup));
     } else {
         damage_from_defender = defender_chosen_move.damage;
@@ -387,9 +414,14 @@ BestMove BattleState::choose_move_against_defender(
 
     // Substitute has no downside as far as I can tell in this case
     if (!attacker_state.is_choiced() &&
+        defender_chosen_move.move != nullptr &&
         attacker_state.get_subs_health() == 0 &&
         attacker_state.get_health() > attacker_state.max_health / 4 &&
-        attacker_state.get_health() / 4 > defender_chosen_move.damage
+        attacker_state.max_health / 4 > damage_from_defender * 2 &&
+        (attacker_faster ||
+            (attacker_state.max_health / 4 <
+                attacker_state.get_health() - damage_from_defender)
+        )
     ) {
         for (const auto& attacker_move :
              attacker_state.get_moves()
@@ -410,12 +442,6 @@ BestMove BattleState::choose_move_against_defender(
 
     const auto attacker_health = attacker_state.get_health();
     const auto defender_health = defender_state.get_health();
-    const bool attacker_faster = attacker_state.outspeeds(
-        defender_state,
-        nullptr,
-        nullptr,
-        weather
-    );
 
     // Check for move that does the most damage
     BestMove best_fire_move{};
@@ -452,9 +478,15 @@ BestMove BattleState::choose_move_against_defender(
         defender_ability == Ability::WonderGuard;
     const auto has_choice_item = CHOICE_ITEMS.contains(attacker_item);
     auto attackers_last_used_move = attacker_state.get_last_used_move();
+    MoveInfo fury_cutter{};
+    fury_cutter.name = "";
     for (const auto& attacker_move :
          attacker_state.get_moves()
     ) {
+        if (attacker_move->move == Move::FuryCutter) {
+            fury_cutter = *attacker_move;
+        }
+
         // if (attacker_state.pokemon->ability == Ability::SwiftSwim &&
         //     attacker_state.pokemon->name == Pokemon::Magikarp &&
         //     defender_state.pokemon->ability == Ability::SwiftSwim &&
@@ -481,6 +513,20 @@ BestMove BattleState::choose_move_against_defender(
         ) {
             continue;
         }
+
+        if (attacker_move->move == Move::LeechSeed &&
+            best_move.damage < opponent_state.max_health / 8) {
+            attacker_state.set_chosen_move(
+                BestMove{
+                    .move = attacker_move,
+                    .damage = 0,
+                    .potential_damage = 0,
+                    .times_to_hit = 1
+                }
+            );
+            continue;
+        }
+
         uint16_t damage = 0;
         if (attacker_move->move == Move::WeatherBall) {
             weather_ball = attacker_move;
@@ -510,6 +556,20 @@ BestMove BattleState::choose_move_against_defender(
             return attacker_state.get_chosen_move();
         }
         if (attacker_move->move == Move::FakeOut) {
+            continue;
+        }
+
+        if (check_rest(
+                attacker_state,
+                defender_state,
+                attacker_move,
+                damage_from_defender,
+                weather
+            )
+        ) {
+            return attacker_state.get_chosen_move();
+        }
+        if (attacker_move->move == Move::Rest) {
             continue;
         }
 
@@ -772,6 +832,44 @@ BestMove BattleState::choose_move_against_defender(
         }
     }
 
+    // Fury cutter
+    if (fury_cutter.name != "") {
+        uint32_t damage = 0;
+        fury_cutter.power = attacker_state.get_fury_cutter_power();
+        for (int i = 0; i < hits_to_defender; i++) {
+            damage += attacker_state.get_damage_of_attacker_move(
+                attacker_item,
+                &fury_cutter,
+                defender_state,
+                weather,
+                is_mid_turn
+            );
+            fury_cutter.power = std::min(fury_cutter.power * 2, 160);
+        }
+        if (damage > (best_move.damage * best_move.times_to_hit *
+            hits_to_defender)) {
+            for (const auto move : attacker_state.get_moves()) {
+                if (move->move != Move::FuryCutter) {
+                    continue;
+                }
+                damage = attacker_state.get_damage_of_attacker_move(
+                    attacker_item,
+                    &fury_cutter,
+                    defender_state,
+                    weather,
+                    is_mid_turn
+                );
+                best_move.damage = damage;
+                best_move.potential_damage = damage;
+                best_move.move = move;
+                best_move.times_to_hit = 1;
+                best_move_must_charge = false;
+                break;
+            }
+        }
+    }
+
+
     // Check if it is better to use a status move
     if (!has_choice_item) {
         for (const auto& move : attacker_pokemon->moves) {
@@ -891,7 +989,7 @@ BestMove BattleState::choose_move_against_defender(
 
                 potential_hp_gain = damage / 2;
                 if (attacker_item == Item::BigRoot) {
-                    potential_hp_gain = std::floor(damage * 0.65);
+                    potential_hp_gain = std::floor(damage * 1.3);
                 }
                 potential_hp_gain = std::max(1u, potential_hp_gain);
                 if (defender_ability == Ability::LiquidOoze) {
@@ -1456,6 +1554,18 @@ void BattleState::execute_move(
         return;
     }
 
+    // Rest
+    if (attacker_move == Move::Rest) {
+        attacker_state.clear_status();
+        attacker_state.try_apply_sleep(
+            2,
+            weather,
+            defender_state
+        );
+        attacker_state.update_last_used_move(false, defender_ability);
+        return;
+    }
+
     // Do the damage
     if (attacker_state.get_field_location() == FieldLocation::ON_FIELD &&
         (move_has_flag(attacker_move, MoveFlag::BYPASSES_PROTECT) ||
@@ -1574,6 +1684,16 @@ void BattleState::execute_move(
         if (attacker_chosen_move.damage > 0) {
             if (!had_sub) {
                 defender_state.set_was_hit();
+            }
+            if (attacker_move == Move::FuryCutter && !had_sub) {
+                attacker_state.set_fury_cutter_power(
+                    std::min(
+                        attacker_state.get_fury_cutter_power() * 2,
+                        160
+                    )
+                );
+            } else {
+                attacker_state.set_fury_cutter_power(10);
             }
             if (move_has_flag(attacker_move, MoveFlag::CONTINUES) && !had_sub) {
                 if (attacker_state.is_player &&

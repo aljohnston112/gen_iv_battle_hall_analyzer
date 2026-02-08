@@ -107,8 +107,12 @@ class PokemonState {
 
     Status status = Status::NONE;
     int turns_badly_poisoned = 0;
+    int turns_asleep = 0;
+
     bool confused = false;
     bool infatuated = false;
+
+    bool seeded = false;
 
     int trapped_counter = 0;
     bool flinched = false;
@@ -136,6 +140,8 @@ class PokemonState {
     uint16_t rollout_power = 0;
     uint8_t rollout_turns = 0;
 
+    uint16_t fury_cutter_power = 10;
+
     uint8_t stockpiles = 0;
 
     bool knocked_off = false;
@@ -146,8 +152,7 @@ class PokemonState {
     uint substitute = 0;
     bool had_sub_ = false;
 
-    void apply_berry() {
-        bool eaten = false;
+    void apply_berry(bool eaten) {
         if (const auto berry = get_item_for_effect();
             berry == Item::ApicotBerry
         ) {
@@ -431,7 +436,7 @@ public:
                 eats_status_berry ||
                 eats_sitrus;
             if (eats_berry) {
-                apply_berry();
+                apply_berry(eaten);
             }
         }
     }
@@ -694,6 +699,20 @@ public:
         }
     }
 
+    void try_apply_sleep(
+        const int turns,
+        const Weather weather,
+        PokemonState& other_state
+    ) {
+        try_apply_status(
+            Status::SLEEP,
+            weather,
+            other_state
+        );
+        turns_asleep = turns;
+    }
+
+
     void clear_status() {
         status = Status::NONE;
     }
@@ -714,6 +733,23 @@ public:
         }
     }
 
+    void set_seeded() {
+        seeded = true;
+    }
+
+    void clear_seeded() {
+        seeded = false;
+    }
+
+    int apply_damage_if_seeded() {
+        int damage = 0;
+        if (seeded) {
+            damage = std::max(1, max_health / 8);
+            apply_damage(damage);
+        }
+        return damage;
+    }
+
     void set_trapped_counter(const int turns) {
         trapped_counter = turns;
     }
@@ -726,6 +762,7 @@ public:
         flinched = true;
         rollout_power = 0;
         rollout_turns = 0;
+        fury_cutter_power = 10;
     }
 
     [[nodiscard]] bool was_hit() const {
@@ -858,6 +895,15 @@ public:
 
     void stop_rollout() {
         this->rollout_turns = 0;
+        rollout_power = 0;
+    }
+
+    int16_t get_fury_cutter_power() const {
+        return fury_cutter_power;
+    }
+
+    void set_fury_cutter_power(const uint16_t power) {
+        this->fury_cutter_power = power;
     }
 
     void add_stockpile() {
@@ -1183,7 +1229,7 @@ public:
         if (rollout_turns != 0) {
             rollout_power *= 2;
         } else {
-            rollout_power = 0;
+            stop_rollout();
         }
         if (safeguard_turns > 0) {
             safeguard_turns--;
@@ -1198,9 +1244,14 @@ public:
             truant = !truant;
             recharging = false;
         }
-
         if (substitute == 0) {
             had_sub_ = false;
+        }
+        if (turns_asleep > 0) {
+            turns_asleep--;
+            if (turns_asleep == 0) {
+                clear_status();
+            }
         }
     }
 
@@ -1208,6 +1259,9 @@ public:
         const Weather weather,
         PokemonState& defender_state
     ) {
+        if (defender_state.get_health() <= 0) {
+            return;
+        }
         const auto item = get_item_for_effect();
         const auto ability = get_ability();
 
@@ -1235,6 +1289,16 @@ public:
         try_apply_leftovers_or_black_sludge(item, ability);
 
         // 6.4 Leech Seed: "pokémon's health is sapped by leech seed"
+        int seed_damage = apply_damage_if_seeded();
+        if (defender_state.get_item_for_effect() == Item::BigRoot) {
+            seed_damage *= 1.3;
+        }
+        if (ability == Ability::LiquidOoze) {
+            defender_state.apply_damage(seed_damage);
+        } else if (defender_state.get_health() > 0) {
+            defender_state.heal(seed_damage);
+        }
+
         // 6.5 Burn, Nightmare, Poison Heal, Poison: "pokémon is hurt by poison"
         try_apply_status_damage(ability);
 
@@ -1296,7 +1360,13 @@ public:
     }
 
     void apply_substitute() {
-        assert(get_health() > max_health / 4);
+        assert(
+            get_health() > max_health / 4 ||
+            pokemon->name == Pokemon::Shuckle
+        );
+        if (get_health() <= max_health / 4) {
+            return;
+        }
         apply_damage(max_health / 4);
         assert(substitute == 0);
         substitute = max_health / 4;
@@ -1428,6 +1498,10 @@ inline bool should_skip_move(
     const MoveInfo* move,
     const BestMove& defender_chosen_move
 ) {
+    if (move->move == Move::LeechSeed) {
+        return false;
+    }
+
     if (!attacker_state.has_power_points(move->move)
     ) {
         return true;
@@ -1480,6 +1554,49 @@ inline bool check_fake_out(
     }
     return false;
 }
+
+inline bool check_rest(
+    PokemonState& attacker_state,
+    const PokemonState& defender_state,
+    const MoveInfo* attacker_move,
+    const uint16_t damage_from_defender,
+    const Weather weather
+) {
+    if (damage_from_defender == 0) {
+        return false;
+    }
+
+    const bool attacker_faster = attacker_state.outspeeds(
+        defender_state,
+        defender_state.get_chosen_move().move,
+        attacker_move,
+        weather
+    );
+    const auto hp = attacker_state.get_health();
+    const int turns_to_ko = hp / damage_from_defender;
+    int turns_asleep = 2;
+    if (!attacker_faster) {
+        turns_asleep++;
+    }
+    if (const int turns_to_ko_asleep =
+            attacker_state.max_health / damage_from_defender;
+        turns_to_ko_asleep < turns_asleep &&
+        (turns_to_ko > 1 || attacker_faster) &&
+        turns_to_ko_asleep > turns_to_ko
+    ) {
+        attacker_state.set_chosen_move(
+            BestMove{
+                .move = attacker_move,
+                .damage = 0,
+                .potential_damage = 0,
+                .times_to_hit = 1
+            }
+        );
+        return true;
+    }
+    return false;
+}
+
 
 inline bool does_zero_damage(
     const PokemonState& defender_state,
@@ -2270,7 +2387,9 @@ inline uint32_t PokemonState::get_damage_of_attacker_move(
     const auto defender_ability = defender_state.get_ability();
     const auto category = attacker_move_info->category;
     const bool is_special = category == Category::SPECIAL;
-    assert(category != Category::STATUS);
+    if (category == Category::STATUS) {
+        return 0;
+    }
     uint16_t attacker_attack =
         is_special
             ? get_special_attack(weather, defender_ability)
