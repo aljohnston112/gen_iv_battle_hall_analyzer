@@ -96,6 +96,7 @@ class PokemonState {
     static constexpr int8_t MIN_STAT_STAGE = -6;
 
     std::vector<const MoveInfo*> moves;
+
     std::array<int8_t, static_cast<int>(Move::Count)> power_points;
     std::array<PokemonType, 2> types;
     Ability ability;
@@ -129,11 +130,13 @@ class PokemonState {
 
     bool protected_ = false;
     int safeguard_turns = 0;
-    bool reflect = false;
-    bool light_screen = false;
+    int reflect_turns = 0;
+    int light_screen_turns = 0;
 
     bool was_drowsy = false;
     bool drowsy = false;
+
+    bool ingrained = false;
 
     bool flash_fired = false;
     uint8_t slow_start_count = 0;
@@ -848,20 +851,38 @@ public:
         protected_ = false;
     }
 
+    void set_reflect() {
+        assert(reflect_turns == 0);
+        if (get_item_for_effect() == Item::LightClay) {
+            reflect_turns = 8;
+        } else {
+            reflect_turns = 5;
+        }
+    }
+
     [[nodiscard]] bool has_reflect_up() const {
-        return reflect;
+        return reflect_turns < 0;
     }
 
     void break_reflect() {
-        reflect = false;
+        reflect_turns = 0;
+    }
+
+    void set_light_screen() {
+        assert(light_screen_turns == 0);
+        if (get_item_for_effect() == Item::LightClay) {
+            light_screen_turns = 8;
+        } else {
+            light_screen_turns = 5;
+        }
     }
 
     [[nodiscard]] bool has_light_screen_up() const {
-        return light_screen;
+        return light_screen_turns > 0;
     }
 
     void break_light_screen() {
-        light_screen = false;
+        light_screen_turns = 0;
     }
 
     [[nodiscard]] bool is_drowsy() const {
@@ -870,6 +891,15 @@ public:
 
     void set_drowsy() {
         drowsy = true;
+    }
+
+    void set_ingrained() {
+        ingrained = true;
+        grounded = true;
+    }
+
+    [[nodiscard]] bool is_ingrained() const {
+        return ingrained;
     }
 
     [[nodiscard]] bool was_flash_fired() const {
@@ -915,6 +945,10 @@ public:
 
     void set_fury_cutter_power(const uint16_t power) {
         this->fury_cutter_power = power;
+    }
+
+    [[nodiscard]] int get_stock_piles() const {
+        return stockpiles;
     }
 
     void add_stockpile() {
@@ -1281,6 +1315,9 @@ public:
 
         // 1.0 Reflect wears off: "your team's reflect wore off"
         // 1.1 Light Screen wears off: "your team's light screen wore off"
+        if (light_screen_turns > 0) {
+            light_screen_turns--;
+        }
         // 1.2 Mist wears off: "your team's mist wore off"
         // 1.3 Safeguard fades: "your team is no longer protected by safeguard"
         // 1.4 Tailwind ends: "your team's tailwind petered out"
@@ -1296,6 +1333,13 @@ public:
         // 5.0 Gravity
         //
         // 6.0 Ingrain
+        if (ingrained) {
+            if (get_item_for_effect() == Item::BigRoot) {
+                heal((max_health / 16) * 1.3);
+            } else {
+                heal(max_health / 16);
+            }
+        }
         // 6.1 Aqua Ring
         // 6.2 Speed Boost, Shed Skin
         try_apply_speed_boost_or_shed_skin(ability);
@@ -1307,10 +1351,12 @@ public:
         if (defender_state.get_item_for_effect() == Item::BigRoot) {
             seed_damage *= 1.3;
         }
-        if (ability == Ability::LiquidOoze) {
-            defender_state.apply_damage(seed_damage);
-        } else if (defender_state.get_health() > 0) {
-            defender_state.heal(seed_damage);
+        if (seed_damage > 0) {
+            if (ability == Ability::LiquidOoze) {
+                defender_state.apply_damage(seed_damage);
+            } else if (defender_state.get_health() > 0) {
+                defender_state.heal(seed_damage);
+            }
         }
 
         // 6.5 Burn, Nightmare, Poison Heal, Poison: "pokémon is hurt by poison"
@@ -2019,7 +2065,7 @@ inline int16_t get_power_based_on_move(
             power = 200;
         }
     } else if (attacker_move == Move::SpitUp) {
-        power = 100;
+        power = 100 * attacker_state.get_stock_piles();
     } else if (attacker_move == Move::WakeUpSlap) {
         power = 60;
         if (defender_state.get_status() == Status::SLEEP) {

@@ -57,6 +57,11 @@ add_executable(
         src/battle_hall_analyzer.cpp
         src/battle_hall_analyzer.h
         src/battle_factory/factory_data_source.h
+        src/BState.cpp
+        src/BState.h
+        src/PState.cpp
+        src/PState.h
+        src/battle_factory/factory_data_source.cpp
 )
 target_include_directories(gen_iv_battle_hall_team_builder PRIVATE ${CMAKE_SOURCE_DIR}/external/libhungarian)
 

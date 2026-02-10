@@ -239,13 +239,21 @@ inline void check_unimplemented_moves(
             move != Move::Rest &&
             move != Move::PainSplit &&
             move != Move::Yawn &&
+            move != Move::Ingrain &&
+            move != Move::Reflect &&
+            move != Move::LightScreen &&
             move != Move::Curse &&
+            move != Move::Stockpile &&
             // TODO skipped since single stage stat boosts don't seem to get picked
             move != Move::Sing && // TODO
             move != Move::Toxic && // TODO
             move != Move::Metronome && // TODO
             move != Move::Refresh && // TODO
             move != Move::ConfuseRay && // Not implemented
+            move != Move::Disable && // Not implemented
+            move != Move::ThunderWave && // Not implemented
+            move != Move::Attract && // Not implemented
+            move != Move::Supersonic && // Not implemented
             move != Move::Swagger && // Not implemented
             move != Move::Recycle && // Not implemented
             move != Move::StealthRock && // Not implemented
@@ -332,6 +340,48 @@ BestMove BattleState::choose_move_against_defender(
 ) {
     PokemonState& attacker_state =
         attacker_is_player ? player_state : opponent_state;
+    PokemonState& defender_state =
+        attacker_is_player ? opponent_state : player_state;
+    const auto attacker_chosen_move = attacker_state.get_chosen_move();
+
+    const auto defender_chosen_move = defender_state.get_chosen_move();
+    uint predicted_damage_from_defender = predict_damage_from_defender(
+        attacker_is_player,
+        weather,
+        is_mid_turn,
+        attacker_state,
+        defender_state,
+        defender_chosen_move
+    );
+    const auto predicted_hits_from_defender =
+        attacker_state.get_health() / predicted_damage_from_defender;
+
+    if ((is_mid_turn || chosen_move_only) &&
+        attacker_chosen_move.move != nullptr
+    ) {
+        recalculate_chosen_move_damage(
+            attacker_state,
+            defender_state,
+            attacker_chosen_move,
+            weather,
+            is_mid_turn,
+            predicted_damage_from_defender
+        );
+        return attacker_state.get_chosen_move();
+    }
+
+    // Cases where a move can't be used
+    BestMove best_move{};
+    const auto attacker_ability = attacker_state.get_ability();
+    if (!checking_future && attacker_state.is_recharging() ||
+        (attacker_ability == Ability::Truant && attacker_state.is_truant())
+    ) {
+        attacker_state.done_recharging();
+        attacker_state.set_chosen_move(std::move(best_move));
+        return attacker_state.get_chosen_move();
+    }
+
+    // Sleep
     if (attacker_state.get_status() == Status::SLEEP) {
         attacker_state.set_chosen_move(
             BestMove{
@@ -344,10 +394,21 @@ BestMove BattleState::choose_move_against_defender(
         return attacker_state.get_chosen_move();
     }
 
-    PokemonState& defender_state =
-        attacker_is_player ? opponent_state : player_state;
+    // Cases where a move is ready
+    if (attacker_state.get_field_location() != FieldLocation::ON_FIELD ||
+        attacker_state.get_multi_turn_move_counter() > 0
+    ) {
+        recalculate_chosen_move_damage(
+            attacker_state,
+            defender_state,
+            attacker_chosen_move,
+            weather,
+            is_mid_turn,
+            predicted_damage_from_defender
+        );
+        return attacker_state.get_chosen_move();
+    }
 
-    const auto attacker_chosen_move = attacker_state.get_chosen_move();
     if (attacker_state.is_charging()) {
         return attacker_chosen_move;
     }
@@ -355,16 +416,6 @@ BestMove BattleState::choose_move_against_defender(
     if (check_transform(attacker_state)) {
         return attacker_state.get_chosen_move();
     }
-
-    const auto defender_chosen_move = defender_state.get_chosen_move();
-    uint predicted_damage_from_defender = predict_damage_from_defender(
-        attacker_is_player,
-        weather,
-        is_mid_turn,
-        attacker_state,
-        defender_state,
-        defender_chosen_move
-    );
 
     // Struggle
     const auto attacker_item = attacker_state.get_item_for_effect();
@@ -398,46 +449,6 @@ BestMove BattleState::choose_move_against_defender(
         return attacker_state.get_chosen_move();
     }
 
-    if ((is_mid_turn || chosen_move_only) &&
-        attacker_chosen_move.move != nullptr
-    ) {
-        recalculate_chosen_move_damage(
-            attacker_state,
-            defender_state,
-            attacker_chosen_move,
-            weather,
-            is_mid_turn,
-            predicted_damage_from_defender
-        );
-        return attacker_state.get_chosen_move();
-    }
-
-    // Cases where a move can't be used
-    BestMove best_move{};
-    const auto attacker_ability = attacker_state.get_ability();
-    if (!checking_future && attacker_state.is_recharging() ||
-        (attacker_ability == Ability::Truant && attacker_state.is_truant())
-    ) {
-        attacker_state.done_recharging();
-        attacker_state.set_chosen_move(std::move(best_move));
-        return attacker_state.get_chosen_move();
-    }
-
-    // Cases where a move is ready
-    if (attacker_state.get_field_location() != FieldLocation::ON_FIELD ||
-        attacker_state.get_multi_turn_move_counter() > 0
-    ) {
-        recalculate_chosen_move_damage(
-            attacker_state,
-            defender_state,
-            attacker_chosen_move,
-            weather,
-            is_mid_turn,
-            predicted_damage_from_defender
-        );
-        return attacker_state.get_chosen_move();
-    }
-
     const bool attacker_faster = attacker_state.outspeeds(
         defender_state,
         nullptr,
@@ -445,57 +456,142 @@ BestMove BattleState::choose_move_against_defender(
         weather
     );
 
-    // Substitute has no downside as far as I can tell in this case
-    if (!attacker_state.is_choiced() &&
-        defender_chosen_move.move != nullptr &&
-        attacker_state.get_subs_health() == 0 &&
-        attacker_state.get_health() > attacker_state.max_health / 4 &&
-        attacker_state.max_health / 4 > predicted_damage_from_defender * 2 &&
-        (attacker_faster ||
-            (attacker_state.max_health / 4 <
-                attacker_state.get_health() - predicted_damage_from_defender)
-        )
-    ) {
+    // Moves that should always be picked under the right conditions
+    if (!attacker_state.is_choiced() && !CHOICE_ITEMS.contains(attacker_item)) {
+        // TODO the opponent may switch move categories if its move does less damage
+
         for (const auto& attacker_move :
              attacker_state.get_moves()
         ) {
+            if (should_skip_move(
+                    attacker_state,
+                    attacker_move,
+                    defender_chosen_move
+                )
+            ) {
+                continue;
+            }
+
+            // Substitute
             if (attacker_move->move == Move::Substitute) {
-                attacker_state.set_chosen_move(
-                    BestMove{
-                        .move = attacker_move,
-                        .damage = 0,
-                        .potential_damage = 0,
-                        .times_to_hit = 1
-                    }
-                );
-                return attacker_state.get_chosen_move();
+                if (defender_chosen_move.move != nullptr &&
+                    attacker_state.get_subs_health() == 0 &&
+                    attacker_state.get_health() > attacker_state.max_health / 4
+                    &&
+                    attacker_state.max_health / 4 >
+                    predicted_damage_from_defender * 2 &&
+                    (attacker_faster ||
+                        (attacker_state.max_health / 4 <
+                            attacker_state.get_health() -
+                            predicted_damage_from_defender)
+                    )
+                ) {
+                    attacker_state.set_chosen_move(
+                        BestMove{
+                            .move = attacker_move,
+                            .damage = 0,
+                            .potential_damage = 0,
+                            .times_to_hit = 1
+                        }
+                    );
+                    return attacker_state.get_chosen_move();
+                }
+            }
+
+            // Light Screen
+            else if (attacker_move->move == Move::LightScreen) {
+                if (defender_chosen_move.move != nullptr &&
+                    defender_chosen_move.move->category == Category::SPECIAL &&
+                    !move_has_flag(
+                        defender_chosen_move.move->move,
+                        MoveFlag::HAS_FIXED_DAMAGE
+                    )
+                ) {
+                    attacker_state.set_chosen_move(
+                        BestMove{
+                            .move = attacker_move,
+                            .damage = 0,
+                            .potential_damage = 0,
+                            .times_to_hit = 1
+                        }
+                    );
+                    return attacker_state.get_chosen_move();
+                }
+            }
+
+            // Reflect
+            else if (attacker_move->move == Move::Reflect) {
+                if (defender_chosen_move.move != nullptr &&
+                    defender_chosen_move.move->category == Category::PHYSICAL &&
+                    !move_has_flag(
+                        defender_chosen_move.move->move,
+                        MoveFlag::HAS_FIXED_DAMAGE
+                    )
+                ) {
+                    attacker_state.set_chosen_move(
+                        BestMove{
+                            .move = attacker_move,
+                            .damage = 0,
+                            .potential_damage = 0,
+                            .times_to_hit = 1
+                        }
+                    );
+                    return attacker_state.get_chosen_move();
+                }
+            }
+
+            // Yawn
+            else if (attacker_move->move == Move::Yawn) {
+                if (defender_chosen_move.move != nullptr &&
+                    attacker_state.get_health() >
+                    predicted_damage_from_defender * 2
+                    // TODO opponent may do more damage the second turn
+                ) {
+                    attacker_state.set_chosen_move(
+                        BestMove{
+                            .move = attacker_move,
+                            .damage = 0,
+                            .potential_damage = 0,
+                            .times_to_hit = 1
+                        }
+                    );
+                    return attacker_state.get_chosen_move();
+                }
+            }
+
+            // Ingrain
+            else if (attacker_move->move == Move::Ingrain) {
+                if (predicted_damage_from_defender <
+                    attacker_state.max_health / 16 &&
+                    !attacker_state.is_ingrained()
+                ) {
+                    attacker_state.set_chosen_move(
+                        BestMove{
+                            .move = attacker_move,
+                            .damage = 0,
+                            .potential_damage = 0,
+                            .times_to_hit = 1
+                        }
+                    );
+                    return attacker_state.get_chosen_move();
+                }
+            }
+
+            // Will-O-Wisp
+            else if (attacker_move->move == Move::WillOWisp) {
+                if (!attacker_is_player &&
+                    defender_chosen_move.move != nullptr &&
+                    defender_chosen_move.move->category == Category::PHYSICAL &&
+                    !move_has_flag(
+                        defender_chosen_move.move->move,
+                        MoveFlag::HAS_FIXED_DAMAGE
+                    )
+                ) {
+
+                }
             }
         }
     }
-
-    // Yawn has no downside as far as I can tell
-    if (!attacker_state.is_choiced() &&
-        defender_chosen_move.move != nullptr &&
-        attacker_state.get_health() > predicted_damage_from_defender * 2
-        // TODO opponent may do more damage the second turn
-    ) {
-        for (const auto& attacker_move :
-             attacker_state.get_moves()
-        ) {
-            if (attacker_move->move == Move::Yawn) {
-                attacker_state.set_chosen_move(
-                    BestMove{
-                        .move = attacker_move,
-                        .damage = 0,
-                        .potential_damage = 0,
-                        .times_to_hit = 1
-                    }
-                );
-                return attacker_state.get_chosen_move();
-            }
-        }
-    }
-
 
     const auto attacker_health = attacker_state.get_health();
     const auto defender_health = defender_state.get_health();
@@ -537,11 +633,28 @@ BestMove BattleState::choose_move_against_defender(
     auto attackers_last_used_move = attacker_state.get_last_used_move();
     MoveInfo fury_cutter{};
     fury_cutter.name = "";
+
+    MoveInfo stockpile{};
+    MoveInfo spit_up{};
+
     for (const auto& attacker_move :
          attacker_state.get_moves()
     ) {
+        if (should_skip_move(
+                attacker_state,
+                attacker_move,
+                defender_chosen_move
+            )
+        ) {
+            continue;
+        }
+
         if (attacker_move->move == Move::FuryCutter) {
             fury_cutter = *attacker_move;
+        } else if (attacker_move->move == Move::SpitUp) {
+            spit_up = *attacker_move;
+        } else if (attacker_move->move == Move::Stockpile) {
+            stockpile = *attacker_move;
         }
 
         // if (attacker_state.pokemon->ability == Ability::SwiftSwim &&
@@ -933,6 +1046,50 @@ BestMove BattleState::choose_move_against_defender(
         }
     }
 
+    if (spit_up.name != "" && stockpile.name != "") {
+        const auto current_stock = attacker_state.get_stock_piles();
+        const auto stockpiles_to_go = std::min(
+            static_cast<uint>(3 - current_stock),
+            hits_to_defender
+        );
+        for (int i = 0; i < stockpiles_to_go; i++) {
+            attacker_state.add_stockpile();
+        }
+        uint32_t damage = attacker_state.get_damage_of_attacker_move(
+            attacker_item,
+            &spit_up,
+            defender_state,
+            weather,
+            is_mid_turn,
+            predicted_damage_from_defender
+        );
+        attacker_state.clear_stockpile();
+        for (int i = 0; i < current_stock; i++) {
+            attacker_state.add_stockpile();
+        }
+        if (damage > (best_move.damage * best_move.times_to_hit *
+            hits_to_defender)) {
+            for (const auto move : attacker_state.get_moves()) {
+                if (move->move != Move::Stockpile) {
+                    continue;
+                }
+                damage = attacker_state.get_damage_of_attacker_move(
+                    attacker_item,
+                    move,
+                    defender_state,
+                    weather,
+                    is_mid_turn,
+                    predicted_damage_from_defender
+                );
+                best_move.damage = 0;
+                best_move.potential_damage = 0;
+                best_move.move = move;
+                best_move.times_to_hit = 1;
+                best_move_must_charge = false;
+                break;
+            }
+        }
+    }
 
     // Check if it is better to use a status move
     if (!has_choice_item) {
@@ -1508,14 +1665,15 @@ void BattleState::execute_move(
         attacker_move = attacker_chosen_move.move->move;
     }
 
-    const auto predicted_damage_from_defender = predict_damage_from_defender(
-        attacker_is_player,
-        weather,
-        is_mid_turn,
-        attacker_state,
-        defender_state,
-        defender_chosen_move
-    );
+    const auto predicted_damage_from_defender =
+        predict_damage_from_defender(
+            attacker_is_player,
+            weather,
+            is_mid_turn,
+            attacker_state,
+            defender_state,
+            defender_chosen_move
+        );
 
     // Brick break
     if (attacker_move == Move::BrickBreak) {
@@ -1825,6 +1983,15 @@ void BattleState::execute_move(
                 defender_state.get_status() == Status::SLEEP && !had_sub
             ) {
                 defender_state.clear_status();
+                if (!is_mid_turn) {
+                    choose_move_against_defender(
+                        attacker_is_player,
+                        false,
+                        weather,
+                        is_mid_turn,
+                        false
+                    );
+                }
             }
 
             if (defender_chosen_move.move != nullptr) {
@@ -1892,7 +2059,6 @@ void BattleState::execute_move(
     }
 }
 
-
 void BattleState::apply_post_move_effects(
     PokemonState& attacker_state,
     const BestMove& attacker_move,
@@ -1926,6 +2092,9 @@ void BattleState::apply_post_move_effects(
 
     // Healing
     if (move_has_flag(move, MoveFlag::HEALS_ATTACKER)) {
+        if (move == Move::Ingrain) {
+            attacker_state.set_ingrained();
+        }
         if (attacker_move.damage > 0 &&
             (move == Move::Absorb ||
                 move == Move::MegaDrain ||
