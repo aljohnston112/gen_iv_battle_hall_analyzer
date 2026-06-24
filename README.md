@@ -1,6 +1,6 @@
 # Gen IV Battle Hall Analyzer
 
-A deterministic battle simulation system written in C++ for analyzing Pokémon performance in the Gen IV Battle Hall under worst-case assumptions.
+A multi-threaded, deterministic battle simulation system written in C++ for analyzing Pokémon performance in the Gen IV Battle Hall.
 
 The system evaluates 1v1 battles by modeling opponent behavior using worst-case assumptions and heuristics to estimate survival potential across a streak-based format.
 
